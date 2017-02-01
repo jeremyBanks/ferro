@@ -19,11 +19,13 @@ Ferro is a BitTorrent client, library, and/or something like that.
   Minor optimization to HTTP tracker protocol.
 - [Peer Exchange (BEP 11)](http://www.bittorrent.org/beps/bep_0011.html)  
   Extension allowing peers to exchange others peers addresses, so the tracker isn't required once connected to other torrent peers.
+- [Canonical Peer Priority (BEP 40)](http://www.bittorrent.org/beps/bep_0040.html)  
+  Defines a peer selection algorithm to slightly improve swarm security and efficiency.
 - [Metadata Exchange and Magnet Links (BEP 9)](http://www.bittorrent.org/beps/bep_0009.html)  
- Extension allowing peers to exchange torrent file info directly, so the torrent file isn't required in advance.
+  Extension allowing peers to exchange torrent file info directly, so the torrent file isn't required in advance.
 - [Mainline DHT Protocol (BEP 5)](http://www.bittorrent.org/beps/bep_0005.html)  
- Distributed index of peers on a secondary P2P network, used to find initial torrent peers without any tracker.
+  Distributed index of peers on a secondary P2P network, used to find initial torrent peers without any tracker.
 - [Kademlia Protocol (Maymounkov and Mazières 2002)](https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf)  
- Fuller description of the protocol on which the mainline DHT protocol is based.
+  Fuller description of the protocol on which the mainline DHT protocol is based.
 - [Magnet URI Web Seeding Draft Proposal](https://wiki.theory.org/BitTorrent_Magnet-URI_Webseeding)  
   De-facto description of additional magnet link parameters including web seeds.
