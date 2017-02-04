@@ -10,26 +10,27 @@ namespace Ferro
     /// Bencode format</para>
     /// </summary>
     // I'm going to want to change the name of this eventually
-    public class BencodeSerializer
+    public static class BencodeSerializer
     {
-        public string Serialize(string byteString)
+        public static string Serialize(string byteString)
         {
-            return "test";
+            return byteString.Length + ":" + byteString;
         }
 
-        public string Serialize(int integer)
+        public static string Serialize(int integer)
         {
-            return "test";
+            return "i" + integer.ToString() + "e";
         }
 
-        // Assuming our lists and dictionaries are going to 
-        // consist of strings here
-        public string Serialize(List<string> list)
+        public static string Serialize(List<object> list)
         {
-            return "test";
+            var output = "";
+            list.ForEach(item => output += BencodeSerializer.Serialize(item));
+
+            return "l" + output + "e";
         }
 
-        public string Serialize(Dictionary<string, string> dict)
+        public static string Serialize(Dictionary<object, object> dict)
         {
             return "test";
         }

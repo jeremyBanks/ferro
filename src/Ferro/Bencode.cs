@@ -12,7 +12,7 @@ namespace Ferro
         string List { get; set; }
         string Dict { get; set; }
 
-        public Bencode()
+        public static string Bencode()
         {
 
         }
