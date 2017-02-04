@@ -5,7 +5,16 @@ using System.Threading.Tasks;
 
 namespace Ferro
 {
-    public class Class
+    public class Bencode
     {
+        string ByteString { get; set; }
+        string Integer { get; set; }
+        string List { get; set; }
+        string Dict { get; set; }
+
+        public Bencode()
+        {
+
+        }
     }
 }
