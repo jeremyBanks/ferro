@@ -18,7 +18,7 @@ namespace Ferro
         public static void Main(string[] args)
         {
             Console.WriteLine("Let's try some simple deserialization examples!");
-            
+
             {
                 Console.WriteLine("A positive integer");
                 var input = Encoding.ASCII.GetBytes("i13e");
@@ -171,7 +171,7 @@ namespace Ferro
 
             {
                 Console.WriteLine("A dictionary with two integer values");
-                var input = Encoding.ASCII.GetBytes("l1:1i2e1:3i4ee");
+                var input = Encoding.ASCII.GetBytes("d1:1i2e1:3i4ee");
                 var result = deserialize(input);
                 assert(typeof(List<object>) == result.GetType());
                 var typedResult = (List<object>) result;
@@ -181,13 +181,19 @@ namespace Ferro
 
             {
                 Console.WriteLine("A invalid dictionary with two keys and one value");
-                var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
+                var input = Encoding.ASCII.GetBytes("di1ei2ei3ee");
                 assertThrows(() => deserialize(input));
             }
 
             {
                 Console.WriteLine("A invalid dictionary with non-lexiconographically-ordered keys");
-                var input = Encoding.ASCII.GetBytes("l1:3i4e1:1i2ee");
+                var input = Encoding.ASCII.GetBytes("d1:3i4e1:1i2ee");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("A invalid dictionary with duplicate keys");
+                var input = Encoding.ASCII.GetBytes("d1:1i2e1:1i2ee");
                 assertThrows(() => deserialize(input));
             }
 
