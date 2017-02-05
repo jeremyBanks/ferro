@@ -32,15 +32,16 @@ namespace Ferro
            return output.ToArray();
         }
 
-        public static string Serialize(List<object> list)
+        public static byte[] Serialize(List<byte[]> list)
         {
-            var output = "";
-            list.ForEach(item => output += BencodeSerializer.Serialize(item));
-
-            return "l" + output + "e";
+            var output = new MemoryStream();
+            output.Write(Encoding.ASCII.GetBytes("l"));
+            list.ForEach(item => output.Write(BencodeSerializer.Serialize(item)));
+            output.Write(Encoding.ASCII.GetBytes("e"));
+            return output.ToArray();
         }
 
-        public static string Serialize(Dictionary<object, object> dict)
+        public static byte[] Serialize(Dictionary<byte[], byte[]> dict)
         {
             return "test";
         }
