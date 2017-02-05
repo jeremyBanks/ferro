@@ -368,7 +368,6 @@ namespace Ferro
         // Asserts that deserializing and re-serializing the specified bytes
         // doesn't result in any change.
         static void assertRoundTrip(byte[] bytes) {
-            return; // TODO: enable when you can
             var roundTripped = serialize(deserialize(bytes));
             assertSequencesEqual(bytes, roundTripped, "Serialization round-trip caused a change.");
         }
