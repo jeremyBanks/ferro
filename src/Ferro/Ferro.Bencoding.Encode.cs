@@ -52,6 +52,7 @@ namespace Ferro  {
         }
 
         public static void Encode(Stream stream, Dictionary<byte[], object> value) {
+            // TODO: sort key
             stream.WriteByte((byte) 'd');
             foreach (var item in value) {
                 Encode(stream, item.Key);
