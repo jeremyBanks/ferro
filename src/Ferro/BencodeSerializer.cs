@@ -75,4 +75,6 @@ namespace Ferro
             return output.ToArray();
         }
     }
+
+    public class SerializationException : Exception {}
 }

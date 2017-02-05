@@ -10,9 +10,11 @@ build:
     untracked: true
   script:
   - dotnet restore src/Ferro/
+  - dotnet restore test/Ferro.Tests/
   - dotnet build src/Ferro/
+  - dotnet build src/Ferro.Tests/
 
 test:
   stage: test
   script:
-  - dotnet run -p src/Ferro/
+  - dotnet test -p test/Ferro.Tests/
