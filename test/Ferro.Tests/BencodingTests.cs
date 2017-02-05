@@ -22,7 +22,6 @@ namespace Ferro.UnitTests
 
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(byte[] bytes) {
-            return; // TODO: remove me
             Assert.Equal(bytes, serialize(deserialize(bytes)));
         }
 
