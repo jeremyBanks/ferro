@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Ferro
@@ -17,9 +19,13 @@ namespace Ferro
             return byteString.Length + ":" + byteString;
         }
 
-        public static string Serialize(int integer)
+        public static byte[] Serialize(int integer)
         {
-            return "i" + integer.ToString() + "e";
+           var output = new MemoryStream();
+           output.Write(Encoding.ASCII.GetBytes("i"));
+           output.Write(Encoding.ASCII.GetBytes(integer.ToString()));
+           output.Write(Encoding.ASCII.GetBytes("e"));
+           return output.ToArray();
         }
 
         public static string Serialize(List<object> list)
