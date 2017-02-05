@@ -12,7 +12,7 @@ build:
   - dotnet restore src/Ferro/
   - dotnet restore test/Ferro.Tests/
   - dotnet build src/Ferro/
-  - dotnet build src/Ferro.Tests/
+  - dotnet build test/Ferro.Tests/
 
 test:
   stage: test
