@@ -16,5 +16,13 @@ namespace Ferro {
         public static string FromASCII(this byte[] bytes) {
             return Encoding.ASCII.GetString(bytes);
         }
+
+        public static byte[] ToUTF8(this string s) {
+            return Encoding.UTF8.GetBytes(s);
+        }
+
+        public static string FromUTF8(this byte[] bytes) {
+            return Encoding.UTF8.GetString(bytes);
+        }
     }
 }
