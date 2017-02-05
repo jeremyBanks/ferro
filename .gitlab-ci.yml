@@ -1,20 +1,9 @@
 image: microsoft/dotnet:1-sdk-projectjson
 
-stages:
-  - build
-  - test
-
-build:
-  stage: build
-  artifacts:
-    untracked: true
+build-and-test:
   script:
   - dotnet restore src/Ferro/
   - dotnet restore test/Ferro.Tests/
   - dotnet build src/Ferro/
   - dotnet build test/Ferro.Tests/
-
-test:
-  stage: test
-  script:
-  - dotnet test -p test/Ferro.Tests/
+  - cd test/Ferro.Tests/ && dotnet test
