@@ -34,6 +34,24 @@ namespace Ferro  {
                         }
                         var next = (byte) nextOrNothing;
 
+                        if (valueDigits.Count == 0 && next == '0') {
+                            // Leading zeros are not allowed, so this must be i0e.
+                            var endOrNothing = stream.ReadByte();
+                            if (endOrNothing == -1) {
+                                throw new DecodingException("Unexpected end of stream while parsing zero integer.");
+                            }
+                            var end = (byte) endOrNothing;
+                            if (end != 'e') {
+                                throw new DecodingException($"Expected 'e' after 'i0', got: {end} '{char.ConvertFromUtf32(end)}'.");
+                            }
+                            return (Int64) 0;
+                        }
+
+                        if (valueDigits.Count == 1 && next == '0' && valueDigits[0] == '-') {
+                            // Negative zero and leading zeros are not allowed.
+                            throw new DecodingException("Unexpected '-0' parsing integer.");
+                        }
+
                         if (next == 'e') {
                             if (valueDigits.Count == 0) {
                                 throw new DecodingException(
@@ -50,7 +68,7 @@ namespace Ferro  {
                             }
                         } else if (!('0' <= next && next <= '9')) {
                             throw new DecodingException(
-                                $"Expected ASCII digit while parsing integer, got: {next}");
+                                $"Expected ASCII digit while parsing integer, got: {next} '{char.ConvertFromUtf32(next)}'.");
                         }
 
                         valueDigits.Add(next);
@@ -72,7 +90,7 @@ namespace Ferro  {
                     }
                     var second = (byte) secondOrNothing;
                     if (second != ':') {
-                        throw new DecodingException($"Expected ':' after leading '0', got: {second}");
+                        throw new DecodingException($"Expected ':' after leading '0', got: {second} '{char.ConvertFromUtf32(second)}'.");
                     }
                     return new byte[]{};
 
