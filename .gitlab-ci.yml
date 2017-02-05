@@ -1,0 +1,18 @@
+image: microsoft/dotnet:1-sdk-projectjson
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  artifacts:
+    untracked: true
+  script:
+  - dotnet restore src/Ferro/
+  - dotnet build src/Ferro/
+
+test:
+  stage: test
+  script:
+  - dotnet run -p src/Ferro/

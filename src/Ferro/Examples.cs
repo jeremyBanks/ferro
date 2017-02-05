@@ -15,7 +15,7 @@ namespace Ferro
             return BencodeSerializer.Serialize(value);
         }
 
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             Console.WriteLine("Let's try some examples!");
             Console.WriteLine();
@@ -228,7 +228,7 @@ namespace Ferro
                 assertRoundTrip(input);
             });
 
-            reportResults();
+            return reportResults();
         }
 
         class AssertionFailedException : Exception {
@@ -311,7 +311,7 @@ namespace Ferro
             Console.WriteLine();
         }
 
-        static void reportResults() {
+        static int reportResults() {
             if (testsFailed > 0) {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.WriteLine();
@@ -329,6 +329,7 @@ namespace Ferro
             Console.WriteLine($"{testsPassed} tests passed.");
             Console.ResetColor();
             Console.WriteLine();
+            return (testsFailed > 0) ? 1 : 0;
         }
     }
 }
