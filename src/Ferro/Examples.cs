@@ -20,6 +20,7 @@ namespace Ferro
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(13 == typedResult);
+                assertRoundTrip(input);
             }
 
             {
@@ -29,6 +30,7 @@ namespace Ferro
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(-3153 == typedResult);
+                assertRoundTrip(input);
             }
 
             {
@@ -38,6 +40,7 @@ namespace Ferro
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(0 == typedResult);
+                assertRoundTrip(input);
             }
 
             {
@@ -47,6 +50,7 @@ namespace Ferro
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(42897244160 == typedResult);
+                assertRoundTrip(input);
             }
             
             {
@@ -62,7 +66,7 @@ namespace Ferro
             }
 
             {
-                Console.WriteLine("An integer way too large for us to handle");
+                Console.WriteLine("An integer way too large for us to support (though technically valid)");
                 var input = Encoding.ASCII.GetBytes(
                     "i" +
                     "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" +
@@ -86,6 +90,23 @@ namespace Ferro
                 assert(typeof(string) == result.GetType());
                 var typedResult = (string) result;
                 assert("hello".Equals(typedResult));
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("An empty string");
+                var input = Encoding.ASCII.GetBytes("0:");
+                var result = BencodeDeserializer.Deserialize(input);
+                assert(typeof(string) == result.GetType());
+                var typedResult = (string) result;
+                assert("".Equals(typedResult));
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("Invalid leading 0s in string size");
+                var input = Encoding.ASCII.GetBytes("05:hello");
+                assertThrows(() => BencodeDeserializer.Deserialize(input));
             }
 
             {
@@ -95,15 +116,33 @@ namespace Ferro
                 assert(typeof(List<object>) == result.GetType());
                 var typedResult = (List<object>) result;
                 assert(0 == typedResult.Count);
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("A list of three integers");
+                var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
+                var result = BencodeDeserializer.Deserialize(input);
+                assert(typeof(List<object>) == result.GetType());
+                var typedResult = (List<object>) result;
+                assert(typedResult.SequenceEqual(new List<object> {1, 2, 3}));
+                assertRoundTrip(input);
             }
 
             {
                 Console.WriteLine("An empty dictionary");
-                var input = Encoding.ASCII.GetBytes("le");
+                var input = Encoding.ASCII.GetBytes("de");
                 var result = BencodeDeserializer.Deserialize(input);
                 assert(typeof(Dictionary<byte[], object>) == result.GetType());
                 var typedResult = (Dictionary<byte[], object>) result;
                 assert(0 == typedResult.Count);
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("An invalid integer-keyed dictionary");
+                var input = Encoding.ASCII.GetBytes("di1ei2ee");
+                assertThrows(() => BencodeDeserializer.Deserialize(input));
             }
         }
         
@@ -124,6 +163,14 @@ namespace Ferro
                 return;
             }
             throw new Exception("Expected exception, but none was thrown.");
+        }
+
+        // Asserts that deserializing and re-serializing the specified bytes
+        // doesn't result in any change.
+        protected static void assertRoundTrip(byte[] bytes) {
+            // NOT IMPLEMENTED
+            // TODO: Implement this once serializer is complete.
+            // assert(bytes == BencodeSerializer.Serialize(BencodeDeserializer.Deserialize(bytes)));
         }
     }
 }
