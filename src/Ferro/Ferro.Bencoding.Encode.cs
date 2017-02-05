@@ -32,12 +32,12 @@ namespace Ferro  {
 
         public static void Encode(Stream stream, Int64 value) {
             stream.WriteByte((byte) 'i');
-            stream.Write(Encoding.ASCII.GetBytes(value.ToString()));
+            stream.Write(value.ToString().ToASCII());
             stream.WriteByte((byte) 'e');
         }
 
         public static void Encode(Stream stream, byte[] value) {
-            stream.Write(Encoding.ASCII.GetBytes(value.Length.ToString()));
+            stream.Write(value.Length.ToString().ToASCII());
             stream.WriteByte((byte) ':');
             stream.Write(value);
         }

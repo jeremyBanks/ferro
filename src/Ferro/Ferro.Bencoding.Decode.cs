@@ -74,7 +74,7 @@ namespace Ferro  {
                         valueDigits.Add(next);
                     }
 
-                    var valueDigitsString = Encoding.ASCII.GetString(valueDigits.ToArray());
+                    var valueDigitsString = valueDigits.ToArray().FromASCII();
                     try {
                         return Int64.Parse(valueDigitsString);
                     } catch (System.OverflowException exception) {
@@ -130,7 +130,7 @@ namespace Ferro  {
                         lengthDigits.Add(next);
                     }
 
-                    var lengthDigitsString = Encoding.ASCII.GetString(lengthDigits.ToArray());
+                    var lengthDigitsString = lengthDigits.ToArray().FromASCII();
                     Int32 length;
                     try {
                         length = Int32.Parse(lengthDigitsString);
