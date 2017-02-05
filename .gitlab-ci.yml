@@ -17,4 +17,4 @@ build:
 test:
   stage: test
   script:
-  - dotnet test -p test/Ferro.Tests/
+  - cd test/Ferro.Tests/ && dotnet test
