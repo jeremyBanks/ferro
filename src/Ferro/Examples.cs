@@ -51,7 +51,7 @@ namespace Ferro
 
             {
                 Console.WriteLine("A large positive integer");
-                var input = Encoding.ASCII.GetBytes("i42897244160");
+                var input = Encoding.ASCII.GetBytes("i42897244160e");
                 var result = deserialize(input);
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
@@ -60,14 +60,38 @@ namespace Ferro
             }
             
             {
-                Console.WriteLine("Invalid leading 0s in an integer");
-                var input = Encoding.ASCII.GetBytes("i-01e");
+                Console.WriteLine("Invalid leading 0s in a positive integer");
+                var input = Encoding.ASCII.GetBytes("i05e");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("Invalid multiple hyphen-minuses in integer");
+                var input = Encoding.ASCII.GetBytes("i--33e");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("Invalid non-initial hyphen-minus in integer");
+                var input = Encoding.ASCII.GetBytes("i3-3e");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("Invalid leading 0s in a negative integer");
+                var input = Encoding.ASCII.GetBytes("i-03e");
                 assertThrows(() => deserialize(input));
             }
 
             {
                 Console.WriteLine("Invalid negative zero integer");
                 var input = Encoding.ASCII.GetBytes("i-0e");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("Invalid empty integer value");
+                var input = Encoding.ASCII.GetBytes("ie");
                 assertThrows(() => deserialize(input));
             }
 
@@ -143,6 +167,28 @@ namespace Ferro
                 var typedResult = (Dictionary<byte[], object>) result;
                 assert(0 == typedResult.Count);
                 assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("A dictionary with two integer values");
+                var input = Encoding.ASCII.GetBytes("l1:1i2e1:3i4ee");
+                var result = deserialize(input);
+                assert(typeof(List<object>) == result.GetType());
+                var typedResult = (List<object>) result;
+                // TODO: check actual value
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("A invalid dictionary with two keys and one value");
+                var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
+                assertThrows(() => deserialize(input));
+            }
+
+            {
+                Console.WriteLine("A invalid dictionary with non-lexiconographically-ordered keys");
+                var input = Encoding.ASCII.GetBytes("l1:3i4e1:1i2ee");
+                assertThrows(() => deserialize(input));
             }
 
             {
