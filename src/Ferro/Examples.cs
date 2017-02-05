@@ -9,10 +9,10 @@ namespace Ferro
     {
         // Plug in your encoding and decoding functions here.
         static object deserialize(byte[] bytes) {
-            return BencodeDeserializer.Deserialize(bytes);
+            return Bencoding.Decode(bytes);
         }
         static byte[] serialize(object value) {
-            return BencodeSerializer.Serialize(value);
+            return Bencoding.Encode(value);
         }
 
         public static int Main(string[] args)
