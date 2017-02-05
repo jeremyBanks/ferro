@@ -14,9 +14,13 @@ namespace Ferro
     // I'm going to want to change the name of this eventually
     public static class BencodeSerializer
     {
-        public static string Serialize(string byteString)
+        public static byte[] Serialize(byte[] byteArray)
         {
-            return byteString.Length + ":" + byteString;
+            var output = new MemoryStream();
+            output.Write(Encoding.ASCII.GetBytes(byteArray.Length.ToString()));
+            output.Write(Encoding.ASCII.GetBytes(":"));
+            output.Write(Encoding.ASCII.GetBytes(byteArray.ToString()));
+            return output.ToArray();   
         }
 
         public static byte[] Serialize(int integer)
