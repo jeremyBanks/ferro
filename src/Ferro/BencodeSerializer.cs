@@ -46,7 +46,15 @@ namespace Ferro
 
         public static byte[] Serialize(Dictionary<byte[], byte[]> dict)
         {
-            return "test";
+            var output = new MemoryStream();
+            output.Write(Encoding.ASCII.GetBytes("d"));
+            foreach(var pair in dict)
+            {
+                output.Write(BencodeSerializer.Serialize(pair.Key));
+                output.Write(BencodeSerializer.Serialize(pair.Value));
+            }
+            output.Write(Encoding.ASCII.GetBytes("e"));
+            return output.ToArray();
         }
     }
 }
