@@ -14,6 +14,24 @@ namespace Ferro
     // I'm going to want to change the name of this eventually
     public static class BencodeSerializer
     {
+        public static byte[] Serialize(object value) {
+            // TODO: make this a switch when upgrading to C# 7.0
+            // https://blogs.msdn.microsoft.com/dotnet/2016/08/24/whats-new-in-csharp-7-0/
+            if (value is Int64) {
+                return Serialize((Int64) value);
+            } else if (value is byte[]) {
+                return Serialize((byte[]) value);
+            } else if (value is List<object>) {
+                return Serialize((List<object>) value);
+            } else if (value is Dictionary<byte[], object>) {
+                return Serialize((Dictionary<byte[], object>) value);
+            } else if (value is Int64) {
+                return Serialize((Int64) value);
+            } else {
+                throw new Exception("Cannot Serialize value of that type!");
+            }
+        }
+
         public static byte[] Serialize(byte[] byteArray)
         {
             var output = new MemoryStream();
@@ -32,7 +50,7 @@ namespace Ferro
            return output.ToArray();
         }
 
-        public static byte[] Serialize(List<byte[]> list)
+        public static byte[] Serialize(List<object> list)
         {
             var output = new MemoryStream();
             output.Write(Encoding.ASCII.GetBytes("l"));
@@ -44,7 +62,7 @@ namespace Ferro
             return output.ToArray();
         }
 
-        public static byte[] Serialize(Dictionary<byte[], byte[]> dict)
+        public static byte[] Serialize(Dictionary<byte[], object> dict)
         {
             var output = new MemoryStream();
             output.Write(Encoding.ASCII.GetBytes("d"));

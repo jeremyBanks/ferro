@@ -9,14 +9,22 @@ namespace Ferro
 {
     public class Examples
     {
+        // Plug in your encoding and decoding functions here.
+        static object deserialize(byte[] bytes) {
+            return BencodeDeserializer.Deserialize(bytes);
+        }
+        static byte[] serialize(object value) {
+            return BencodeSerializer.Serialize(value);
+        }
+
         public static void Main(string[] args)
         {
-            Console.WriteLine("Let's try some simple examples!");
-
+            Console.WriteLine("Let's try some simple deserialization examples!");
+            
             {
                 Console.WriteLine("A positive integer");
                 var input = Encoding.ASCII.GetBytes("i13e");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(13 == typedResult);
@@ -26,7 +34,7 @@ namespace Ferro
             {
                 Console.WriteLine("A negative integer");
                 var input = Encoding.ASCII.GetBytes("i-3153e");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(-3153 == typedResult);
@@ -36,7 +44,7 @@ namespace Ferro
             {
                 Console.WriteLine("The zero integer");
                 var input = Encoding.ASCII.GetBytes("i0e");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(0 == typedResult);
@@ -46,7 +54,7 @@ namespace Ferro
             {
                 Console.WriteLine("A large positive integer");
                 var input = Encoding.ASCII.GetBytes("i42897244160");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(Int64) == result.GetType());
                 var typedResult = (Int64) result;
                 assert(42897244160 == typedResult);
@@ -56,13 +64,13 @@ namespace Ferro
             {
                 Console.WriteLine("Invalid leading 0s in an integer");
                 var input = Encoding.ASCII.GetBytes("i-01e");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
 
             {
                 Console.WriteLine("Invalid negative zero integer");
                 var input = Encoding.ASCII.GetBytes("i-0e");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
 
             {
@@ -74,19 +82,19 @@ namespace Ferro
                     "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" +
                     "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" +
                     "e");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
             
             {
                 Console.WriteLine("An invalid leading character");
                 var input = Encoding.ASCII.GetBytes("z0e");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
 
             {
                 Console.WriteLine("A string");
                 var input = Encoding.ASCII.GetBytes("5:hello");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(string) == result.GetType());
                 var typedResult = (string) result;
                 assert("hello".Equals(typedResult));
@@ -96,7 +104,7 @@ namespace Ferro
             {
                 Console.WriteLine("An empty string");
                 var input = Encoding.ASCII.GetBytes("0:");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(string) == result.GetType());
                 var typedResult = (string) result;
                 assert("".Equals(typedResult));
@@ -106,13 +114,13 @@ namespace Ferro
             {
                 Console.WriteLine("Invalid leading 0s in string size");
                 var input = Encoding.ASCII.GetBytes("05:hello");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
 
             {
                 Console.WriteLine("An empty list");
                 var input = Encoding.ASCII.GetBytes("le");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(List<object>) == result.GetType());
                 var typedResult = (List<object>) result;
                 assert(0 == typedResult.Count);
@@ -122,7 +130,7 @@ namespace Ferro
             {
                 Console.WriteLine("A list of three integers");
                 var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(List<object>) == result.GetType());
                 var typedResult = (List<object>) result;
                 assert(typedResult.SequenceEqual(new List<object> {1, 2, 3}));
@@ -132,7 +140,7 @@ namespace Ferro
             {
                 Console.WriteLine("An empty dictionary");
                 var input = Encoding.ASCII.GetBytes("de");
-                var result = BencodeDeserializer.Deserialize(input);
+                var result = deserialize(input);
                 assert(typeof(Dictionary<byte[], object>) == result.GetType());
                 var typedResult = (Dictionary<byte[], object>) result;
                 assert(0 == typedResult.Count);
@@ -142,8 +150,10 @@ namespace Ferro
             {
                 Console.WriteLine("An invalid integer-keyed dictionary");
                 var input = Encoding.ASCII.GetBytes("di1ei2ee");
-                assertThrows(() => BencodeDeserializer.Deserialize(input));
+                assertThrows(() => deserialize(input));
             }
+
+            Console.WriteLine("All done!");
         }
         
         // Specifies a condition that must be true.
@@ -170,7 +180,7 @@ namespace Ferro
         protected static void assertRoundTrip(byte[] bytes) {
             // NOT IMPLEMENTED
             // TODO: Implement this once serializer is complete.
-            // assert(bytes == BencodeSerializer.Serialize(BencodeDeserializer.Deserialize(bytes)));
+            // assert(bytes == serialize(deserialize(bytes)));
         }
     }
 }
