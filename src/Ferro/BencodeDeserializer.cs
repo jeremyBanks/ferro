@@ -7,5 +7,8 @@ namespace Ferro
 {
     public class BencodeDeserializer
     {
+        public static object Deserialize(byte[] bytes) {
+            throw new Exception("not implemented");
+        }
     }
 }
