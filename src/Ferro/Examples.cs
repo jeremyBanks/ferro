@@ -118,9 +118,9 @@ namespace Ferro
                 Console.WriteLine("A string");
                 var input = Encoding.ASCII.GetBytes("5:hello");
                 var result = deserialize(input);
-                assertEquals(typeof(string), result.GetType());
-                var typedResult = (string) result;
-                assertEquals("hello", typedResult);
+                assertEquals(typeof(byte[]), result.GetType());
+                var typedResult = (byte[]) result;
+                assertSequenceEqual(Encoding.ASCII.GetBytes("hello"), typedResult);
                 assertRoundTrip(input);
             });
 
@@ -128,15 +128,21 @@ namespace Ferro
                 Console.WriteLine("An empty string");
                 var input = Encoding.ASCII.GetBytes("0:");
                 var result = deserialize(input);
-                assertEquals(typeof(string), result.GetType());
-                var typedResult = (string) result;
-                assertEquals("", typedResult);
+                assertEquals(typeof(byte[]), result.GetType());
+                var typedResult = (byte[]) result;
+                assertSequenceEqual(new byte[]{}, typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("Invalid leading 0s in string size");
                 var input = Encoding.ASCII.GetBytes("05:hello");
+                assertThrows(() => deserialize(input));
+            });
+
+            test(() => {
+                Console.WriteLine("Invalid string with length greater than remaining data");
+                var input = Encoding.ASCII.GetBytes("50:hello");
                 assertThrows(() => deserialize(input));
             });
 
@@ -155,8 +161,6 @@ namespace Ferro
                 var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
                 var result = deserialize(input);
                 assertEquals(typeof(List<object>), result.GetType());
-                var typedResult = (List<object>) result;
-                assert(typedResult.SequenceEqual(new List<object> {1, 2, 3}));
                 assertRoundTrip(input);
             });
 
@@ -175,8 +179,6 @@ namespace Ferro
                 var input = Encoding.ASCII.GetBytes("d1:1i2e1:3i4ee");
                 var result = deserialize(input);
                 assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
-                var typedResult = (Dictionary<byte[], object>) result;
-                // TODO: check actual value
                 assertRoundTrip(input);
             });
 
@@ -185,8 +187,6 @@ namespace Ferro
                 var input = Encoding.ASCII.GetBytes("d1:1li2ee1:3li4eee");
                 var result = deserialize(input);
                 assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
-                var typedResult = (Dictionary<byte[], object>) result;
-                // TODO: check actual value
                 assertRoundTrip(input);
             });
 
@@ -217,18 +217,14 @@ namespace Ferro
             test(() => {
                 Console.WriteLine("A pseudo-torrent (munged to fit in ASCII)!");
                 var input = Encoding.ASCII.GetBytes(
-                    "d8:announce35:udp://tracker.openbittorrent.com:80" +
-                    "13:announce-listll35:udp://tracker.openbittorrent.com:80e" +
-                    "l33:udp://tracker.opentrackr.org:1337ee4:infod6:lengthi7e" +
-                    "4:name7:example12:piece lengthi7e6:pieces" + 
-                    "20:0I0')s 0~0v0-0o0?04:salt3:20e8:url-listl57:https://mgnt" +
-                    ".ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/56:http://mgnt" +
-                    ".ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee"
+                    "d8:announce35:udp://tracker.openbittorrent.com:8013:announce-list" +
+                    "ll35:udp://tracker.openbittorrent.com:80el33:udp://tracker.opentrackr.org:1337ee" +
+                    "4:infod6:lengthi7e4:name7:example12:piece lengthi7e6:pieces20:0I0')s000000v0-0o0?0" + 
+                    "4:salt3:200e8:url-listl57:https://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/" + 
+                    "56:http://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee"
                 );
                 var result = deserialize(input);
                 assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
-                var typedResult = (Dictionary<byte[], object>) result;
-                // TODO: check actual value
                 assertRoundTrip(input);
             });
 
@@ -251,6 +247,12 @@ namespace Ferro
             assert(expected.Equals(actual), $"Expected {expected}, got {actual}.");
         }
 
+        static void assertSequenceEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, string message = null) {
+            assert(
+                expected.SequenceEqual(actual),
+                $"{message}\nExpected [{String.Join(", ", expected.ToArray())}]\nGot      [{String.Join(", ", actual.ToArray())}].");
+        }
+
         // Used to specify an action that must raise a DeserializationException.
         // If it raises a different type of Exception, that's a problem because
         // it means an error isn't being handled properly internally.
@@ -268,10 +270,7 @@ namespace Ferro
         static void assertRoundTrip(byte[] bytes) {
             return; // TODO: enable when you can
             var roundTripped = serialize(deserialize(bytes));
-            if (!roundTripped.SequenceEqual(bytes)) {
-                throw new AssertionFailedException(
-                    "Deserialized and re-serialized value differs from input value.");
-            }
+            assertSequenceEqual(bytes, roundTripped, "Serialization round-trip caused a change.");
         }
 
         static Int64 testsPassed = 0;
@@ -280,7 +279,7 @@ namespace Ferro
             try {
                 f();
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Success");
+                Console.WriteLine("Passed");
                 Console.ResetColor();
                 testsPassed += 1;
             } catch (AssertionFailedException e) {
@@ -306,16 +305,22 @@ namespace Ferro
         }
 
         static void reportResults() {
-            if (testsFailed > 1) {
+            if (testsFailed > 0) {
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.WriteLine();
-                Console.WriteLine($"{testsFailed} tests failed.");
+                Console.WriteLine($"{testsFailed} tests failed. :(");
                 Console.ResetColor();
-            } else {
+            } else if (testsPassed > 0) {
+                Console.BackgroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.Black;
                 Console.WriteLine();
+                Console.WriteLine($"Zero tests failed. :)");
+                Console.ResetColor();
             }
             Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"{testsPassed} tests passed.");
+            Console.ResetColor();
             Console.WriteLine();
         }
     }
