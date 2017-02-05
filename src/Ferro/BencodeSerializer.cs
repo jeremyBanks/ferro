@@ -23,7 +23,7 @@ namespace Ferro
             return output.ToArray();   
         }
 
-        public static byte[] Serialize(int integer)
+        public static byte[] Serialize(Int64 integer)
         {
            var output = new MemoryStream();
            output.Write(Encoding.ASCII.GetBytes("i"));

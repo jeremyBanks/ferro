@@ -11,4 +11,6 @@ namespace Ferro
             throw new Exception("not implemented");
         }
     }
+
+    public class DeserializationException : Exception {}
 }
