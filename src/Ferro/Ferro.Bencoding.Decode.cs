@@ -160,6 +160,8 @@ namespace Ferro  {
                 
                 case (byte) 'd':
                     var dictionary = new Dictionary<byte[], object> {};
+                    byte[] previousKey = null;
+
                     while (true) {
                         var key = Decode(stream, nullForCollectionEnd: true);
                         if (key == null) {
@@ -169,6 +171,13 @@ namespace Ferro  {
                                 $"Expected byte string for dictionary key, got: {key.GetType()}");
                         }
                         var typedKey = (byte[]) key;
+                        if (previousKey != null) {
+                            if (!ByteArrayComparer.Ascending(previousKey, typedKey)) {
+                                throw new DecodingException(
+                                    "Dictionary key was in the wrong order or duplicated.");
+                            }
+                        }
+                        previousKey = typedKey;
                         var value = Decode(stream);
                         dictionary.Add(typedKey, value);
 

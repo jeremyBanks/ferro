@@ -14,8 +14,6 @@ namespace Ferro  {
         }
 
         public static void Encode(Stream stream, object value) {
-            // TODO: make this a switch when upgrading to C# 7.0
-            // https://blogs.msdn.microsoft.com/dotnet/2016/08/24/whats-new-in-csharp-7-0/
             if (value is Int64) {
                 Encode(stream, (Int64) value);
             } else if (value is byte[]) {
@@ -54,30 +52,7 @@ namespace Ferro  {
 
         public static void Encode(Stream stream, Dictionary<byte[], object> value) {
             var keys = value.Keys.ToArray();
-            Array.Sort(keys, (x, y) => {
-                // Leiconographic ordering of byte arrays.
-                // TODO: Extract into a Comparator that can also be used to verify decoded dictionary key order.
-
-                for (var i = 0;; i++) {
-                    if (i >= x.Length) {
-                        if (i >= y.Length) {
-                            return 0; // they are equal
-                        } else {
-                            return -1; // y contains additional items
-                        }
-                    } else if (i >= y.Length) {
-                        return +1; // x contains additional item
-                    }
-
-                    var xItem = x[i];
-                    var yItem = y[i];
-                    if (xItem > yItem) {
-                        return +1; // x contains a greater item first
-                    } else if (yItem > xItem) {
-                        return -1; // y contains a greater item first
-                    }
-                }
-            });
+            Array.Sort(keys, ByteArrayComparer.Instance);
             stream.WriteByte((byte) 'd');
             foreach (var key in keys) {
                 Encode(stream, key);
