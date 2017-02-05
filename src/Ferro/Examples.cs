@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Ferro
 {
@@ -155,24 +153,29 @@ namespace Ferro
 
             Console.WriteLine("All done!");
         }
+
+        class AssertionFailedException : Exception {
+            public AssertionFailedException(string message) : base(message) {}
+            public AssertionFailedException(string message, Exception inner) : base(message, inner) {}
+        }
         
         // Specifies a condition that must be true.
         protected static void assert(bool condition) {
             if (!condition) {
-                throw new Exception("Assertion failed.");
+                throw new AssertionFailedException("Assertion condition is false.");
             }
         }
 
         // Used to specify an action that must raise a DeserializationException.
         // If it raises a different type of Exception, that's a problem because
         // it means an error isn't being handled properly internally.
-        protected static void assertThrows(Action f) {
+        public static void assertThrows(Action f) {
             try {
                 f();
             } catch (DeserializationException) {
                 return;
             }
-            throw new Exception("Expected exception, but none was thrown.");
+            throw new AssertionFailedException("Expected exception, but none was thrown.");
         }
 
         // Asserts that deserializing and re-serializing the specified bytes
