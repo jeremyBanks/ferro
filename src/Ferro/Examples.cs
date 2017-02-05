@@ -9,10 +9,18 @@ namespace Ferro
 {
     public class Examples
     {
+        // Plug in your encoding and decoding functions here.
+        object deserialize(byte[] bytes) {
+            return BencodeDeserializer.Deserialize(bytes);
+        }
+        byte[] serialize(object value) {
+            return BencodeDeserializer.Serialize(value);
+        }
+
         public static void Main(string[] args)
         {
-            Console.WriteLine("Let's try some simple examples!");
-
+            Console.WriteLine("Let's try some simple deserialization examples!");
+            
             {
                 Console.WriteLine("A positive integer");
                 var input = Encoding.ASCII.GetBytes("i13e");
