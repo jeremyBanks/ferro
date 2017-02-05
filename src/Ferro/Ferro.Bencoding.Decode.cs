@@ -57,7 +57,12 @@ namespace Ferro  {
                     }
 
                     var valueDigitsString = Encoding.ASCII.GetString(valueDigits.ToArray());
-                    return Int64.Parse(valueDigitsString);
+                    try {
+                        return Int64.Parse(valueDigitsString);
+                    } catch (System.OverflowException exception) {
+                        throw new DecodingException(
+                            $"Integer out of supported 64-bit bounds: {valueDigitsString}", exception);
+                    }
                 
                 case (byte) '0':
                     // Must be the empty string.
@@ -81,7 +86,48 @@ namespace Ferro  {
                 case (byte) '8':
                 case (byte) '9':
                     var lengthDigits = new List<byte>{ first };
-                    return Encoding.ASCII.GetBytes("NOT IMPLEMENTED");
+
+                    while (true) {
+                        var nextOrNothing = stream.ReadByte();
+                        if (nextOrNothing == -1) {
+                            throw new DecodingException(
+                                "Unexpected end of stream while parsing length.");
+                        }
+                        var next = (byte) nextOrNothing;
+
+                        if (next == ':') {
+                            break; // valid end of length
+                        }
+
+                        if (next == '-') {
+                            if (lengthDigits.Count > 0) {
+                                throw new DecodingException(
+                                    "Unexpected hyphen-minus after first character of integer length.");
+                            }
+                        } else if (!('0' <= next && next <= '9')) {
+                            throw new DecodingException(
+                                $"Expected ASCII digit while parsing length, got: {next}");
+                        }
+
+                        lengthDigits.Add(next);
+                    }
+
+                    var lengthDigitsString = Encoding.ASCII.GetString(lengthDigits.ToArray());
+                    Int32 length;
+                    try {
+                        length = Int32.Parse(lengthDigitsString);
+                    } catch (System.OverflowException exception) {
+                        throw new DecodingException(
+                            $"Length out of supported 32-bit bounds: {lengthDigitsString}", exception);
+                    }
+
+                    var buffer = new byte[length];
+                    var read = stream.Read(buffer, 0, (int) length);
+                    if (read < length) {
+                        throw new DecodingException(
+                            "Unexpected end of stream while reading string content.");
+                    }
+                    return buffer;
                 
                 case (byte) 'l':
                     var list = new List<object> {};
@@ -121,7 +167,7 @@ namespace Ferro  {
                 
                 default:
                     throw new DecodingException(
-                        $"Unexpected initial byte in value: {first}.");
+                        $"Unexpected initial byte in value: {first} '{char.ConvertFromUtf32(first)}'.");
             }
         }
 
