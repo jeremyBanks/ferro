@@ -100,10 +100,10 @@ namespace Ferro
                 Console.WriteLine("An integer way too large for us to support (though technically valid)");
                 var input = Encoding.ASCII.GetBytes(
                     "i" +
-                    "012345678901234567890123456789012345678901234567890123456789" +
-                    "012345678901234567890123456789012345678901234567890123456789" +
-                    "012345678901234567890123456789012345678901234567890123456789" +
-                    "012345678901234567890123456789012345678901234567890123456789" +
+                    "123456789012345678901234567890123456789012345678901234567890" +
+                    "123456789012345678901234567890123456789012345678901234567890" +
+                    "123456789012345678901234567890123456789012345678901234567890" +
+                    "123456789012345678901234567890123456789012345678901234567890" +
                     "e");
                 assertThrows(() => deserialize(input));
             });
@@ -192,7 +192,7 @@ namespace Ferro
 
             test(() => {
                 Console.WriteLine("A invalid dictionary with two keys and one value");
-                var input = Encoding.ASCII.GetBytes("di1ei2ei3ee");
+                var input = Encoding.ASCII.GetBytes("d1:1i2e1:3e");
                 assertThrows(() => deserialize(input));
             });
 
@@ -259,7 +259,14 @@ namespace Ferro
         public static void assertThrows(Action f) {
             try {
                 f();
-            } catch (DeserializationException) {
+            } catch (DeserializationException error) {
+                Console.WriteLine($"Expected exception and got one: {error.GetType()}: {error.Message}");
+                return;
+            } catch (Bencoding.DecodingException error) {
+                Console.WriteLine($"Expected exception and got one: {error.GetType()}: {error.Message}");
+                return;
+            } catch (Bencoding.EncodingException error) {
+                Console.WriteLine($"Expected exception and got one: {error.GetType()}: {error.Message}");
                 return;
             }
             throw new AssertionFailedException("Expected exception, but none was thrown.");
