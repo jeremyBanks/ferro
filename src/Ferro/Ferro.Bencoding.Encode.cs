@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Ferro  {
@@ -52,11 +53,35 @@ namespace Ferro  {
         }
 
         public static void Encode(Stream stream, Dictionary<byte[], object> value) {
-            // TODO: sort key
+            var keys = value.Keys.ToArray();
+            Array.Sort(keys, (x, y) => {
+                // Leiconographic ordering of byte arrays.
+                // TODO: Extract into a Comparator that can also be used to verify decoded dictionary key order.
+
+                for (var i = 0;; i++) {
+                    if (i >= x.Length) {
+                        if (i >= y.Length) {
+                            return 0; // they are equal
+                        } else {
+                            return -1; // y contains additional items
+                        }
+                    } else if (i >= y.Length) {
+                        return +1; // x contains additional item
+                    }
+
+                    var xItem = x[i];
+                    var yItem = y[i];
+                    if (xItem > yItem) {
+                        return +1; // x contains a greater item first
+                    } else if (yItem > xItem) {
+                        return -1; // y contains a greater item first
+                    }
+                }
+            });
             stream.WriteByte((byte) 'd');
-            foreach (var item in value) {
-                Encode(stream, item.Key);
-                Encode(stream, item.Value);
+            foreach (var key in keys) {
+                Encode(stream, key);
+                Encode(stream, value[key]);
             }
             stream.WriteByte((byte) 'e');
         }
