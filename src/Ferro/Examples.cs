@@ -361,6 +361,10 @@ namespace Ferro
             } catch (Bencoding.EncodingException error) {
                 Console.WriteLine($"Expected exception and got one: {error.GetType()}: {error.Message}");
                 return;
+            } catch (Bencoding.DecodingException) {
+                return;
+            } catch (Bencoding.EncodingException) {
+                return;
             }
             throw new AssertionFailedException("Expected exception, but none was thrown.");
         }
