@@ -21,210 +21,303 @@ namespace Ferro
             Console.WriteLine();
 
             test(() => {
+                Console.WriteLine("A positive integer from C#");
+                Int64 value = 12345;
+                var encoded = serialize(value);
+                assertSequencesEqual("i12345e".ToASCII(), encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("A positive integer");
-                var input = Encoding.ASCII.GetBytes("i13e");
+                var input = "i13e".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Int64), result.GetType());
+                assertEqual(typeof(Int64), result.GetType());
                 var typedResult = (Int64) result;
-                assertEquals(13, typedResult);
+                assertEqual(13, typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("A negative integer");
-                var input = Encoding.ASCII.GetBytes("i-3153e");
+                var input = "i-3153e".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Int64), result.GetType());
+                assertEqual(typeof(Int64), result.GetType());
                 var typedResult = (Int64) result;
-                assertEquals(-3153, typedResult);
+                assertEqual(-3153, typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
+                Console.WriteLine("A negative integer from C#");
+                Int64 value = -9876;
+                var encoded = serialize(value);
+                assertSequencesEqual("i-9876e".ToASCII(), encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("The zero integer");
-                var input = Encoding.ASCII.GetBytes("i0e");
+                var input = "i0e".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Int64), result.GetType());
+                assertEqual(typeof(Int64), result.GetType());
                 var typedResult = (Int64) result;
-                assertEquals(0, typedResult);
+                assertEqual(0, typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("A large positive integer");
-                var input = Encoding.ASCII.GetBytes("i42897244160e");
+                var input = "i42897244160e".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Int64), result.GetType());
+                assertEqual(typeof(Int64), result.GetType());
                 var typedResult = (Int64) result;
-                assertEquals(42897244160, typedResult);
+                assertEqual(42897244160, typedResult);
                 assertRoundTrip(input);
             });
             
             test(() => {
                 Console.WriteLine("Invalid leading 0s in a positive integer");
-                var input = Encoding.ASCII.GetBytes("i05e");
+                var input = "i05e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid multiple hyphen-minuses in integer");
-                var input = Encoding.ASCII.GetBytes("i--33e");
+                var input = "i--33e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid non-initial hyphen-minus in integer");
-                var input = Encoding.ASCII.GetBytes("i3-3e");
+                var input = "i3-3e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid leading 0s in a negative integer");
-                var input = Encoding.ASCII.GetBytes("i-03e");
+                var input = "i-03e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid negative zero integer");
-                var input = Encoding.ASCII.GetBytes("i-0e");
+                var input = "i-0e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid empty integer value");
-                var input = Encoding.ASCII.GetBytes("ie");
+                var input = "ie".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("An integer way too large for us to support (though technically valid)");
-                var input = Encoding.ASCII.GetBytes(
+                var input = (
                     "i" +
                     "123456789012345678901234567890123456789012345678901234567890" +
                     "123456789012345678901234567890123456789012345678901234567890" +
                     "123456789012345678901234567890123456789012345678901234567890" +
                     "123456789012345678901234567890123456789012345678901234567890" +
-                    "e");
+                    "e").ToASCII();
                 assertThrows(() => deserialize(input));
             });
             
             test(() => {
                 Console.WriteLine("An invalid leading character");
-                var input = Encoding.ASCII.GetBytes("z0e");
+                var input = "z0e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("A string");
-                var input = Encoding.ASCII.GetBytes("5:hello");
+                var input = "5:hello".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(byte[]), result.GetType());
+                assertEqual(typeof(byte[]), result.GetType());
                 var typedResult = (byte[]) result;
-                assertSequenceEqual(Encoding.ASCII.GetBytes("hello"), typedResult);
+                assertSequencesEqual("hello".ToASCII(), typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
+                Console.WriteLine("A byte string from C#");
+                var value = "hello world".ToASCII();
+                var encoded = serialize(value);
+                assertSequencesEqual("11:hello world".ToASCII(), encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("An empty string");
-                var input = Encoding.ASCII.GetBytes("0:");
+                var input = "0:".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(byte[]), result.GetType());
+                assertEqual(typeof(byte[]), result.GetType());
                 var typedResult = (byte[]) result;
-                assertSequenceEqual(new byte[]{}, typedResult);
+                assertSequencesEqual(new byte[]{}, typedResult);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("Invalid leading 0s in string size");
-                var input = Encoding.ASCII.GetBytes("05:hello");
+                var input = "05:hello".ToASCII();
+                assertThrows(() => deserialize(input));
+            });
+
+            test(() => {
+                Console.WriteLine("Invalid string with negative length");
+                var input = "-5:hello".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("Invalid string with length greater than remaining data");
-                var input = Encoding.ASCII.GetBytes("50:hello");
+                var input = "50:hello".ToASCII();
+                assertThrows(() => deserialize(input));
+            });
+
+            test(() => {
+                Console.WriteLine("Invalid string with length greater than ever possible");
+                var input =
+                    "987654332198765433219876543321987654332198765433219876543321:hello".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("An empty list");
-                var input = Encoding.ASCII.GetBytes("le");
+                var input = "le".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(List<object>), result.GetType());
+                assertEqual(typeof(List<object>), result.GetType());
                 var typedResult = (List<object>) result;
-                assertEquals(0, typedResult.Count);
+                assertEqual(0, typedResult.Count);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("A list of three integers");
-                var input = Encoding.ASCII.GetBytes("li1ei2ei3ee");
+                var input = "li1ei2ei3ee".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(List<object>), result.GetType());
+                assertEqual(typeof(List<object>), result.GetType());
                 assertRoundTrip(input);
             });
 
             test(() => {
+                Console.WriteLine("A list of strings and integers from C#");
+                var value = new List<object> { (Int64) 1234, "hello".ToASCII(), (Int64) (-5678), "world".ToASCII() };
+                var encoded = serialize(value);
+                assertSequencesEqual("li1234e5:helloi-5678e5:worlde".ToASCII(), encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("An empty dictionary");
-                var input = Encoding.ASCII.GetBytes("de");
+                var input = "de".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
+                assertEqual(typeof(Dictionary<byte[], object>), result.GetType());
                 var typedResult = (Dictionary<byte[], object>) result;
-                assertEquals(0, typedResult.Count);
+                assertEqual(0, typedResult.Count);
                 assertRoundTrip(input);
             });
 
             test(() => {
                 Console.WriteLine("A dictionary with two integer values");
-                var input = Encoding.ASCII.GetBytes("d1:1i2e1:3i4ee");
+                var input = "d1:1i2e1:3i4ee".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
+                assertEqual(typeof(Dictionary<byte[], object>), result.GetType());
                 assertRoundTrip(input);
+            });
+
+            test(() => {
+                Console.WriteLine("A dictionary of integers from C#");
+                var value = new Dictionary<byte[], object> {
+                    {"hello".ToASCII(), (Int64) 1234},
+                    {"world".ToASCII(), (Int64) (-5678)}
+                };
+                var encoded = serialize(value);
+                assertSequencesEqual("d5:helloi1234e5:worldi-5678ee".ToASCII(), encoded);
+                assertRoundTrip(encoded);
             });
 
             test(() => {
                 Console.WriteLine("A dictionary with two single-item integer list values");
-                var input = Encoding.ASCII.GetBytes("d1:1li2ee1:3li4eee");
+                var input = "d1:1li2ee1:3li4eee".ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
+                assertEqual(typeof(Dictionary<byte[], object>), result.GetType());
                 assertRoundTrip(input);
             });
 
             test(() => {
+                Console.WriteLine("A dictionary containing a list containing a dictionary from C#");
+                var value = new Dictionary<byte[], object> {
+                    {
+                        "hello".ToASCII(),
+                        new List<object> {
+                            new Dictionary<byte[], object> {
+                                {"world".ToASCII(), (Int64) 102436}
+                            }
+                        }
+                    }
+                };
+                var encoded = serialize(value);
+                Console.WriteLine(encoded.FromASCII());
+                assertSequencesEqual("d5:hellold5:worldi102436eeee".ToASCII(), encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("A invalid dictionary with two keys and one value");
-                var input = Encoding.ASCII.GetBytes("d1:1i2e1:3e");
+                var input = "d1:1i2e1:3e".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("A invalid dictionary with non-lexiconographically-ordered keys");
-                var input = Encoding.ASCII.GetBytes("d1:3i4e1:1i2ee");
+                var input = "d1:3i4e1:1i2ee".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("A invalid dictionary with duplicate keys");
-                var input = Encoding.ASCII.GetBytes("d1:1i2e1:1i2ee");
+                var input = "d1:1i2e1:1i2ee".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
+                Console.WriteLine("A dictionary from C# whose keys are initially disordered");
+                var value = new Dictionary<byte[], object> {
+                    {"zzz".ToASCII(), "last".ToASCII()},
+                    {"zz".ToASCII(), "dictionary".ToASCII()},
+                    {"zza".ToASCII(), "whose".ToASCII()},
+                    {"".ToASCII(), "disordered".ToASCII()},
+                    {"a".ToASCII(), "with".ToASCII()},
+                    {"az".ToASCII(), "keys".ToASCII()},
+                    {"azb".ToASCII(), "invalid".ToASCII()},
+                    {"aza".ToASCII(), "two".ToASCII()}
+                };
+                var encoded = serialize(value);
+                assertSequencesEqual(
+                    ("d0:10:disordered1:a4:with2:az4:keys3:aza3:two3:azb" + 
+                        "7:invalid2:zz10:dictionary3:zza5:whose3:zzz4:laste").ToASCII(),
+                    encoded);
+                assertRoundTrip(encoded);
+            });
+
+            test(() => {
                 Console.WriteLine("An invalid integer-keyed dictionary");
-                var input = Encoding.ASCII.GetBytes("di1ei2ee");
+                var input = "di1ei2ee".ToASCII();
                 assertThrows(() => deserialize(input));
             });
 
             test(() => {
                 Console.WriteLine("A pseudo-torrent (munged to fit in ASCII)!");
-                var input = Encoding.ASCII.GetBytes(
+                var input = (
                     "d8:announce35:udp://tracker.openbittorrent.com:8013:announce-list" +
                     "ll35:udp://tracker.openbittorrent.com:80el33:udp://tracker.opentrackr.org:1337ee" +
                     "4:infod6:lengthi7e4:name7:example12:piece lengthi7e6:pieces20:0I0')s000000v0-0o0?0" + 
                     "4:salt3:200e8:url-listl57:https://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/" + 
-                    "56:http://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee"
-                );
+                    "56:http://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee").ToASCII();
                 var result = deserialize(input);
-                assertEquals(typeof(Dictionary<byte[], object>), result.GetType());
+                assertEqual(typeof(Dictionary<byte[], object>), result.GetType());
                 assertRoundTrip(input);
             });
 
@@ -243,11 +336,11 @@ namespace Ferro
             }
         }
 
-        static void assertEquals<T>(T expected, T actual) {
+        static void assertEqual<T>(T expected, T actual) {
             assert(expected.Equals(actual), $"Expected {expected}, got {actual}.");
         }
 
-        static void assertSequenceEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, string message = null) {
+        static void assertSequencesEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual, string message = null) {
             assert(
                 expected.SequenceEqual(actual),
                 $"{message}\nExpected [{String.Join(", ", expected.ToArray())}]\nGot      [{String.Join(", ", actual.ToArray())}].");
@@ -277,7 +370,7 @@ namespace Ferro
         static void assertRoundTrip(byte[] bytes) {
             return; // TODO: enable when you can
             var roundTripped = serialize(deserialize(bytes));
-            assertSequenceEqual(bytes, roundTripped, "Serialization round-trip caused a change.");
+            assertSequencesEqual(bytes, roundTripped, "Serialization round-trip caused a change.");
         }
 
         static Int64 testsPassed = 0;
