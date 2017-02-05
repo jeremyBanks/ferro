@@ -173,8 +173,18 @@ namespace Ferro
                 Console.WriteLine("A dictionary with two integer values");
                 var input = Encoding.ASCII.GetBytes("d1:1i2e1:3i4ee");
                 var result = deserialize(input);
-                assert(typeof(List<object>) == result.GetType());
-                var typedResult = (List<object>) result;
+                assert(typeof(Dictionary<byte[], object>) == result.GetType());
+                var typedResult = (Dictionary<byte[], object>) result;
+                // TODO: check actual value
+                assertRoundTrip(input);
+            }
+
+            {
+                Console.WriteLine("A dictionary with two single-item integer list values");
+                var input = Encoding.ASCII.GetBytes("d1:1li2ee1:3li4eee");
+                var result = deserialize(input);
+                assert(typeof(Dictionary<byte[], object>) == result.GetType());
+                var typedResult = (Dictionary<byte[], object>) result;
                 // TODO: check actual value
                 assertRoundTrip(input);
             }
