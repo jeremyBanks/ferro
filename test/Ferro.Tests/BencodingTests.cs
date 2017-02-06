@@ -167,6 +167,51 @@ namespace Ferro.UnitTests
         }
 
         [Fact]
+        public void InvalidJamesBond()
+        {
+            var value = "007".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidDigitsThenLetters()
+        {
+            var value = "22twentytwo".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousStringStart()
+        {
+            var value = "22  :idontknowaoutyou".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidAyeAyeAyeAyeAye() {
+            var value = "iiiiiiiiii13e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidPositivelyPositiveInteger() {
+            var value = "i+1e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousStartInteger() {
+            var value = "i 1e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousEndInteger() {
+            var value = "i1 e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
         public void EmptyStringFromValue()
         {
             var value = "0:".ToASCII();
