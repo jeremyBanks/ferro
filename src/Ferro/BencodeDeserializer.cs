@@ -32,6 +32,11 @@ namespace Ferro
             {
                 throw new DeserializationException("Gigantic Integers are unsupported.", e);
             }
+            catch(FormatException e)
+            {
+                // This is rather broad, catches multiple conditions.
+                throw new DeserializationException("Incorrect format for Integer.", e);
+            }
             
         }
 
