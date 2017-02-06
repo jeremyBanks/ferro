@@ -100,7 +100,6 @@ namespace Ferro
         private static List<object> ListDeserialize(byte[] bytes)
         {
             var output = new List<object>();
-            //foreach (var item in bytes)
             for (int i = 0; i < bytes.Length; i++)
             {
                 if (bytes[i] == endDelimiter && state.Peek() != ListState)
