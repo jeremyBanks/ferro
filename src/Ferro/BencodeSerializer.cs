@@ -37,7 +37,7 @@ namespace Ferro
             var output = new MemoryStream();
             output.Write(Encoding.ASCII.GetBytes(byteArray.Length.ToString()));
             output.Write(Encoding.ASCII.GetBytes(":"));
-            output.Write(Encoding.ASCII.GetBytes(byteArray.ToString()));
+            output.Write(Encoding.ASCII.GetBytes(Encoding.ASCII.GetString(byteArray)));
             return output.ToArray();   
         }
 
