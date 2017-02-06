@@ -1,10 +1,11 @@
+using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Ferro {
     // Extensions methods on core types that we use internally.
     public static class CoreExtensions {
-        // Make the offset and length on Stream.Write() optional if you're writing the whole thing.
         public static void Write(this Stream stream, byte[] bytes) {
             stream.Write(bytes, 0, bytes.Length);
         }
@@ -23,6 +24,17 @@ namespace Ferro {
 
         public static string FromUTF8(this byte[] bytes) {
             return Encoding.UTF8.GetString(bytes);
+        }
+
+        public static byte[] Sha1(this byte[] bytes) {
+            using (var sha1 = SHA1.Create())
+            {
+                return sha1.ComputeHash(bytes);
+            }
+        }
+
+        public static string ToHex(this byte[] bytes) {
+            return BitConverter.ToString(bytes).Replace("-","").ToLower();
         }
     }
 }
