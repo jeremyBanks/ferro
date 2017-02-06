@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,14 +9,36 @@ namespace Ferro
 {
     public class BencodeDeserializer
     {
-        public static object Deserialize(byte[] bytes) {
-            // declare encodings for each type of delimiter
-            var intBeginDelimiter = "i".ToASCII();
-            var intEndDelimiter = "e".ToASCII();
+        // DECLARE DELIMITERS
+        private static byte intBeginDelimiter = "i".ToASCII()[0];
+        private static byte intEndDelimiter = "e".ToASCII()[0];
 
+        private static Int64 IntDeserialize(byte[] bytes)
+        {
             var output = new MemoryStream();
+            foreach (var item in bytes)
+            {
+                if (item != intEndDelimiter)
+                {
+                    output.WriteByte(item);
+                }
+            }
 
-            return output.ToArray();
+            return Int64.Parse(output.ToArray().FromASCII());
+        }
+
+        public static object Deserialize(byte[] bytes)
+        {
+            var output = new MemoryStream();
+            foreach (var item in bytes)
+            {
+                if (item == intBeginDelimiter)
+                {
+                   return IntDeserialize(bytes.Skip(1).ToArray());
+                }
+            }
+
+            return output.ToArray().FromASCII();
         }
     }
 
