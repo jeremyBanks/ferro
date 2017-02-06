@@ -24,7 +24,15 @@ namespace Ferro
                 }
             }
 
-            return Int64.Parse(output.ToArray().FromASCII());
+            try
+            {
+                return Int64.Parse(output.ToArray().FromASCII());
+            }
+            catch(OverflowException e)
+            {
+                throw new DeserializationException("Gigantic Integers are unsupported.", e);
+            }
+            
         }
 
         private static byte[] StringDeserialize(byte[] bytes)
