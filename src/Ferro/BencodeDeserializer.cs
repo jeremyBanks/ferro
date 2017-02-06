@@ -10,11 +10,16 @@ namespace Ferro
     public class BencodeDeserializer
     {
         // DECLARE STATE CONSTANTS
-        private const int DoneState = 0;
+        private const int NeutralState = 0;
         private const int IntState = 1;
         private const int StringState = 2;
         private const int ListState = 3;
         private const int DictState = 4;
+
+        // State field -- 
+        // This keeps track of the type of thing we're 
+        // deserializing at a given time
+        private static Stack<int> state = new Stack<int>();
 
         // DECLARE DELIMITERS
         private static byte endDelimiter = "e".ToASCII()[0];
@@ -38,6 +43,7 @@ namespace Ferro
 
             try
             {
+                state.Pop();
                 return Int64.Parse(output.ToArray().FromASCII());
             }
             catch (OverflowException e)
@@ -87,6 +93,7 @@ namespace Ferro
                 throw new DeserializationException("Strings cannot have a negative length.");
             }
 
+            state.Pop();
             return byteArray.Take(length).ToArray();
         }
 
@@ -95,8 +102,9 @@ namespace Ferro
             var output = new List<object>();
             foreach (var item in bytes)
             {
-                if (item == endDelimiter)
+                if (item == endDelimiter && state.Peek() == ListState)
                 {
+                    state.Pop();
                     return output;
                 }
                 else
@@ -110,20 +118,22 @@ namespace Ferro
 
         private static object DeserializeAny(byte[] bytes)
         {
-
             var output = new MemoryStream();
             foreach (var item in bytes)
             {
                 if (item == listBeginDelimiter)
                 {
+                    state.Push(ListState);
                     return ListDeserialize(bytes.Skip(1).ToArray());
                 }
                 else if (item == intBeginDelimiter)
                 {
+                    state.Push(IntState);
                     return IntDeserialize(bytes.Skip(1).ToArray());
                 }
                 else if ((byte)'0' <= item && (byte)'9' >= item)
                 {
+                    state.Push(StringState);
                     return StringDeserialize(bytes);
                 }
             }
