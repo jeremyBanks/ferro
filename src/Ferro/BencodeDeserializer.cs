@@ -47,7 +47,17 @@ namespace Ferro
                 }
             }
 
-            var length = Int32.Parse(numStore.ToArray().FromASCII());
+            Int32 length;
+
+            try
+            {
+                length = Int32.Parse(numStore.ToArray().FromASCII());
+            }
+            catch(OverflowException e)
+            {
+                throw new DeserializationException("The String length value is too large", e);
+            }
+
             if (length < 0)
             {
                 throw new DeserializationException("Strings cannot have a negative length.");
