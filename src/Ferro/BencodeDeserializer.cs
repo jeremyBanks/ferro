@@ -27,6 +27,30 @@ namespace Ferro
             return Int64.Parse(output.ToArray().FromASCII());
         }
 
+        private static byte[] StringDeserialize(byte[] bytes)
+        {
+            var output = new MemoryStream();
+            var numStore = new List<byte>();
+            byte[] byteArray = bytes;
+            
+            foreach (var item in byteArray)
+            {
+                if (item == (byte) ':')
+                {
+                    byteArray = byteArray.Skip(1).ToArray();
+                    break;
+                }
+                else
+                {
+                    numStore.Add(item);
+                    byteArray = byteArray.Skip(1).ToArray();
+                }
+            }
+
+            var length = Int32.Parse(numStore.ToArray().FromASCII());
+            return byteArray.Take(length).ToArray();
+        }
+
         public static object Deserialize(byte[] bytes)
         {
             var output = new MemoryStream();
@@ -35,6 +59,10 @@ namespace Ferro
                 if (item == intBeginDelimiter)
                 {
                    return IntDeserialize(bytes.Skip(1).ToArray());
+                }
+                else if ((byte) '0' <= item && (byte) '9' >= item)
+                {
+                    return StringDeserialize(bytes);
                 }
             }
 
