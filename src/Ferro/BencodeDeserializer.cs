@@ -43,7 +43,7 @@ namespace Ferro
 
             try
             {
-                state.Pop();
+                //state.Pop();
                 return Int64.Parse(output.ToArray().FromASCII());
             }
             catch (OverflowException e)
@@ -100,16 +100,21 @@ namespace Ferro
         private static List<object> ListDeserialize(byte[] bytes)
         {
             var output = new List<object>();
-            foreach (var item in bytes)
+            //foreach (var item in bytes)
+            for (int i = 0; i < bytes.Length; i++)
             {
-                if (item == endDelimiter && state.Peek() == ListState)
+                if (bytes[i] == endDelimiter && state.Peek() != ListState)
+                {
+                    state.Pop();
+                    
+                } else if (bytes[i] == endDelimiter)
                 {
                     state.Pop();
                     return output;
                 }
-                else
+                else if (bytes[i] == intBeginDelimiter)
                 {
-                    output.Add(DeserializeAny(bytes));
+                    output.Add(DeserializeAny(bytes.Skip(i).ToArray()));
                 }
             }
 
