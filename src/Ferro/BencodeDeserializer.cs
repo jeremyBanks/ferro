@@ -10,15 +10,15 @@ namespace Ferro
     public class BencodeDeserializer
     {
         // DECLARE DELIMITERS
+        private static byte endDelimiter = "e".ToASCII()[0];
         private static byte intBeginDelimiter = "i".ToASCII()[0];
-        private static byte intEndDelimiter = "e".ToASCII()[0];
-
+        
         private static Int64 IntDeserialize(byte[] bytes)
         {
             var output = new MemoryStream();
             foreach (var item in bytes)
             {
-                if (item != intEndDelimiter)
+                if (item != endDelimiter)
                 {
                     output.WriteByte(item);
                 }
