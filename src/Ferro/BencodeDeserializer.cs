@@ -48,6 +48,11 @@ namespace Ferro
             }
 
             var length = Int32.Parse(numStore.ToArray().FromASCII());
+            if (length < 0)
+            {
+                throw new DeserializationException("Strings cannot have a negative length.");
+            }
+
             return byteArray.Take(length).ToArray();
         }
 
@@ -70,5 +75,10 @@ namespace Ferro
         }
     }
 
-    public class DeserializationException : Exception {}
+    public class DeserializationException : Exception {
+        public DeserializationException(string message) : 
+            base(message) { }
+        public DeserializationException(string message, Exception inner) : 
+            base(message, inner) { }
+    }
 }
