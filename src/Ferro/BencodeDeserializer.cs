@@ -9,6 +9,13 @@ namespace Ferro
 {
     public class BencodeDeserializer
     {
+        // DECLARE STATE CONSTANTS
+        private const int DoneState = 0;
+        private const int IntState = 1;
+        private const int StringState = 2;
+        private const int ListState = 3;
+        private const int DictState = 4;
+
         // DECLARE DELIMITERS
         private static byte endDelimiter = "e".ToASCII()[0];
         private static byte intBeginDelimiter = "i".ToASCII()[0];
@@ -103,6 +110,7 @@ namespace Ferro
 
         private static object DeserializeAny(byte[] bytes)
         {
+
             var output = new MemoryStream();
             foreach (var item in bytes)
             {
