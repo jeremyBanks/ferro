@@ -54,7 +54,7 @@ namespace Ferro
         {
             var output = new MemoryStream();
             output.Write(Encoding.ASCII.GetBytes("l"));
-            foreach (byte[] item in list)
+            foreach (var item in list)
             {
                 output.Write(BencodeSerializer.Serialize(item));
             }
