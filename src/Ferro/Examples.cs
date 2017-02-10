@@ -7,6 +7,8 @@ namespace Ferro
         public static int Main(string[] args)
         {
             Console.WriteLine("Hello, world!");
+            Console.WriteLine("Hello, world!".ToASCII().Sha1().ToHex());
+            Console.WriteLine("Hello, world!".ToASCII().Sha1().ToHuman());
             return 0;
         }
     }

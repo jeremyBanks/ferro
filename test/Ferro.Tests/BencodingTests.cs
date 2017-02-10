@@ -6,23 +6,22 @@ using Xunit;
 namespace Ferro.UnitTests
 {
     // Plug in your exception classes (for invalid values) here.
-    using serializationException = Ferro.SerializationException;
-    using deserializationException = Ferro.DeserializationException;
+    using serializationException = Ferro.Bencoding.EncodingException;
+    using deserializationException = Ferro.Bencoding.DecodingException;
 
     public class BencodingTests
     {
         // Plug in your encoding and decoding functions here.
         static object deserialize(byte[] bytes) {
-            return BencodeDeserializer.Deserialize(bytes);
+            return Bencoding.Decode(bytes);
         }
 
         static byte[] serialize(object value) {
-            return BencodeSerializer.Serialize(value);
+            return Bencoding.Encode(value);
         }
 
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(byte[] bytes) {
-            return; // TODO: remove me
             Assert.Equal(bytes, serialize(deserialize(bytes)));
         }
 
@@ -164,6 +163,51 @@ namespace Ferro.UnitTests
             var encoded = serialize(value);
             Assert.Equal("11:hello world".ToASCII(), encoded);
             AssertRoundTrip(encoded);
+        }
+
+        [Fact]
+        public void InvalidJamesBond()
+        {
+            var value = "007".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidDigitsThenLetters()
+        {
+            var value = "22twentytwo".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousStringStart()
+        {
+            var value = "22  :idontknowaoutyou".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidAyeAyeAyeAyeAye() {
+            var value = "iiiiiiiiii13e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidPositivelyPositiveInteger() {
+            var value = "i+1e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousStartInteger() {
+            var value = "i 1e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
+        }
+
+        [Fact]
+        public void InvalidSpaceousEndInteger() {
+            var value = "i1 e".ToASCII();
+            Assert.Throws<deserializationException>(() => deserialize(value));
         }
 
         [Fact]
