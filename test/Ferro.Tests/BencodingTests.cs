@@ -6,23 +6,22 @@ using Xunit;
 namespace Ferro.UnitTests
 {
     // Plug in your exception classes (for invalid values) here.
-    using serializationException = Ferro.SerializationException;
-    using deserializationException = Ferro.DeserializationException;
+    using serializationException = Ferro.Bencoding.EncodingException;
+    using deserializationException = Ferro.Bencoding.DecodingException;
 
     public class BencodingTests
     {
         // Plug in your encoding and decoding functions here.
         static object deserialize(byte[] bytes) {
-            return BencodeDeserializer.Deserialize(bytes);
+            return Bencoding.Decode(bytes);
         }
 
         static byte[] serialize(object value) {
-            return BencodeSerializer.Serialize(value);
+            return Bencoding.Encode(value);
         }
 
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(byte[] bytes) {
-            return; // TODO: remove me
             Assert.Equal(bytes, serialize(deserialize(bytes)));
         }
 
