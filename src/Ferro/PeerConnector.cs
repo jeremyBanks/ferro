@@ -27,6 +27,8 @@ namespace Ferro
         public void Handshake(IPAddress peerIP, Int32 peerPort)
         {
             TcpListener connection = new TcpListener(myIpAddress, myPort);
+            connection.Start();
+
             TcpClient client = new TcpClient();
             client.ConnectAsync(peerIP, peerPort).Wait();
 
