@@ -13,10 +13,9 @@ namespace Ferro
         // This is the port we'll be listening on
         private Int32 myPort = 8888;
 
-        public TcpListener TCPConnection(IPAddress peerIP, Int32 peerPort)
+        private TcpListener TcpConnect()
         {
             var host = Dns.GetHostEntryAsync(Dns.GetHostName()).Result;
-
             // get a useable IP address for us
             foreach (var ip in host.AddressList)
             {
@@ -29,6 +28,12 @@ namespace Ferro
             throw new Exception("No valid IP addresses are available.");
         }
 
+        public void Handshake(IPAddress peerIP, Int32 peerPort)
+        {
+            TcpListener connection = TcpConnect();
+            TcpClient client = new TcpClient();
 
+
+        }
     }
 }
