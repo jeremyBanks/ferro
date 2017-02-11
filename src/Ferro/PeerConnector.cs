@@ -13,13 +13,22 @@ namespace Ferro
         // This is the port we'll be listening on
         private Int32 myPort = 8888;
 
-        public void Handshake(IPAddress peerIP, Int32 peerPort)
+        public TcpListener TCPConnection(IPAddress peerIP, Int32 peerPort)
         {
-            
-            // TODO: figure out what port to use for my Docker container
-            /*TcpListener listener = new TcpListener(myPort);*/
+            var host = Dns.GetHostEntryAsync(Dns.GetHostName()).Result;
 
+            // get a useable IP address for us
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.ToString().EndsWith("1") == false)
+                {
+                    return new TcpListener(ip, myPort);
+                }
+            }
 
+            throw new Exception("No valid IP addresses are available.");
         }
+
+
     }
 }
