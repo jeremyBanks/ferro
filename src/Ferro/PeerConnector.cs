@@ -11,29 +11,29 @@ namespace Ferro
     {
         // We probably want to keep this private and potentially constant
         // This is the port we'll be listening on
-        private Int32 myPort = 8888;
+        private Int32 myPort = 6881;
+        private IPAddress myIpAddress;
 
-        private TcpListener TcpConnect()
+        public PeerConnector(String ipAddress)
         {
-            var host = Dns.GetHostEntryAsync(Dns.GetHostName()).Result;
-            // get a useable IP address for us
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.ToString().EndsWith("1") == false)
-                {
-                    return new TcpListener(ip, myPort);
-                }
-            }
+            myIpAddress = IPAddress.Parse(ipAddress);
+        }
 
-            throw new Exception("No valid IP addresses are available.");
+        public PeerConnector()
+        {
+            myIpAddress = IPAddress.Parse("127.0.0.1");
         }
 
         public void Handshake(IPAddress peerIP, Int32 peerPort)
         {
-            TcpListener connection = TcpConnect();
+            TcpListener connection = new TcpListener(myIpAddress, myPort);
             TcpClient client = new TcpClient();
+            client.ConnectAsync(peerIP, peerPort).Wait();
 
-
+            if (client.Connected)
+            {
+                Console.WriteLine("connected");
+            }
         }
     }
 }
