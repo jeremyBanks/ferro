@@ -4,7 +4,7 @@ __default:
 	make test;
 	make run;
 
-.PHONY: __default deps build test run peer
+.PHONY: __default deps build test run peer stop-peer
 
 deps:
 	cd ./src/Ferro/ && dotnet restore;
