@@ -13,6 +13,7 @@ namespace Ferro
         // This is the port we'll be listening on
         private Int32 myPort = 6881;
         private IPAddress myIpAddress;
+        private byte[] handshakeGreeting = "19BitTorrent protocol".ToASCII();
 
         public PeerConnector(String ipAddress)
         {
@@ -35,7 +36,26 @@ namespace Ferro
             if (client.Connected)
             {
                 Console.WriteLine("connected");
+            } else
+            {
+                throw new Exception("Attempted to move on without connecting to peer");
             }
+
+            NetworkStream stream = client.GetStream();
+            stream.Write(handshakeGreeting);
+            if (stream.CanRead)
+            {
+                Console.WriteLine("About to read...");
+                byte[] response = new byte[256];
+                stream.Read(response, 0, response.Length);
+                Console.WriteLine(stream.DataAvailable.ToString());
+                Console.WriteLine(response.FromASCII());
+            }
+            else
+            {
+                Console.WriteLine("Can't read from this stream, apparently");
+            }
+            
         }
     }
 }

@@ -15,6 +15,7 @@ namespace Ferro
 
             connector.Handshake(IPAddress.Parse("192.168.99.100"), 45566);
 
+            Console.WriteLine("Finished with Handshake");
             Console.ReadLine();
                        
             return 0;
