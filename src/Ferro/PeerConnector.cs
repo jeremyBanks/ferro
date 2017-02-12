@@ -15,15 +15,18 @@ namespace Ferro
         private IPAddress myIpAddress;
         private byte[] handshakeHeader = "19BitTorrent protocol".ToASCII();
         private byte[] handshakeBuffer = "00000000".ToASCII();
+        private byte[] peerId = new byte[20];
 
         public PeerConnector(String ipAddress)
         {
             myIpAddress = IPAddress.Parse(ipAddress);
+            peerId.FillRandom();
         }
 
         public PeerConnector()
         {
             myIpAddress = IPAddress.Parse("127.0.0.1");
+            peerId.FillRandom();
         }
 
         public void Handshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
@@ -42,11 +45,12 @@ namespace Ferro
                 throw new Exception("Attempted to move on without connecting to peer");
             }
 
-            // sha1 infohash will be 20 bytes -- so....
-            byte[] handshake = new byte[49];
+            // Put all of our handshake data into a byte array
+            byte[] handshake = new byte[69];
             Array.Copy(handshakeHeader, 0, handshake, 0, handshakeHeader.Length);
             Array.Copy(handshakeBuffer, 0, handshake, handshakeHeader.Length, handshakeBuffer.Length);
-            Array.Copy(infoHash, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length, infoHash.Length);
+            Array.Copy(infoHash, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length, 20);
+            Array.Copy(peerId, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length + 20, 20);
 
             Console.WriteLine(handshake.FromASCII());
 
@@ -58,7 +62,6 @@ namespace Ferro
                 Console.WriteLine("About to read...");
                 byte[] response = new byte[256];
                 stream.Read(response, 0, response.Length);
-                Console.WriteLine(stream.DataAvailable.ToString());
                 Console.WriteLine(response.FromASCII());
             }
             else
