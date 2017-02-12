@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Ferro {
@@ -11,7 +10,6 @@ namespace Ferro {
     {
         readonly byte[] nodeId;
         readonly IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 6881);
-        readonly IPEndPoint knownTestNodeEndPoint = new IPEndPoint(IPAddress.Loopback, 9527);
         private UDPSocket socket;
 
         public DHTClient() {
@@ -20,9 +18,9 @@ namespace Ferro {
             socket = new UDPSocket(localEndPoint);
         }
 
-        // Pings any DHT node, to confirm we have some connection.
-        public async Task Ping() {
-            sendPing(knownTestNodeEndPoint);
+        // Pings the DHT node at the given endpoint, or throws an error.
+        public async Task Ping(IPEndPoint ep) {
+            sendPing(ep);
 
             Console.WriteLine("Waiting for packet...");
 
@@ -37,7 +35,7 @@ namespace Ferro {
             if ("".Length == 0) {
                 throw new Exception("NOT IMPLEMENTED");
             }
-            await Ping();
+            await Ping(null);
             return (List<object>) null;
         }
 

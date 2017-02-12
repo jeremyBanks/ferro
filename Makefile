@@ -17,7 +17,7 @@ test:
 	cd ./test/Ferro.Tests/ && dotnet test;
 
 run:
-	cd ./src/Ferro/ && dotnet run;
+	cd ./src/Ferro/ && dotnet run 127.0.0.1;
 
 peer:
 	docker inspect registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
