@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.Net;
 
-namespace Ferro
+﻿namespace Ferro
 {
-    public class Examples
-    {
-        public static int Main(string[] args)
+    class Examples {
+        public static void Main()
         {
             Console.WriteLine("Hello, world!");
 
@@ -14,9 +13,20 @@ namespace Ferro
 
             connector.Handshake(IPAddress.Parse("192.168.99.100"), 45566, infoHash);
             Console.WriteLine("Finished with Handshake");
-            Console.ReadLine();
                        
-            return 0;
+            dhtClient();
+            tcpPeerProtocol();
+            Console.ReadLine();
         }
+
+        static void dhtClient() {
+            var dht = new DHTClient();
+            dht.Ping().Wait();
+        }
+
+        static void tcpPeerProtocol() {
+            // TODO
+        }
+        
     }
 }
