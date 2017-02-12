@@ -13,7 +13,7 @@ namespace Ferro {
         private UDPSocket socket;
 
         public DHTClient() {
-            nodeId = "[An Example Node ID]".ToASCII();
+            nodeId = new byte[20].FillRandom();
 
             socket = new UDPSocket(localEndPoint);
         }
@@ -24,11 +24,16 @@ namespace Ferro {
 
             Console.WriteLine("Waiting for packet...");
 
-            var response = await socket.ReceiveAsync();
-
-            Console.WriteLine($"Got packet from {response.Source}: {Bencoding.ToHuman(response.Data)}");
-
-            Console.WriteLine("I hop that's the response we were looking for! Should check...");
+            while (true) {
+                var response = await socket.ReceiveAsync();
+                if (!response.Source.Equals(ep)) {
+                    Console.WriteLine($"Got unexpected packet from a different source, {response.Source}: {Bencoding.ToHuman(response.Data)}");
+                    continue;
+                } else {
+                    Console.WriteLine($"Got response packet: {Bencoding.ToHuman(response.Data)}");
+                    break;
+                }
+            }
         }
 
         public async Task<List<object>> GetPeers(byte[] infohash) {
@@ -41,7 +46,8 @@ namespace Ferro {
 
         void sendPing(IPEndPoint destination) {
             var ping = Bencoding.Encode(new Dictionary<byte[], object>{
-                ["t".ToASCII()] = "t2".ToASCII(), // unique identifier for this request/response
+                ["t".ToASCII()] = "t2".ToASCII().FillRandom(),
+                    // unique identifier for this request/response
                 ["y".ToASCII()] = "q".ToASCII(), // type is query
                 ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
                 ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict

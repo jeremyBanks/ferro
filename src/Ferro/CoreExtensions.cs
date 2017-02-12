@@ -75,14 +75,14 @@ namespace Ferro {
             return bytes;
         }
 
-
-        // Returns 20 random bytes, as for a BitTorrent peer id or infohash.
-        public static void FillRandom(this byte[] bytes)
+        // Fills the array with secure random data.
+        public static byte[] FillRandom(this byte[] bytes)
         {
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(bytes);
             }
+            return bytes;
         }
     }
 }
