@@ -27,8 +27,8 @@ namespace Ferro
         public Task<ReceivedMessage> Receive() {
             var taskSource = new TaskCompletionSource<ReceivedMessage>();
             
+            // I'd recycle but would have thread-safety concerns.
             byte[] buffer = new byte[65507];
-            // over-sized, but what can you do?
 
             SocketAsyncEventArgs responseHandling = new SocketAsyncEventArgs();
             responseHandling.SetBuffer(buffer, 0, buffer.Length);
