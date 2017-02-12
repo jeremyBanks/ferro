@@ -4,7 +4,7 @@ __default:
 	make test;
 	make run;
 
-.PHONY: __default deps build test run peer
+.PHONY: __default deps build test run peer stop-peer
 
 deps:
 	cd ./src/Ferro/ && dotnet restore;
@@ -20,6 +20,7 @@ run:
 	cd ./src/Ferro/ && dotnet run;
 
 peer:
+	docker inspect registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
 	docker pull camillebaronnet/docktorrent;
 	docker run -d \
 		-p 8042:80 -p 45566:45566 -p 9527:9527/udp \
