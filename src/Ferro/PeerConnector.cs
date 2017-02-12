@@ -43,10 +43,10 @@ namespace Ferro
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
-            Array.Copy(handshakeHeader, 0, handshake, 0, handshakeHeader.Length);
-            Array.Copy(handshakeBuffer, 0, handshake, handshakeHeader.Length, handshakeBuffer.Length);
-            Array.Copy(infoHash, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length, 20);
-            Array.Copy(peerId, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length + 20, 20);
+            handshakeHeader.CopyTo(handshake, 0);
+            handshakeBuffer.CopyTo(handshake, handshakeHeader.Length);
+            infoHash.CopyTo(handshake, handshakeHeader.Length + handshakeBuffer.Length);
+            peerId.CopyTo(handshake, handshakeHeader.Length + handshakeBuffer.Length + infoHash.Length);
 
             Console.WriteLine(handshake.FromASCII());
 
@@ -64,6 +64,7 @@ namespace Ferro
                 throw new Exception("Unable to read from the current network stream");
             }
 
+            // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
     }
