@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ferro
 {
-
     public class Examples
     {
         /**
@@ -27,16 +24,12 @@ namespace Ferro
         const Int32 DOCKTORRENT_DHT_PORT = 9527;
 
         public static async Task MainAsync() {
-            var myId = "example peer id 2234".ToASCII();
+            var myId = "[An Example Peer ID]".ToASCII();
 
-
-            var socket = new Socket(
-                AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            var localEndPoint = new IPEndPoint(IPAddress.Any, DEFAULT_PORT);
             var peerDhtEndpoint = new IPEndPoint(IPAddress.Loopback, DOCKTORRENT_DHT_PORT);
 
-            socket.Bind(new IPEndPoint(IPAddress.Loopback, DEFAULT_PORT));
-
-            Console.WriteLine($"Sending data to {peerDhtEndpoint}.");
+            var socket = new UDPSocket(localEndPoint);
 
             var ping = Bencoding.Encode(new Dictionary<byte[], object>{
                 ["t".ToASCII()] = "t2".ToASCII(), // unique identifier for this request/response
@@ -46,44 +39,20 @@ namespace Ferro
                     ["id".ToASCII()] = myId // only ping argument is own id
                 },
             });
-            Console.WriteLine(ping.FromASCII());
-
-            // d1:ad2:id20:example peer id 2234e1:q4:ping1:t2:t21:y1:qe
-            // d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+            Console.WriteLine($"Sending ping: {Bencoding.ToHuman(ping)}");
 
             socket.SendTo(ping, peerDhtEndpoint);
 
-            Console.WriteLine("waiting for response");
+            Console.WriteLine("Waiting for packet...");
 
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-            byte[] buffer = new byte[1024];
-            args.SetBuffer(buffer, 0, buffer.Length);
-            args.RemoteEndPoint = peerDhtEndpoint;
-            args.Completed += (sender, results) => {
-                Console.WriteLine($"got response: {results.Buffer.FromASCII()}");
-                var decoded = Bencoding.Decode(results.Buffer);
-                Console.WriteLine($"got response: {decoded}");
-                stopWaitHandle.Reset();
-            };
+            var response = await socket.Receive();
 
-            var pending = socket.ReceiveFromAsync(args);
-            if (!pending) {
-                Console.WriteLine($"got response: {args.Buffer.FromASCII()}");
-                var decoded = Bencoding.Decode(args.Buffer);
-                Console.WriteLine($"got response: {decoded}");
-                stopWaitHandle.Reset();
-            } else {
-                Console.WriteLine("Keep waiting?");
-                stopWaitHandle.WaitOne();
-            }
+            Console.WriteLine($"Got packet from {response.Source}: {Bencoding.ToHuman(response.Data)}");
         }
-
-        static ManualResetEvent stopWaitHandle = new ManualResetEvent(false);
 
         public static void Main()
         {
             MainAsync().Wait();
-            stopWaitHandle.Set();
         }
     }
 }
