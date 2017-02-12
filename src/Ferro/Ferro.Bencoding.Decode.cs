@@ -13,6 +13,13 @@ namespace Ferro  {
                 return value;
             }
         }
+        public static object DecodeFirst(byte[] bytes, out Int64 count) {
+            using (var stream = new MemoryStream(bytes)) {
+                var value = Decode(stream);
+                count = stream.Position;
+                return value;
+            }
+        }
 
         public static object Decode(Stream stream, bool nullForCollectionEnd = false) {
             var firstOrNothing = stream.ReadByte();
