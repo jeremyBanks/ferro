@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -10,9 +13,13 @@ namespace Ferro {
             stream.Write(bytes, 0, bytes.Length);
         }
 
+        public static ImmutableArray<byte> ToByteString(this IList<byte> bytes) {
+            return ImmutableArray.Create<byte>(bytes.ToArray());
+        }
+
         // Produces a human developer-friendly respresentation of the bytes.
-        public static string ToHuman(this byte[] bytes) {
-            var result = new StringBuilder(bytes.Length);
+        public static string ToHuman(this IList<byte> bytes) {
+            var result = new StringBuilder(bytes.Count);
 
             foreach (var b in bytes) {
                 if (' ' <= b && b <= '~' && b != '\\') {
@@ -31,8 +38,8 @@ namespace Ferro {
         }
 
         // Decodes bytes from a string as ASCII.
-        public static string FromASCII(this byte[] bytes) {
-            return Encoding.ASCII.GetString(bytes);
+        public static string FromASCII(this IList<byte> bytes) {
+            return Encoding.ASCII.GetString(bytes.ToArray());
         }
 
         // Encodes a string to bytes as UTF-8.
@@ -41,21 +48,21 @@ namespace Ferro {
         }
 
         // Decodes bytes from a string as UTF-8.
-        public static string FromUTF8(this byte[] bytes) {
-            return Encoding.UTF8.GetString(bytes);
+        public static string FromUTF8(this IList<byte> bytes) {
+            return Encoding.UTF8.GetString(bytes.ToArray());
         }
 
         // Returns the SHA-1 hash digest of these bytes.
-        public static byte[] Sha1(this byte[] bytes) {
+        public static byte[] Sha1(this IList<byte> bytes) {
             using (var sha1 = SHA1.Create())
             {
-                return sha1.ComputeHash(bytes);
+                return sha1.ComputeHash(bytes.ToArray());
             }
         }
 
         // Converts bytes to their lowercase hexadecimal representation.
-        public static string ToHex(this byte[] bytes) {
-            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+        public static string ToHex(this IList<byte> bytes) {
+            return BitConverter.ToString(bytes.ToArray()).Replace("-", "").ToLower();
         }
 
         // Converts a hexadecimal string into bytes

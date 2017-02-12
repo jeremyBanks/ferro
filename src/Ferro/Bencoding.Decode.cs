@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 
 namespace Ferro  {
     public static partial class Bencoding {
-        public static object Decode(byte[] bytes) {
-            using (var stream = new MemoryStream(bytes)) {
+        public static object Decode(IList<byte> bytes) {
+            using (var stream = new MemoryStream(bytes.ToArray())) {
                 var value = Decode(stream);
                 if (stream.Position < stream.Length) {
                     throw new DecodingException("Unexpected data after input.");
@@ -13,8 +15,8 @@ namespace Ferro  {
                 return value;
             }
         }
-        public static object DecodeFirst(byte[] bytes, out Int64 count) {
-            using (var stream = new MemoryStream(bytes)) {
+        public static object DecodeFirst(IList<byte> bytes, out Int64 count) {
+            using (var stream = new MemoryStream(bytes.ToArray())) {
                 var value = Decode(stream);
                 count = stream.Position;
                 return value;
@@ -151,7 +153,7 @@ namespace Ferro  {
                         throw new DecodingException(
                             "Unexpected end of stream while reading string content.");
                     }
-                    return buffer;
+                    return ImmutableArray.Create<byte>(buffer);
                 
                 case (byte) 'l':
                     var list = new List<object> {};
@@ -165,28 +167,29 @@ namespace Ferro  {
                     return list;
                 
                 case (byte) 'd':
-                    var dictionary = new Dictionary<byte[], object> {};
-                    byte[] previousKey = null;
+                    var dictionary = new Dictionary<ImmutableArray<byte>, object> {};
+                    var hasPreviousKey = false;
+                    ImmutableArray<byte> previousKey;
 
                     while (true) {
                         var key = Decode(stream, nullForCollectionEnd: true);
                         if (key == null) {
                             break; // valid end of dictionary
-                        } else if (!(key is byte[])) {
+                        } else if (!(key is ImmutableArray<byte>)) {
                             throw new DecodingException(
-                                $"Expected byte string for dictionary key, got: {key.GetType()}");
+                                $"Expected ImmutableArray<byte> for dictionary key, got: {key.GetType()}");
                         }
-                        var typedKey = (byte[]) key;
-                        if (previousKey != null) {
-                            if (!ByteArrayComparer.Ascending(previousKey, typedKey)) {
+                        var typedKey = (ImmutableArray<byte>) key;
+                        if (hasPreviousKey) {
+                            if (!ByteListComparer<ImmutableArray<byte>>.Ascending(previousKey, typedKey)) {
                                 throw new DecodingException(
                                     "Dictionary key was in the wrong order or duplicated.");
                             }
                         }
                         previousKey = typedKey;
+                        hasPreviousKey = true;
                         var value = Decode(stream);
                         dictionary.Add(typedKey, value);
-
                     }
                     return dictionary;
 

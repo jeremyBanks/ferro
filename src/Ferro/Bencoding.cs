@@ -1,20 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Ferro  {
+    
     partial class Bencoding {
         // Creates a human-readable formatting of the bencoded data.
-        public static string ToHuman(byte[] data) {
+        public static string ToHuman(IList<byte> data) {
             var value = Bencoding.Decode(data);
             var result = new StringBuilder();
             toHuman(value, result, 0, 2);
             return result.ToString();
         }
 
+
         static void toHuman(object value, StringBuilder result, int indentLevel, int indent) {
-            if (value is byte[]) {
-                var s = (byte[]) value;
+            if (value is IList<byte>) {
+                var s = (IList<byte>) value;
                 result.Append("\"");
                 foreach (var c in s) {
                     if (c >= ' ' && c <= '~' && c != '"') {
@@ -59,17 +62,17 @@ namespace Ferro  {
         }
     }
 
-    class ByteArrayComparer : IComparer<byte[]> {
+    public class ByteListComparer<T> : IComparer<T>, IEqualityComparer<T> where T : IList<byte> {
         // Leiconographic ordering of byte arrays.
-        public int Compare(byte[] x, byte[] y) {
+        public int Compare(T x, T y) {
             for (var i = 0;; i++) {
-                if (i >= x.Length) {
-                    if (i >= y.Length) {
+                if (i >= x.Count) {
+                    if (i >= y.Count) {
                         return 0; // they are equal
                     } else {
                         return -1; // y contains additional items
                     }
-                } else if (i >= y.Length) {
+                } else if (i >= y.Count) {
                     return +1; // x contains additional item
                 }
 
@@ -84,21 +87,21 @@ namespace Ferro  {
         }
 
         // Static instance that we can always use, since there's no state.
-        public static readonly ByteArrayComparer Instance;
+        public static readonly ByteListComparer<T> Instance;
 
-        static ByteArrayComparer() {
-            Instance = new ByteArrayComparer();
+        static ByteListComparer() {
+            Instance = new ByteListComparer<T>();
         }
 
-        public static bool Ascending(byte[] x, byte[] y) {
+        public static bool Ascending(T x, T y) {
             return Instance.Compare(x, y) < 0;
         }
 
-        public static bool Equal(byte[] x, byte[] y) {
+        public static bool Equal(T x, T y) {
             return Instance.Compare(x, y) == 0;
         }
 
-        public static bool Descending(byte[] x, byte[] y) {
+        public static bool Descending(T x, T y) {
             return Instance.Compare(x, y) > 0;
         }
     }

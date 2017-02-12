@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -61,7 +62,7 @@ namespace Ferro {
             });
             Console.WriteLine($"Sending ping to {destination}: {Bencoding.ToHuman(ping)}");
 
-            socket.SendTo(ping, destination);
+            socket.SendTo(ping.ToArray(), destination);
         }
 
         void sendGetPeers() {

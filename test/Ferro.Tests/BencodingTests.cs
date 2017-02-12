@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using Xunit;
 
 
@@ -12,19 +14,20 @@ namespace Ferro.UnitTests
     public class BencodingTests
     {
         // Plug in your encoding and decoding functions here.
-        static object deserialize(byte[] bytes) {
-            return Bencoding.Decode(bytes);
+        static object deserialize(IList<byte> bytes) {
+            return Bencoding.Decode(bytes.ToImmutableArray());
         }
 
-        static byte[] serialize(object value) {
+        static ImmutableArray<byte> serialize(object value) {
             return Bencoding.Encode(value);
         }
 
         // Asserts that deserializing and reserializing doesn't modify a value.
-        public void AssertRoundTrip(byte[] bytes) {
+        public void AssertRoundTrip(IList<byte> bytes) {
+            var typedBytes = bytes.ToArray().ToByteString();
             var value = deserialize(bytes);
             var reserialized = serialize(value);
-            Assert.Equal(bytes, reserialized);
+            Assert.Equal(typedBytes, reserialized, Ferro.ByteListComparer<IList<byte>>.Instance);
         }
 
         [Fact]

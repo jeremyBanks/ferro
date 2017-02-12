@@ -1,26 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 
 namespace Ferro  {
     public static partial class Bencoding {
-        public static byte[] Encode(object value) {
+        public static ImmutableArray<byte> Encode(object value) {
             using (var stream = new MemoryStream()) {
                 Encode(stream, value);
-                return stream.ToArray();
+                return stream.ToArray().ToByteString();
             }
         }
 
         public static void Encode(Stream stream, object value) {
             if (value is Int64) {
                 Encode(stream, (Int64) value);
+            } else if (value is IList<byte>) {
+                Encode(stream, ((IList<byte>) value).ToByteString());
             } else if (value is byte[]) {
-                Encode(stream, (byte[]) value);
+                // We also accept normal byte arrays as input.
+                Encode(stream, ((IList<byte>) value).ToArray().ToByteString());
             } else if (value is List<object>) {
                 Encode(stream, (List<object>) value);
-            } else if (value is Dictionary<byte[], object>) {
-                Encode(stream, (Dictionary<byte[], object>) value);
+            } else if (value is Dictionary<ImmutableArray<byte>, object>) {
+                Encode(stream, (Dictionary<ImmutableArray<byte>, object>) value);
             } else if (value is Int64) {
                 Encode(stream, (Int64) value);
             } else {
@@ -35,10 +39,10 @@ namespace Ferro  {
             stream.WriteByte((byte) 'e');
         }
 
-        public static void Encode(Stream stream, byte[] value) {
+        public static void Encode(Stream stream, ImmutableArray<byte> value) {
             stream.Write(value.Length.ToString().ToASCII());
             stream.WriteByte((byte) ':');
-            stream.Write(value);
+            stream.Write(value.ToArray());
         }
 
         public static void Encode(Stream stream, List<object> value) {
@@ -49,9 +53,9 @@ namespace Ferro  {
             stream.WriteByte((byte) 'e');
         }
 
-        public static void Encode(Stream stream, Dictionary<byte[], object> value) {
+        public static void Encode(Stream stream, Dictionary<ImmutableArray<byte>, object> value) {
             var keys = value.Keys.ToArray();
-            Array.Sort(keys, ByteArrayComparer.Instance);
+            Array.Sort(keys);
             stream.WriteByte((byte) 'd');
             foreach (var key in keys) {
                 Encode(stream, key);
