@@ -20,7 +20,7 @@ namespace Ferro
         public PeerConnector(IPAddress ipAddress)
         {
             handshakeHeader[0] = Convert.ToByte(19);
-            Array.Copy("BitTorrent protocol".ToASCII(), 0, handshakeHeader, 1, 19);
+            "BitTorrent protocol".ToASCII().CopyTo(handshakeHeader, 1);
             myIpAddress = ipAddress;
             peerId.FillRandom();
         }
