@@ -34,10 +34,14 @@ namespace Ferro {
         }
 
         public async Task<List<object>> GetPeers(byte[] infohash) {
-            throw new Exception("NOT IMPLEMENTED");
+            if ("".Length == 0) {
+                throw new Exception("NOT IMPLEMENTED");
+            }
+            await Ping();
+            return (List<object>) null;
         }
 
-        async void sendPing(IPEndPoint destination) {
+        void sendPing(IPEndPoint destination) {
             var ping = Bencoding.Encode(new Dictionary<byte[], object>{
                 ["t".ToASCII()] = "t2".ToASCII(), // unique identifier for this request/response
                 ["y".ToASCII()] = "q".ToASCII(), // type is query
@@ -51,11 +55,11 @@ namespace Ferro {
             socket.SendTo(ping, destination);
         }
 
-        async void sendGetPeers() {
+        void sendGetPeers() {
             throw new Exception("NOT IMPLEMENTED");
         }
 
-        async void sendFindNode() {
+        void sendFindNode() {
             throw new Exception("NOT IMPLEMENTED");
         }
     }

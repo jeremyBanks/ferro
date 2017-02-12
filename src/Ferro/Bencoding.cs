@@ -8,11 +8,11 @@ namespace Ferro  {
         public static string ToHuman(byte[] data) {
             var value = Bencoding.Decode(data);
             var result = new StringBuilder();
-            ToHuman(value, result, 0, 2);
+            toHuman(value, result, 0, 2);
             return result.ToString();
         }
 
-        static void ToHuman(object value, StringBuilder result, int indentLevel, int indent) {
+        static void toHuman(object value, StringBuilder result, int indentLevel, int indent) {
             if (value is byte[]) {
                 var s = (byte[]) value;
                 result.Append("\"");
@@ -33,9 +33,9 @@ namespace Ferro  {
 
                 foreach (var item in d) {
                     for (var i = 0; i < indentLevel + indent; i++) result.Append(" ");
-                    ToHuman(item.Key, result, indentLevel + indent, indent);
+                    toHuman(item.Key, result, indentLevel + indent, indent);
                     result.Append(": ");
-                    ToHuman(item.Value, result, indentLevel + indent, indent);
+                    toHuman(item.Value, result, indentLevel + indent, indent);
                     result.Append('\n');
                 }
 
@@ -47,14 +47,14 @@ namespace Ferro  {
 
                 foreach (var item in l) {
                     for (var i = 0; i < indentLevel + indent; i++) result.Append(" ");
-                    ToHuman(item, result, indentLevel + indent, indent);
+                    toHuman(item, result, indentLevel + indent, indent);
                     result.Append('\n');
                 }
 
                 for (var i = 0; i < indentLevel; i++) result.Append(" ");
                 result.Append("]");
             } else {
-                throw new Exception($"impossible value type in ToHuman {value.GetType()}");
+                throw new Exception($"impossible value type in toHuman {value.GetType()}");
             }
         }
     }
