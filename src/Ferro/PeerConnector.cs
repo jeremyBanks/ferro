@@ -17,23 +17,11 @@ namespace Ferro
         private byte[] handshakeBuffer = new byte[8];
         private byte[] peerId = new byte[20];
 
-        public PeerConnector(IPAddress ipAddress) : this()
-        {
-            myIpAddress = ipAddress;
-            peerId.FillRandom();
-        }
-
-        public PeerConnector(String ipAddress) : this()
-        {
-            myIpAddress = IPAddress.Parse(ipAddress);
-            peerId.FillRandom();
-        }
-
-        public PeerConnector()
+        public PeerConnector(IPAddress ipAddress)
         {
             handshakeHeader[0] = Convert.ToByte(19);
             Array.Copy("BitTorrent protocol".ToASCII(), 0, handshakeHeader, 1, 19);
-            myIpAddress = IPAddress.Parse("127.0.0.1");
+            myIpAddress = ipAddress;
             peerId.FillRandom();
         }
 
