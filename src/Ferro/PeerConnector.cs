@@ -17,10 +17,14 @@ namespace Ferro
         private byte[] handshakeBuffer = new byte[8];
         private byte[] peerId = new byte[20];
 
-        public PeerConnector(String ipAddress)
+        public PeerConnector(IPAddress ipAddress) : this()
         {
-            handshakeHeader[0] = Convert.ToByte(19);
-            Array.Copy("BitTorrent protocol".ToASCII(), 0, handshakeHeader, 1, 19);
+            myIpAddress = ipAddress;
+            peerId.FillRandom();
+        }
+
+        public PeerConnector(String ipAddress) : this()
+        {
             myIpAddress = IPAddress.Parse(ipAddress);
             peerId.FillRandom();
         }
@@ -63,16 +67,16 @@ namespace Ferro
 
             if (stream.CanRead)
             {
-                Console.WriteLine("About to read...");
                 byte[] response = new byte[256];
                 stream.Read(response, 0, response.Length);
                 Console.WriteLine(response.FromASCII());
             }
             else
             {
-                Console.WriteLine("Can't read from this stream, apparently");
+                throw new Exception("Unable to read from the current network stream");
             }
-            
+
+            connection.Stop();
         }
     }
 }
