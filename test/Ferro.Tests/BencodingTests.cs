@@ -298,6 +298,10 @@ namespace Ferro.UnitTests
             var value = "d1:1i2e1:3i4ee".ToASCII();
             var result = deserialize(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
+            var typedResult = (Dictionary<byte[], object>) result;
+            Assert.Equal(2, typedResult.Count);
+            Assert.Equal(2, typedResult["1".ToASCII()]);
+            Assert.Equal(4, typedResult["3".ToASCII()]);
             AssertRoundTrip(value);
         }
 
