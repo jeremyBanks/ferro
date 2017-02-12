@@ -81,9 +81,7 @@ namespace Ferro {
         {
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
-                byte[] id = new byte[bytes.Length];
-                rng.GetBytes(id);
-                Array.Copy(id, bytes, 20);
+                rng.GetBytes(bytes);
             }
         }
     }
