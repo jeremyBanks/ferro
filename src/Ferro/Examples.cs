@@ -1,15 +1,19 @@
-﻿using System;
-
-namespace Ferro
+﻿namespace Ferro
 {
-    public class Examples
-    {
-        public static int Main(string[] args)
+    class Examples {
+        public static void Main()
         {
-            Console.WriteLine("Hello, world!");
-            Console.WriteLine("Hello, world!".ToASCII().Sha1().ToHex());
-            Console.WriteLine("Hello, world!".ToASCII().Sha1().ToHuman());
-            return 0;
+            dhtClient();
+            tcpPeerProtocol();
+        }
+
+        static void dhtClient() {
+            var dht = new DHTClient();
+            dht.Ping().Wait();
+        }
+
+        static void tcpPeerProtocol() {
+            // TODO
         }
     }
 }
