@@ -42,7 +42,7 @@ namespace Ferro {
 
             Console.WriteLine("Waiting for packet...");
 
-            var response = await socket.Receive();
+            var response = await socket.ReceiveAsync();
 
             Console.WriteLine($"Got packet from {response.Source}: {Bencoding.ToHuman(response.Data)}");
         }

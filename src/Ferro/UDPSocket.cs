@@ -24,8 +24,8 @@ namespace Ferro
             }
         }
 
-        public Task<ReceivedMessage> Receive() {
-            var taskSource = new TaskCompletionSource<ReceivedMessage>();
+        public Task<ReceivedPacket> ReceiveAsync() {
+            var taskSource = new TaskCompletionSource<ReceivedPacket>();
             
             // I'd recycle but would have thread-safety concerns.
             byte[] buffer = new byte[65507];
@@ -42,7 +42,7 @@ namespace Ferro
                 var data = new byte[responseHandling.BytesTransferred];
                 Array.Copy(buffer, 0, data, 0, responseHandling.BytesTransferred);
                 
-                taskSource.SetResult(new ReceivedMessage {
+                taskSource.SetResult(new ReceivedPacket {
                     Data = data,
                     Source = (IPEndPoint) responseHandling.RemoteEndPoint
                 });
@@ -58,7 +58,7 @@ namespace Ferro
             return taskSource.Task;
         }
 
-        public class ReceivedMessage {
+        public class ReceivedPacket {
             public byte[] Data;            
             public IPEndPoint Source;
         }
