@@ -20,15 +20,20 @@ namespace Ferro {
 
         // Pings the DHT node at the given endpoint, or throws an error.
         public async Task Ping(IPEndPoint ep) {
-            sendPing(ep);
+            var token = new byte[4].FillRandom();
+            sendPing(ep, token);
 
             Console.WriteLine("Waiting for packet...");
 
             while (true) {
                 var response = await socket.ReceiveAsync();
+                var value = (Dictionary<byte[], object>) Bencoding.Decode(response.Data);
                 if (!response.Source.Equals(ep)) {
                     Console.WriteLine($"Got unexpected packet from a different source, {response.Source}: {Bencoding.ToHuman(response.Data)}");
                     continue;
+                // } else if (!value["t".ToASCII()].Equals(token)) {
+                //     Console.WriteLine($"Got patcket with unexpected token: {Bencoding.ToHuman(response.Data)}");
+                //     continue;
                 } else {
                     Console.WriteLine($"Got response packet: {Bencoding.ToHuman(response.Data)}");
                     break;
@@ -44,9 +49,9 @@ namespace Ferro {
             return (List<object>) null;
         }
 
-        void sendPing(IPEndPoint destination) {
+        void sendPing(IPEndPoint destination, byte[] token) {
             var ping = Bencoding.Encode(new Dictionary<byte[], object>{
-                ["t".ToASCII()] = "t2".ToASCII().FillRandom(),
+                ["t".ToASCII()] = token,
                     // unique identifier for this request/response
                 ["y".ToASCII()] = "q".ToASCII(), // type is query
                 ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
