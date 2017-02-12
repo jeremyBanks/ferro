@@ -5,46 +5,58 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Ferro {
+    // A client (not server) for the mainline BitTorrent DHT.
+    // Only supporting BEP 5 at this point, none of the other extensions.
     public class DHTClient
     {
-        static byte[] randomId() {
-            using(RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                byte[] id = new byte[20];
-                rng.GetBytes(id);
-                return id;
-            }
+        readonly byte[] nodeId;
+        readonly IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 6881);
+        readonly IPEndPoint knownTestNodeEndPoint = new IPEndPoint(IPAddress.Loopback, 9527);
+        private UDPSocket socket;
+
+        public DHTClient() {
+            nodeId = "[An Example Node ID]".ToASCII();
+
+            socket = new UDPSocket(localEndPoint);
         }
 
-        const Int32 DEFAULT_PORT = 6881;
-        const Int32 DOCKTORRENT_DHT_PORT = 9527;
-
-        // Pings any DHT peer, to confirm we have some connection.
+        // Pings any DHT node, to confirm we have some connection.
         public async Task Ping() {
-            var myId = "[An Example Peer ID]".ToASCII();
-
-            var localEndPoint = new IPEndPoint(IPAddress.Any, DEFAULT_PORT);
-            var peerDhtEndpoint = new IPEndPoint(IPAddress.Loopback, DOCKTORRENT_DHT_PORT);
-
-            var socket = new UDPSocket(localEndPoint);
-
-            var ping = Bencoding.Encode(new Dictionary<byte[], object>{
-                ["t".ToASCII()] = "t2".ToASCII(), // unique identifier for this request/response
-                ["y".ToASCII()] = "q".ToASCII(), // type is query
-                ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
-                ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
-                    ["id".ToASCII()] = myId // only ping argument is own id
-                },
-            });
-            Console.WriteLine($"Sending ping: {Bencoding.ToHuman(ping)}");
-
-            socket.SendTo(ping, peerDhtEndpoint);
+            sendPing(knownTestNodeEndPoint);
 
             Console.WriteLine("Waiting for packet...");
 
             var response = await socket.ReceiveAsync();
 
             Console.WriteLine($"Got packet from {response.Source}: {Bencoding.ToHuman(response.Data)}");
+
+            Console.WriteLine("I hop that's the response we were looking for! Should check...");
+        }
+
+        public async Task<List<object>> GetPeers(byte[] infohash) {
+            throw new Exception("NOT IMPLEMENTED");
+        }
+
+        async void sendPing(IPEndPoint destination) {
+            var ping = Bencoding.Encode(new Dictionary<byte[], object>{
+                ["t".ToASCII()] = "t2".ToASCII(), // unique identifier for this request/response
+                ["y".ToASCII()] = "q".ToASCII(), // type is query
+                ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
+                ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
+                    ["id".ToASCII()] = nodeId // only ping argument is own id
+                },
+            });
+            Console.WriteLine($"Sending ping to {destination}: {Bencoding.ToHuman(ping)}");
+
+            socket.SendTo(ping, destination);
+        }
+
+        async void sendGetPeers() {
+            throw new Exception("NOT IMPLEMENTED");
+        }
+
+        async void sendFindNode() {
+            throw new Exception("NOT IMPLEMENTED");
         }
     }
 }
