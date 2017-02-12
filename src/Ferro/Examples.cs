@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Net;
 
 namespace Ferro
@@ -27,7 +27,12 @@ namespace Ferro
         }
 
         static void tcpPeerProtocol(IPAddress testAddress) {
-            // TODO
+            var connector = new PeerConnector(IPAddress.Any);
+            var infoHash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
+
+            connector.Handshake(testAddress, 45566, infoHash);
+            Console.WriteLine("Finished with Handshake");
         }
+        
     }
 }
