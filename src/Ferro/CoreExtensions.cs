@@ -57,5 +57,22 @@ namespace Ferro {
         public static string ToHex(this byte[] bytes) {
             return BitConverter.ToString(bytes).Replace("-", "").ToLower();
         }
+
+        // Converts a hexadecimal string into bytes
+        public static byte[] FromHex (this string hex)
+        {
+            if (hex.Length % 2 != 0)
+            {
+                throw new ArgumentException("Hexadecimal input must have an even number of members");
+            }
+
+            byte[] bytes = new byte[hex.Length / 2];
+            for (int i = 0; i < hex.Length; i+=2)
+            {
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            }
+
+            return bytes;
+        }
     }
 }

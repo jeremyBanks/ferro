@@ -43,7 +43,7 @@ namespace Ferro
             }
 
             // sha1 infohash will be 20 bytes -- so....
-            byte[] handshake = new byte[69];
+            byte[] handshake = new byte[49];
             Array.Copy(handshakeHeader, 0, handshake, 0, handshakeHeader.Length);
             Array.Copy(handshakeBuffer, 0, handshake, handshakeHeader.Length, handshakeBuffer.Length);
             Array.Copy(infoHash, 0, handshake, handshakeHeader.Length + handshakeBuffer.Length, infoHash.Length);
