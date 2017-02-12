@@ -33,13 +33,14 @@ namespace Ferro
             TcpClient client = new TcpClient();
             client.ConnectAsync(peerIP, peerPort).Wait();
 
-            if (client.Connected)
-            {
-                Console.WriteLine("connected");
-            } else
+            if (!client.Connected)
             {
                 throw new Exception("Attempted to move on without connecting to peer");
+            } else
+            {
+                Console.WriteLine("connected");
             }
+            
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
@@ -53,15 +54,14 @@ namespace Ferro
             NetworkStream stream = client.GetStream();
             stream.Write(handshake);
 
-            if (stream.CanRead)
+            if (!stream.CanRead)
+            {
+                throw new Exception("Unable to read from the current network stream");
+            } else
             {
                 byte[] response = new byte[256];
                 stream.Read(response, 0, response.Length);
                 Console.WriteLine(response.FromASCII());
-            }
-            else
-            {
-                throw new Exception("Unable to read from the current network stream");
             }
 
             // we probably want to get rid of this in the future, when there's a proceding action
