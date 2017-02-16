@@ -27,6 +27,8 @@ Ferro is a BitTorrent client, library, and/or something like that.
   Extension allowing peers to exchange torrent file info directly, so the torrent file isn't required in advance.
 - [Mainline DHT Protocol (BEP 5)](http://www.bittorrent.org/beps/bep_0005.html)  
   Distributed index of peers on a secondary P2P network, used to find initial torrent peers without any tracker.
+- [Read-only DHT Nodes](http://www.bittorrent.org/beps/bep_0043.html)  
+  Allows DHT nodes to indicate that they're read/client-only, and should not be queried.
 - [Kademlia Protocol (Maymounkov and Mazières 2002)](https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf)  
   Fuller description of the protocol on which the mainline DHT protocol is based.
 - [Magnet URI Web Seeding Draft Proposal](https://wiki.theory.org/BitTorrent_Magnet-URI_Webseeding)  
