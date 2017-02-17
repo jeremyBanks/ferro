@@ -92,6 +92,9 @@ namespace Ferro
                 Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
                 stream.Dispose();
             }
+
+            Array.Copy(response, 48, theirPeerId, 0, 20);
+            Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
             // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
