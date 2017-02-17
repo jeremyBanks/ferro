@@ -15,6 +15,7 @@ namespace Ferro
         private IPAddress myIpAddress;
         private byte[] fixedHeader = new byte[20];
         private byte[] zeroBuffer = new byte[8];
+        // Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         private byte[] peerId = new byte[20];
 
         public PeerConnector(IPAddress ipAddress)
