@@ -10,6 +10,10 @@ namespace Ferro {
     {
         readonly byte[] nodeId;
         readonly IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 6881);
+<<<<<<< Updated upstream
+=======
+        readonly IPEndPoint knownTestNodeEndPoint = new IPEndPoint(IPAddress.Parse("192.168.99.100"), 9527);
+>>>>>>> Stashed changes
         private UDPSocket socket;
 
         public DHTClient() {
