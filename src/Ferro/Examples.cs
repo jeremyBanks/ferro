@@ -15,7 +15,7 @@ namespace Ferro
                 return 1;
             }
 
-            dhtClient(testAddress);
+            //dhtClient(testAddress);
             tcpPeerProtocol(testAddress);
 
             return 0;

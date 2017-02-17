@@ -13,14 +13,14 @@ namespace Ferro
         // This is the port we'll be listening on
         private Int32 myPort = 6881;
         private IPAddress myIpAddress;
-        private byte[] handshakeHeader = new byte[20];
-        private byte[] handshakeBuffer = new byte[8];
+        private byte[] fixedHeader = new byte[20];
+        private byte[] zeroBuffer = new byte[8];
         private byte[] peerId = new byte[20];
 
         public PeerConnector(IPAddress ipAddress)
         {
-            handshakeHeader[0] = Convert.ToByte(19);
-            "BitTorrent protocol".ToASCII().CopyTo(handshakeHeader, 1);
+            fixedHeader[0] = Convert.ToByte(19);
+            "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
             myIpAddress = ipAddress;
             peerId.FillRandom();
         }
@@ -43,10 +43,10 @@ namespace Ferro
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
-            handshakeHeader.CopyTo(handshake, 0);
-            handshakeBuffer.CopyTo(handshake, handshakeHeader.Length);
-            infoHash.CopyTo(handshake, handshakeHeader.Length + handshakeBuffer.Length);
-            peerId.CopyTo(handshake, handshakeHeader.Length + handshakeBuffer.Length + infoHash.Length);
+            fixedHeader.CopyTo(handshake, 0);
+            zeroBuffer.CopyTo(handshake, fixedHeader.Length);
+            infoHash.CopyTo(handshake, fixedHeader.Length + zeroBuffer.Length);
+            peerId.CopyTo(handshake, fixedHeader.Length + zeroBuffer.Length + infoHash.Length);
 
             Console.WriteLine(handshake.FromASCII());
 
