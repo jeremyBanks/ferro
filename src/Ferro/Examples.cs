@@ -15,19 +15,10 @@ namespace Ferro
                 return 1;
             }
 
-<<<<<<< Updated upstream
             dhtClient(testAddress);
             tcpPeerProtocol(testAddress);
 
             return 0;
-=======
-            connector.Handshake(IPAddress.Parse("192.168.99.100"), 45566, infoHash);
-            Console.WriteLine("Finished with Handshake");
-                       
-            //dhtClient();
-            //tcpPeerProtocol();
-            Console.ReadLine();
->>>>>>> Stashed changes
         }
 
         static void dhtClient(IPAddress testAddress) {
