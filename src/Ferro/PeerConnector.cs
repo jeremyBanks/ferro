@@ -63,6 +63,35 @@ namespace Ferro
             stream.Read(response, 0, response.Length);
             Console.WriteLine(response.FromASCII());
 
+            byte[] peerFixedHeader = new byte[20];
+            byte[] peerZeroBuffer = new byte[8];
+            byte[] peerInfoHash = new byte[20];
+            byte[] theirPeerId = new byte[20];
+
+            Array.Copy(response, 0, peerFixedHeader, 0, 20);
+            // We probably want to compare the byte arrays directly, rather than converting them to strings.
+            // TODO: write a helper method to do this.
+            if (peerFixedHeader.FromASCII() != fixedHeader.FromASCII())
+            {
+                Console.WriteLine("Peer failed to return fixed header; aborting connection.");
+                stream.Dispose();
+            }
+
+            Array.Copy(response, 20, peerZeroBuffer, 0, 8);
+            /* See TODO above
+             * if (peerZeroBuffer.FromASCII() != zeroBuffer.FromASCII())
+            {
+                Console.WriteLine("Peer response missing buffer after header; aborting connection");
+                stream.Dispose();
+            }*/
+
+            Array.Copy(response, 28, peerInfoHash, 0, 20);
+            Console.WriteLine("Peer's infohash is: " + peerInfoHash.FromASCII());
+            if (peerInfoHash.FromASCII() != infoHash.FromASCII())
+            {
+                Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
+                stream.Dispose();
+            }
             // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
