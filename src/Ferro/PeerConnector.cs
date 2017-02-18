@@ -64,30 +64,25 @@ namespace Ferro
             Console.WriteLine(response.FromASCII());
 
             byte[] peerFixedHeader = new byte[20];
-            byte[] peerZeroBuffer = new byte[8];
+            byte[] peerBuffer = new byte[8];
             byte[] peerInfoHash = new byte[20];
             byte[] theirPeerId = new byte[20];
 
             Array.Copy(response, 0, peerFixedHeader, 0, 20);
-            // We probably want to compare the byte arrays directly, rather than converting them to strings.
-            // TODO: write a helper method to do this.
-            if (peerFixedHeader.FromASCII() != fixedHeader.FromASCII())
+            if (!peerFixedHeader.SequenceEqual(fixedHeader))
             {
                 Console.WriteLine("Peer failed to return fixed header; aborting connection.");
                 stream.Dispose();
             }
 
-            Array.Copy(response, 20, peerZeroBuffer, 0, 8);
-            /* See TODO above
-             * if (peerZeroBuffer.FromASCII() != zeroBuffer.FromASCII())
-            {
-                Console.WriteLine("Peer response missing buffer after header; aborting connection");
-                stream.Dispose();
-            }*/
+            Array.Copy(response, 20, peerBuffer, 0, 8);
+            // Peer buffer will not necessarily be zero -- client implementations may be using
+            // some extension. So, looking for equality is not what we want to do here, but we'll 
+            // want to store this anyways, in case we want to implement some extension later.
 
             Array.Copy(response, 28, peerInfoHash, 0, 20);
             Console.WriteLine("Peer's infohash is: " + peerInfoHash.FromASCII());
-            if (peerInfoHash.FromASCII() != infoHash.FromASCII())
+            if (!peerInfoHash.SequenceEqual(infoHash))
             {
                 Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
                 stream.Dispose();
@@ -95,6 +90,7 @@ namespace Ferro
 
             Array.Copy(response, 48, theirPeerId, 0, 20);
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
+
             // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
