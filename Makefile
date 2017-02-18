@@ -20,18 +20,17 @@ run:
 	cd ./src/Ferro/ && dotnet run 127.0.0.1;
 
 peer:
-	docker inspect registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
-	docker pull camillebaronnet/docktorrent;
+	docker pull registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
 	docker run -d \
 		-p 8042:80 -p 45566:45566 -p 9527:9527/udp \
 		--dns 8.8.8.8 \
 		-v $(PWD)/test-peer-data:/rtorrent  \
 		-e UPLOAD_RATE=1024 \
-		camillebaronnet/docktorrent;
+		registry.gitlab.com/banks/ferro:docktorrent;
 	docker ps;
 	# Peer now running at: localhost:45566
 	# You may control it at: http://localhost:8042
 	# You can terminate it gracefully with `make stop-peer`
 
 stop-peer:
-	docker stop -t 120 "$$(docker ps -q --filter ancestor=camillebaronnet/docktorrent)";
+	docker stop -t 120 "$$(docker ps -q --filter ancestor=registry.gitlab.com/banks/ferro:docktorrent)";
