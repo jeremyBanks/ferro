@@ -5,40 +5,74 @@ using System.Threading.Tasks;
 
 namespace Ferro {
     // A client (not server) for the mainline BitTorrent DHT.
-    // Only supporting BEP 5 at this point, none of the other extensions.
     public class DHTClient
     {
-        readonly byte[] nodeId;
-        readonly IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 6881);
+        readonly byte[] NodeId;
+        readonly IPEndPoint LocalEndPoint = new IPEndPoint(IPAddress.Any, 6881);
         private UDPSocket socket;
 
-        public DHTClient() {
-            nodeId = new byte[20].FillRandom();
+        readonly Task Listening;
 
-            socket = new UDPSocket(localEndPoint);
+        // This is terrible.
+        byte nextToken = 0;
+
+        private Dictionary<
+            Tuple<IPEndPoint, byte>,
+            TaskCompletionSource<Dictionary<byte[], dynamic>>
+        > pendingQueries;
+
+        public DHTClient() {
+            pendingQueries = new Dictionary<
+                Tuple<IPEndPoint, byte>,
+                TaskCompletionSource<Dictionary<byte[], dynamic>>
+            >();
+
+            NodeId = new byte[20].FillRandom();
+
+            socket = new UDPSocket(LocalEndPoint);
+
+            Listening = Task.Run(async () => {
+                // TODO: don't crash when you get invalid data
+                while (true) {
+                    var response = await socket.ReceiveAsync();
+
+                    var value = (Dictionary<byte[], object>) Bencoding.Decode(response.Data);
+
+                    var type = ((byte[]) value["y".ToASCII()]).FromASCII();
+
+                    switch (type) {
+                        case "r":
+                            Console.WriteLine($"Got response mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
+
+                            break;
+
+                        case "e":
+                            Console.WriteLine($"Got error mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
+                            break;
+
+                        case "q": 
+                            // do nothing because we're read-only
+                            break;
+
+                        default:
+                            // maybe we could send an error?
+                            break;
+                    }
+                }
+            });
         }
 
         // Pings the DHT node at the given endpoint, or throws an error.
         public async Task Ping(IPEndPoint ep) {
-            var token = new byte[4].FillRandom();
-            sendPing(ep, token);
+            var token = nextToken++;
 
             Console.WriteLine("Waiting for packet...");
 
-            while (true) {
-                var response = await socket.ReceiveAsync();
-                var value = (Dictionary<byte[], object>) Bencoding.Decode(response.Data);
-                if (!response.Source.Equals(ep)) {
-                    Console.WriteLine($"Got unexpected packet from a different source, {response.Source}: {Bencoding.ToHuman(response.Data)}");
-                    continue;
-                } else if (!ByteArrayComparer.Instance.Equals((byte[]) value["t".ToASCII()], token)) {
-                    Console.WriteLine($"Got packet with unexpected token: {Bencoding.ToHuman(response.Data)}");
-                    continue;
-                } else {
-                    Console.WriteLine($"Got response packet: {Bencoding.ToHuman(response.Data)}");
-                    break;
-                }
-            }
+            var result = new TaskCompletionSource<Dictionary<byte[], dynamic>>();
+            // TODO insert it
+            sendPing(ep, new byte[]{token});
+
+            var results = await result.Task;
         }
 
         public async Task<List<object>> GetPeers(byte[] infohash) {
@@ -56,7 +90,7 @@ namespace Ferro {
                 ["y".ToASCII()] = "q".ToASCII(), // type is query
                 ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
                 ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
-                    ["id".ToASCII()] = nodeId // only ping argument is own id
+                    ["id".ToASCII()] = NodeId // only ping argument is own id
                 },
                 ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
             });
