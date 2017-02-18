@@ -26,6 +26,14 @@ namespace Ferro
             peerId.FillRandom();
         }
 
+        // Generalized method to enable any extension we see fit.
+        // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
+        public void EnableExtensions(byte[] buffer, int index, int value)
+        {
+
+            buffer[index] = (byte) value;
+        }
+
         public void Handshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
             TcpListener connection = new TcpListener(myIpAddress, myPort);
@@ -40,7 +48,9 @@ namespace Ferro
             }
 
             Console.WriteLine("Connected to peer.");
-            
+
+            // indicate support for extensions -- See http://www.bittorrent.org/beps/bep_0010.html
+            EnableExtensions(zeroBuffer, 5, 16);
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
@@ -69,6 +79,8 @@ namespace Ferro
             byte[] theirPeerId = new byte[20];
 
             Array.Copy(response, 0, peerFixedHeader, 0, 20);
+            // TODO: Replace byte[].SequenceEqual() with the more customized byte[] comparator written by 
+            // @banks -- see ceb791f0f5f6067abb900bc32eb29c4ad54e1407
             if (!peerFixedHeader.SequenceEqual(fixedHeader))
             {
                 Console.WriteLine("Peer failed to return fixed header; aborting connection.");
@@ -77,6 +89,9 @@ namespace Ferro
             }
 
             Array.Copy(response, 20, peerBuffer, 0, 8);
+            Console.WriteLine("Peer buffer is: " + peerBuffer.FromASCII());
+            Console.WriteLine("5: " + peerBuffer[5]);
+
             // Peer buffer will not necessarily be zero -- client implementations may be using
             // some extension. So, looking for equality is not what we want to do here, but we'll 
             // want to store this anyways, in case we want to implement some extension later.
