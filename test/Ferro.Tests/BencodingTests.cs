@@ -299,9 +299,9 @@ namespace Ferro.UnitTests
             var result = deserialize(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             var typedResult = (Dictionary<byte[], object>) result;
-            Assert.Equal(2, typedResult.Count);
-            Assert.Equal(2, typedResult["1".ToASCII()]);
-            Assert.Equal(4, typedResult["3".ToASCII()]);
+            Assert.Equal((Int64) 2, typedResult.Count);
+            Assert.Equal((Int64) 2, typedResult["1".ToASCII()]);
+            Assert.Equal((Int64) 4, typedResult["3".ToASCII()]);
             AssertRoundTrip(value);
         }
 
@@ -315,6 +315,17 @@ namespace Ferro.UnitTests
             var encoded = serialize(value);
             Assert.Equal("d5:helloi1234e5:worldi-5678ee".ToASCII(), encoded);
             AssertRoundTrip(encoded);
+        }
+
+        [Fact]
+        public void InvalidDuplicateKeysDictionaryFromValue()
+        {
+            var value = new Dictionary<byte[], object> {
+                {"hello".ToASCII(), (Int64) 1234},
+                {"hello".ToASCII(), (Int64) (-5678)}
+            };
+            Assert.Equal(2, value.Count); // verify that we did add two keys
+            Assert.Throws<serializationException>(() => serialize(value));
         }
 
         [Fact]
