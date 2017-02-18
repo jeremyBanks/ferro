@@ -62,6 +62,10 @@ namespace Ferro  {
     class ByteArrayComparer : IEqualityComparer<byte[]>, IComparer<byte[]> {
         // Leiconographic ordering of byte arrays.
         public int Compare(byte[] x, byte[] y) {
+            if (x == null || y == null)  {
+                throw new Exception("null is not ordered relative to byte arrays.");
+            }
+
             if (ReferenceEquals(x, y)) {
                 return 0;
             }
@@ -87,6 +91,9 @@ namespace Ferro  {
         }
 
         public bool Equals(byte[] x, byte[] y) {
+            if (x == null || y == null) {
+                return x == null && y == null;
+            }
             return Compare(x, y) == 0;
         }
 
