@@ -13,7 +13,7 @@ namespace Ferro {
             stream.Write(bytes, 0, bytes.Length);
         }
 
-        public static ImmutableArray<byte> ToByteString(this IList<byte> bytes) {
+        public static ImmutableArray<byte> ToImmutable(this IList<byte> bytes) {
             return ImmutableArray.Create<byte>(bytes.ToArray());
         }
 

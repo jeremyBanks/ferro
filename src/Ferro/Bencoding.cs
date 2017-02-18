@@ -86,6 +86,18 @@ namespace Ferro  {
             }
         }
 
+        public int GetHashCode(T x) {
+            int hashCode = x.Count;
+            foreach (var value in x) {
+                hashCode += value.GetHashCode();
+            }
+            return hashCode;
+        }
+
+        public bool Equals(T x, T y) {
+            return Compare(x, y) == 0;
+        }
+
         // Static instance that we can always use, since there's no state.
         public static readonly ByteListComparer<T> Instance;
 

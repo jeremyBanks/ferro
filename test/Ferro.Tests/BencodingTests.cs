@@ -15,7 +15,7 @@ namespace Ferro.UnitTests
     {
         // Plug in your encoding and decoding functions here.
         static object deserialize(IList<byte> bytes) {
-            return Bencoding.Decode(bytes.ToImmutableArray());
+            return Bencoding.Decode(bytes.ToImmutable());
         }
 
         static ImmutableArray<byte> serialize(object value) {
@@ -24,7 +24,7 @@ namespace Ferro.UnitTests
 
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(IList<byte> bytes) {
-            var typedBytes = bytes.ToArray().ToByteString();
+            var typedBytes = bytes.ToArray().ToImmutable();
             var value = deserialize(bytes);
             var reserialized = serialize(value);
             Assert.Equal(typedBytes, reserialized, Ferro.ByteListComparer<IList<byte>>.Instance);

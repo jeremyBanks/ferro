@@ -9,7 +9,7 @@ namespace Ferro  {
         public static ImmutableArray<byte> Encode(object value) {
             using (var stream = new MemoryStream()) {
                 Encode(stream, value);
-                return stream.ToArray().ToByteString();
+                return stream.ToArray().ToImmutable();
             }
         }
 
@@ -17,14 +17,22 @@ namespace Ferro  {
             if (value is Int64) {
                 Encode(stream, (Int64) value);
             } else if (value is IList<byte>) {
-                Encode(stream, ((IList<byte>) value).ToByteString());
+                Encode(stream, ((IList<byte>) value).ToImmutable());
             } else if (value is byte[]) {
                 // We also accept normal byte arrays as input.
-                Encode(stream, ((IList<byte>) value).ToArray().ToByteString());
+                Encode(stream, ((IList<byte>) value).ToArray().ToImmutable());
             } else if (value is List<object>) {
                 Encode(stream, (List<object>) value);
             } else if (value is Dictionary<ImmutableArray<byte>, object>) {
                 Encode(stream, (Dictionary<ImmutableArray<byte>, object>) value);
+            } else if (value is Dictionary<byte[], object>) {
+                var dictionary =
+                    ((Dictionary<byte[], object>) value)
+                    .Select(kv =>
+                        new KeyValuePair<ImmutableArray<byte>, object>(
+                            kv.Key.ToImmutable(), kv.Value))
+                   .ToDictionary(kv => kv.Key, kv => kv.Value);
+                Encode(stream, dictionary);
             } else if (value is Int64) {
                 Encode(stream, (Int64) value);
             } else {
