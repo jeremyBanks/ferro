@@ -17,6 +17,7 @@ namespace Ferro
         private byte[] zeroBuffer = new byte[8];
         // Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         private byte[] peerId = new byte[20];
+        bool extensionsEnabled = false;
 
         public PeerConnector(IPAddress ipAddress)
         {
@@ -28,10 +29,10 @@ namespace Ferro
 
         // Generalized method to enable any extension we see fit.
         // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
-        public void EnableExtensions(byte[] buffer, int index, int value)
+        public void EnableExtensions()
         {
-
-            buffer[index] = (byte) value;
+            zeroBuffer[5] = (byte) 16;
+            extensionsEnabled = true;
         }
 
         public void Handshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
@@ -50,7 +51,7 @@ namespace Ferro
             Console.WriteLine("Connected to peer.");
 
             // indicate support for extensions -- See http://www.bittorrent.org/beps/bep_0010.html
-            EnableExtensions(zeroBuffer, 5, 16);
+            EnableExtensions();
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
@@ -108,6 +109,14 @@ namespace Ferro
             Array.Copy(response, 48, theirPeerId, 0, 20);
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
+            if (extensionsEnabled)
+            {
+                byte[] protocolExtension = new byte[256];
+                Array.Copy(response, 68, protocolExtension, 0, response.Length - 69);
+                Console.WriteLine(protocolExtension.FromASCII());
+            }
+            
+            //Console.WriteLine("Protocol extension: " + Bencoding.ToHuman((byte[]) Bencoding.Decode(protocolExtension)).ToASCII());
             // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
