@@ -31,9 +31,9 @@ namespace Ferro {
                 if (!response.Source.Equals(ep)) {
                     Console.WriteLine($"Got unexpected packet from a different source, {response.Source}: {Bencoding.ToHuman(response.Data)}");
                     continue;
-                // } else if (!value["t".ToASCII()].Equals(token)) {
-                //     Console.WriteLine($"Got patcket with unexpected token: {Bencoding.ToHuman(response.Data)}");
-                //     continue;
+                } else if (!ByteArrayComparer.Instance.Equals((byte[]) value["t".ToASCII()], token)) {
+                    Console.WriteLine($"Got packet with unexpected token: {Bencoding.ToHuman(response.Data)}");
+                    continue;
                 } else {
                     Console.WriteLine($"Got response packet: {Bencoding.ToHuman(response.Data)}");
                     break;
@@ -58,6 +58,7 @@ namespace Ferro {
                 ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
                     ["id".ToASCII()] = nodeId // only ping argument is own id
                 },
+                ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
             });
             Console.WriteLine($"Sending ping to {destination}: {Bencoding.ToHuman(ping)}");
 
