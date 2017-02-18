@@ -73,6 +73,7 @@ namespace Ferro
             {
                 Console.WriteLine("Peer failed to return fixed header; aborting connection.");
                 stream.Dispose();
+                connection.Stop();
             }
 
             Array.Copy(response, 20, peerBuffer, 0, 8);
@@ -86,6 +87,7 @@ namespace Ferro
             {
                 Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
                 stream.Dispose();
+                connection.Stop();
             }
 
             Array.Copy(response, 48, theirPeerId, 0, 20);
