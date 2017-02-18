@@ -43,15 +43,14 @@ namespace Ferro
             TcpClient client = new TcpClient();
             client.ConnectAsync(peerIP, peerPort).Wait();
 
+            EnableExtensions();
+
             if (!client.Connected)
             {
                 throw new Exception("Failed to connect to peer.");
             }
 
             Console.WriteLine("Connected to peer.");
-
-            // indicate support for extensions -- See http://www.bittorrent.org/beps/bep_0010.html
-            EnableExtensions();
 
             // Put all of our handshake data into a byte array
             byte[] handshake = new byte[68];
