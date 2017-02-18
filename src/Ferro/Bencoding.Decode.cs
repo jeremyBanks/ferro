@@ -165,7 +165,8 @@ namespace Ferro  {
                     return list;
                 
                 case (byte) 'd':
-                    var dictionary = new Dictionary<byte[], object> {};
+                    var dictionary =
+                        new Dictionary<byte[], object>(ByteArrayComparer.Instance);
                     byte[] previousKey = null;
 
                     while (true) {

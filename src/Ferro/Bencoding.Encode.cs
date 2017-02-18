@@ -53,7 +53,15 @@ namespace Ferro  {
             var keys = value.Keys.ToArray();
             Array.Sort(keys, ByteArrayComparer.Instance);
             stream.WriteByte((byte) 'd');
+            byte[] previousKey = null;
             foreach (var key in keys) {
+                if (ByteArrayComparer.Instance.Equals(previousKey, key)) {
+                    // Because it's sorted, duplicate keys will be consecutive.
+                    throw new EncodingException(
+                        "Unexpected duplicate key when encoding dictionary");
+                }
+                previousKey = key;
+
                 Encode(stream, key);
                 Encode(stream, value[key]);
             }

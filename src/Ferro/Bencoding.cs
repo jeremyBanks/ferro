@@ -59,9 +59,16 @@ namespace Ferro  {
         }
     }
 
-    class ByteArrayComparer : IComparer<byte[]> {
+    class ByteArrayComparer : IEqualityComparer<byte[]>, IComparer<byte[]> {
         // Leiconographic ordering of byte arrays.
         public int Compare(byte[] x, byte[] y) {
+            if (x == null || y == null)  {
+                throw new Exception("null is not ordered relative to byte arrays.");
+            }
+
+            if (ReferenceEquals(x, y)) {
+                return 0;
+            }
             for (var i = 0;; i++) {
                 if (i >= x.Length) {
                     if (i >= y.Length) {
@@ -81,6 +88,17 @@ namespace Ferro  {
                     return -1; // y contains a greater item first
                 }
             }
+        }
+
+        public bool Equals(byte[] x, byte[] y) {
+            if (x == null || y == null) {
+                return x == null && y == null;
+            }
+            return Compare(x, y) == 0;
+        }
+
+        public int GetHashCode(byte[] x) {
+            return x.Length;
         }
 
         // Static instance that we can always use, since there's no state.
