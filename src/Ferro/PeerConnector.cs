@@ -29,7 +29,7 @@ namespace Ferro
 
         // Generalized method to enable any extension we see fit.
         // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
-        public void EnableExtensions()
+        private void EnableExtensions()
         {
             zeroBuffer[5] = (byte) 16;
             extensionsEnabled = true;
@@ -109,12 +109,22 @@ namespace Ferro
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
             if (extensionsEnabled)
-            {
-                byte[] protocolExtension = new byte[256];
-                Array.Copy(response, 68, protocolExtension, 0, response.Length - 69);
+            { 
+                byte[] protocolExtension = new byte[response.Length - 69];
+                Array.Copy(response, 68, protocolExtension, 0, protocolExtension.Length);
                 Console.WriteLine(protocolExtension.FromASCII());
+
+                var lengthPrefix = new byte[4];
+                Array.Copy(protocolExtension, 0, lengthPrefix, 0, 4);
+                // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
+                // I'm using Linq to reverse the thing.
+                // TODO: Write a more versitile method to check and do this if necessary.
+                var length = BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
+                Console.WriteLine(length.ToString());
+
             }
             
+
             //Console.WriteLine("Protocol extension: " + Bencoding.ToHuman((byte[]) Bencoding.Decode(protocolExtension)).ToASCII());
             // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
