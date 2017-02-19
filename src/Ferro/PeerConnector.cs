@@ -110,16 +110,24 @@ namespace Ferro
 
             if (extensionsEnabled)
             { 
-                byte[] protocolExtension = new byte[response.Length - 69];
-                Array.Copy(response, 68, protocolExtension, 0, protocolExtension.Length);
-                Console.WriteLine(protocolExtension.FromASCII());
+                byte[] extensionMessage = new byte[response.Length - 69];
+                Array.Copy(response, 68, extensionMessage, 0, extensionMessage.Length);
+                Console.WriteLine(extensionMessage.FromASCII());
 
                 var lengthPrefix = new byte[4];
-                Array.Copy(protocolExtension, 0, lengthPrefix, 0, 4);
+                Array.Copy(extensionMessage, 0, lengthPrefix, 0, 4);
                 // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
                 // I'm using Linq to reverse the thing.
                 // TODO: Write a more versitile method to check and do this if necessary.
-                var length = BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
+                var length = 0;
+                if (BitConverter.IsLittleEndian)
+                {
+                    length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
+                }
+                else
+                {
+                    length += BitConverter.ToInt32(lengthPrefix, 0);
+                }
                 Console.WriteLine(length.ToString());
 
             }
