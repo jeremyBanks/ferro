@@ -7,7 +7,7 @@ using System.Net.Sockets;
 
 namespace Ferro
 {
-    public class PeerConnector
+    public class PeerConnection
     {
         // We probably want to keep this private and potentially constant
         // This is the port we'll be listening on
@@ -19,7 +19,7 @@ namespace Ferro
         private byte[] peerId = new byte[20];
         bool extensionsEnabled = false;
 
-        public PeerConnector(IPAddress ipAddress)
+        public PeerConnection(IPAddress ipAddress)
         {
             fixedHeader[0] = Convert.ToByte(19);
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
