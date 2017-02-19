@@ -111,17 +111,14 @@ namespace Ferro
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
             if (extensionsEnabled && theirExtensionsEnabled)
-            { 
-                byte[] extensionMessage = new byte[response.Length - 69];
-                Array.Copy(response, 68, extensionMessage, 0, extensionMessage.Length);
-                Console.WriteLine(extensionMessage.FromASCII());
+            {
 
-                var lengthPrefix = new byte[4];
-                Array.Copy(extensionMessage, 0, lengthPrefix, 0, 4);
                 // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
                 // I'm using Linq to reverse the thing.
                 // TODO: Write a more versitile method to check and do this if necessary.
                 var length = 0;
+                var lengthPrefix = new byte[4];
+                Array.Copy(response, 68, lengthPrefix, 0, 4);
                 if (BitConverter.IsLittleEndian)
                 {
                     length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
@@ -130,8 +127,13 @@ namespace Ferro
                 {
                     length += BitConverter.ToInt32(lengthPrefix, 0);
                 }
-                Console.WriteLine(length.ToString());
+                Console.WriteLine("Extension length is: " + length.ToString());
 
+                byte[] extensionMessage = new byte[length];
+                Array.Copy(response, 72, extensionMessage, 0, length);
+                Console.WriteLine(extensionMessage.FromASCII());
+
+                
             }
             
 
