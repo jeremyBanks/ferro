@@ -17,7 +17,10 @@ namespace Ferro
         private byte[] zeroBuffer = new byte[8];
         // Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         private byte[] peerId = new byte[20];
+
+        // Indicate whether extensions are enabled for both self and peer
         bool extensionsEnabled = false;
+        bool theirExtensionsEnabled = false;
 
         public PeerConnection(IPAddress ipAddress)
         {
@@ -37,13 +40,14 @@ namespace Ferro
 
         public void Handshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
+            EnableExtensions();
+
             TcpListener connection = new TcpListener(myIpAddress, myPort);
             connection.Start();
 
             TcpClient client = new TcpClient();
             client.ConnectAsync(peerIP, peerPort).Wait();
 
-            EnableExtensions();
 
             if (!client.Connected)
             {
@@ -89,12 +93,10 @@ namespace Ferro
             }
 
             Array.Copy(response, 20, peerBuffer, 0, 8);
-            Console.WriteLine("Peer buffer is: " + peerBuffer.FromASCII());
-            Console.WriteLine("5: " + peerBuffer[5]);
-
-            // Peer buffer will not necessarily be zero -- client implementations may be using
-            // some extension. So, looking for equality is not what we want to do here, but we'll 
-            // want to store this anyways, in case we want to implement some extension later.
+            if (peerBuffer[5] == 16)
+            {
+                theirExtensionsEnabled = true;
+            }
 
             Array.Copy(response, 28, peerInfoHash, 0, 20);
             Console.WriteLine("Peer's infohash is: " + peerInfoHash.FromASCII());
@@ -108,7 +110,7 @@ namespace Ferro
             Array.Copy(response, 48, theirPeerId, 0, 20);
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
-            if (extensionsEnabled)
+            if (extensionsEnabled && theirExtensionsEnabled)
             { 
                 byte[] extensionMessage = new byte[response.Length - 69];
                 Array.Copy(response, 68, extensionMessage, 0, extensionMessage.Length);
