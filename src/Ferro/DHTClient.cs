@@ -34,6 +34,9 @@ namespace Ferro {
         }
     }
 
+    // TODO We need a utility to Sort a list of byte arrays using the BEP 5/Kad
+    // XOR metric distance from a given target infohash, to use in all of these functions.
+
     public class DHTMessage {
         public Dictionary<byte[], dynamic> Data;
     }
@@ -166,7 +169,12 @@ namespace Ferro {
             return nodeId;
         }
 
-        public async Task<List<object>> GetPeers(byte[] infohash) {
+        public async Task<List<IPEndPoint>> GetPeers(byte[] infohash) {
+            // TODO: This is not complete.
+            // This should, up to like 10 times or something, ask the closest
+            // node to the target infohash if it knows any nodes closer to that,
+            // until it gets the result (a list of peers, not nodes) or gives up
+            // and returns an empty list or throws an exception.
             foreach (var node in knownGoodNodes) {
                 var token = new byte[]{nextToken++};
 
@@ -181,8 +189,9 @@ namespace Ferro {
 
                 var nodesData = (byte[]) results.Data["r".ToASCII()]["nodes".ToASCII()];
 
-                // We need to parse this data instead of just returing a blob
-                return new List<object> { nodesData };
+                // We need to parse `nodesData` as NODES and ping them.
+
+                return new List<IPEndPoint> {};
             }
 
             throw new Exception("had no good nodes to query");
