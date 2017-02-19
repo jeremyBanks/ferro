@@ -15,12 +15,11 @@ namespace Ferro
         private IPAddress myIpAddress;
         private byte[] fixedHeader = new byte[20];
         private byte[] zeroBuffer = new byte[8];
-        // Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
+        // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         private byte[] peerId = new byte[20];
 
-        // Indicate whether extensions are enabled for both self and peer
-        bool extensionsEnabled = false;
-        bool theirExtensionsEnabled = false;
+        private bool extensionsEnabled = false;
+        private bool theirExtensionsEnabled = false;
 
         public PeerConnection(IPAddress ipAddress)
         {
@@ -30,7 +29,6 @@ namespace Ferro
             peerId.FillRandom();
         }
 
-        // Generalized method to enable any extension we see fit.
         // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
         private void EnableExtensions()
         {
@@ -54,53 +52,52 @@ namespace Ferro
                 throw new Exception("Failed to connect to peer.");
             }
 
-            Console.WriteLine("Connected to peer.");
-
             // Put all of our handshake data into a byte array
-            byte[] handshake = new byte[68];
-            fixedHeader.CopyTo(handshake, 0);
-            zeroBuffer.CopyTo(handshake, fixedHeader.Length);
-            infoHash.CopyTo(handshake, fixedHeader.Length + zeroBuffer.Length);
-            peerId.CopyTo(handshake, fixedHeader.Length + zeroBuffer.Length + infoHash.Length);
+            var initialHandshake = new byte[68];
+            fixedHeader.CopyTo(initialHandshake, 0);
+            zeroBuffer.CopyTo(initialHandshake, fixedHeader.Length);
+            infoHash.CopyTo(initialHandshake, fixedHeader.Length + zeroBuffer.Length);
+            peerId.CopyTo(initialHandshake, fixedHeader.Length + zeroBuffer.Length + infoHash.Length);
 
-            Console.WriteLine(handshake.FromASCII());
-
+            Console.WriteLine("Sending our handshake: ");
+            Console.WriteLine(initialHandshake.FromASCII());
             NetworkStream stream = client.GetStream();
-            stream.Write(handshake);
+            stream.Write(initialHandshake);
 
             if (!stream.CanRead)
             {
                 throw new Exception("Unable to read from the network stream.");
             }
 
-            byte[] response = new byte[256];
+            var response = new byte[256];
             stream.Read(response, 0, response.Length);
+            Console.WriteLine("Received response: ");
             Console.WriteLine(response.FromASCII());
 
-            byte[] peerFixedHeader = new byte[20];
-            byte[] peerBuffer = new byte[8];
-            byte[] peerInfoHash = new byte[20];
+            byte[] theirFixedHeader = new byte[20];
+            byte[] theirBuffer = new byte[8];
+            byte[] theirInfoHash = new byte[20];
             byte[] theirPeerId = new byte[20];
 
-            Array.Copy(response, 0, peerFixedHeader, 0, 20);
+            Array.Copy(response, 0, theirFixedHeader, 0, 20);
             // TODO: Replace byte[].SequenceEqual() with the more customized byte[] comparator written by 
             // @banks -- see ceb791f0f5f6067abb900bc32eb29c4ad54e1407
-            if (!peerFixedHeader.SequenceEqual(fixedHeader))
+            if (!theirFixedHeader.SequenceEqual(fixedHeader))
             {
                 Console.WriteLine("Peer failed to return fixed header; aborting connection.");
                 stream.Dispose();
                 connection.Stop();
             }
 
-            Array.Copy(response, 20, peerBuffer, 0, 8);
-            if (peerBuffer[5] == 16)
+            Array.Copy(response, 20, theirBuffer, 0, 8);
+            if (theirBuffer[5] == 16)
             {
                 theirExtensionsEnabled = true;
             }
 
-            Array.Copy(response, 28, peerInfoHash, 0, 20);
-            Console.WriteLine("Peer's infohash is: " + peerInfoHash.FromASCII());
-            if (!peerInfoHash.SequenceEqual(infoHash))
+            Array.Copy(response, 28, theirInfoHash, 0, 20);
+            Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
+            if (!theirInfoHash.SequenceEqual(infoHash))
             {
                 Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
                 stream.Dispose();
@@ -112,7 +109,6 @@ namespace Ferro
 
             if (extensionsEnabled && theirExtensionsEnabled)
             {
-
                 // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
                 // I'm using Linq to reverse the thing.
                 // TODO: Write a more versitile method to check and do this if necessary.
@@ -127,18 +123,25 @@ namespace Ferro
                 {
                     length += BitConverter.ToInt32(lengthPrefix, 0);
                 }
-                Console.WriteLine("Extension length is: " + length.ToString());
 
-                byte[] extensionMessage = new byte[length];
-                Array.Copy(response, 72, extensionMessage, 0, length);
-                Console.WriteLine(extensionMessage.FromASCII());
+                var extensionResponse = new byte[length];
+                Array.Copy(response, 72, extensionResponse, 0, length);
+                if (extensionResponse[0] != 20)
+                {
+                    Console.WriteLine("Unexpected payload in handshake extension; Aborting.");
+                    stream.Dispose();
+                    connection.Stop();
+                }
 
-                
+                var extensionDict = new byte[length - 2];
+                Array.Copy(extensionResponse, 2, extensionDict, 0, length - 2);
+
+                var decodedDict = Bencoding.Decode(extensionDict);
+                var humanReadableDict = Bencoding.ToHuman(extensionDict);
+                Console.WriteLine("Peer's handshake extension:");
+                Console.WriteLine(humanReadableDict);
             }
             
-
-            //Console.WriteLine("Protocol extension: " + Bencoding.ToHuman((byte[]) Bencoding.Decode(protocolExtension)).ToASCII());
-            // we probably want to get rid of this in the future, when there's a proceding action
             connection.Stop();
         }
     }
