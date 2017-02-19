@@ -179,7 +179,10 @@ namespace Ferro {
 
                 var results = await result.Task;
 
-                var nodeId = (List<object>) results.Data["r".ToASCII()]["nodes".ToASCII()];
+                var nodesData = (byte[]) results.Data["r".ToASCII()]["nodes".ToASCII()];
+
+                // We need to parse this data instead of just returing a blob
+                return new List<object> { nodesData };
             }
 
             throw new Exception("had no good nodes to query");

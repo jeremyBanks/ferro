@@ -33,7 +33,10 @@ namespace Ferro
             
             var infoHash = "ea45080eae6eab465f647e6366f775bf25f69a61".FromHex();
 
-            await dht.GetPeers(infoHash);
+            var peers = await dht.GetPeers(infoHash);
+
+            Console.WriteLine(
+                $"Requested peers for {infoHash.ToHex()} and got some response!");
             
         }
 
