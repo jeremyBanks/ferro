@@ -46,6 +46,8 @@ namespace Ferro {
         private UDPSocket socket;
 
         readonly Task Listening;
+        
+        private HashSet<IPEndPoint> knownGoodNodes;
 
         // This is terrible.
         byte nextToken = 0;
@@ -59,6 +61,8 @@ namespace Ferro {
 
             socket = new UDPSocket(LocalEndPoint);
 
+            knownGoodNodes = new HashSet<IPEndPoint>();
+
             Listening = Task.Run(async () => {
                 while (true) {
                     await Task.Delay(10);
@@ -71,8 +75,8 @@ namespace Ferro {
                         var type = ((byte[]) value["y".ToASCII()]).FromASCII();
 
                         switch (type) {
-                            case "r":
-                                Console.WriteLine($"Got response message from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
+                            case "r": {
+                                Console.WriteLine($"Got response message from {response.Source}.");
 
                                 var key = new DHTQueryKey {
                                     Token = (byte[]) value["t".ToASCII()],
@@ -92,20 +96,47 @@ namespace Ferro {
                                 }
 
                                 break;
+                            }
 
-                            case "e":
-                                Console.WriteLine($"Got error mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
+                            case "e": {
+                                Console.WriteLine($"Got error mesage from {response.Source}.");
+
+                                var key = new DHTQueryKey {
+                                    Token = (byte[]) value["t".ToASCII()],
+                                    EP = response.Source
+                                };
+
+                                Console.WriteLine("For query key: " + key);
+
+                                if (pendingQueries.ContainsKey(key)) {
+                                    var responseSource = pendingQueries[key];
+                                    pendingQueries.Remove(key);
+
+                                    var errors = (List<object>) value["e".ToASCII()];
+                                    var code = (Int64) errors[0];
+                                    var message = ((byte[]) errors[1]).FromASCII();
+                                    
+                                    var exception = new Exception($"{code} {message}");
+                                    Console.WriteLine("Rejecting pending task.");
+                                    responseSource.SetException(new Exception[] { exception });
+                                } else {
+                                    Console.WriteLine("But I wasn't expecting that!");
+                                }
+
                                 break;
+                            }
 
-                            case "q": 
+                            case "q": {
                                 Console.WriteLine($"Ignored query mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
                                 // do nothing because we're read-only
                                 break;
+                            }
 
-                            default:
+                            default: {
                                 Console.WriteLine($"Got unknown mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
                                 // maybe we could send an error?
                                 break;
+                            }
                         }
                     } catch (Exception ex) {
                         Console.WriteLine("Exception! " + ex);  
@@ -115,6 +146,7 @@ namespace Ferro {
         }
 
         // Pings the DHT node at the given endpoint and returns its id, or throws an error.
+        // If the node is pinged successfully, it adds it to routing table.
         public async Task<byte[]> Ping(IPEndPoint ep) {
             var token = new byte[]{nextToken++};
 
@@ -122,20 +154,35 @@ namespace Ferro {
             var key = new DHTQueryKey { Token = token, EP = ep };
             pendingQueries[key] = result;
 
-            Console.WriteLine($"Sending query {key}...");
+            Console.WriteLine($"Sending ping {key}...");
             sendPing(ep, token);
 
             var results = await result.Task;
 
-            return (byte[]) results.Data["r".ToASCII()]["id".ToASCII()];
+            var nodeId = (byte[]) results.Data["r".ToASCII()]["id".ToASCII()];
+
+            knownGoodNodes.Add(ep);
+
+            return nodeId;
         }
 
         public async Task<List<object>> GetPeers(byte[] infohash) {
-            if ("".Length == 0) {
-                throw new Exception("NOT IMPLEMENTED");
+            foreach (var node in knownGoodNodes) {
+                var token = new byte[]{nextToken++};
+
+                var result = new TaskCompletionSource<DHTMessage>();
+                var key = new DHTQueryKey { Token = token, EP = node };
+                pendingQueries[key] = result;
+
+                Console.WriteLine($"Sending get_peers {key}...");
+                sendGetPeers(node, token, infohash);
+
+                var results = await result.Task;
+
+                var nodeId = (List<object>) results.Data["r".ToASCII()]["nodes".ToASCII()];
             }
-            await Ping(null);
-            return (List<object>) null;
+
+            throw new Exception("had no good nodes to query");
         }
 
         void sendPing(IPEndPoint destination, byte[] token) {
@@ -149,13 +196,26 @@ namespace Ferro {
                 },
                 ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
             });
-            Console.WriteLine($"Sending ping to {destination}: {Bencoding.ToHuman(ping)}");
+            Console.WriteLine($"Sending ping to {destination}.");
 
             socket.SendTo(ping, destination);
         }
 
-        void sendGetPeers() {
-            throw new Exception("NOT IMPLEMENTED");
+        void sendGetPeers(IPEndPoint destination, byte[] token, byte[] infohash) {
+            var ping = Bencoding.Encode(new Dictionary<byte[], object>{
+                ["t".ToASCII()] = token,
+                    // unique identifier for this request/response
+                ["y".ToASCII()] = "q".ToASCII(), // type is query
+                ["q".ToASCII()] = "get_peers".ToASCII(), // query name is get_peers
+                ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
+                    ["id".ToASCII()] = NodeId, // own id
+                    ["info_hash".ToASCII()] = infohash // own id
+                },
+                ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
+            });
+            Console.WriteLine($"Sending get_peers to {destination}.");
+
+            socket.SendTo(ping, destination);
         }
 
         void sendFindNode() {

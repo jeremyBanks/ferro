@@ -24,9 +24,17 @@ namespace Ferro
 
         static async Task dhtClient(IPAddress testAddress) {
             var dht = new DHTClient();
-            var id = await dht.Ping(new IPEndPoint(testAddress, 9527));
+
+            var testNode = new IPEndPoint(testAddress, 9527);
+            var testNodeId = await dht.Ping(testNode);
+
             Console.WriteLine(
-                $"Successfully pinged node and got response from node ID {id.ToHex()}");
+                $"Successfully pinged {testNode} and got response with node ID {testNodeId.ToHex()}");
+            
+            var infoHash = "ea45080eae6eab465f647e6366f775bf25f69a61".FromHex();
+
+            await dht.GetPeers(infoHash);
+            
         }
 
         static void tcpPeerProtocol(IPAddress testAddress) {
