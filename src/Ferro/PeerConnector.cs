@@ -75,8 +75,6 @@ namespace Ferro
             byte[] theirPeerId = new byte[20];
 
             Array.Copy(response, 0, theirFixedHeader, 0, 20);
-            // TODO: Replace byte[].SequenceEqual() with the more customized byte[] comparator written by 
-            // @banks -- see ceb791f0f5f6067abb900bc32eb29c4ad54e1407
             if (!theirFixedHeader.SequenceEqual(fixedHeader))
             {
                 Console.WriteLine("Peer failed to return fixed header; aborting connection.");
@@ -133,6 +131,12 @@ namespace Ferro
                     Console.WriteLine("Unexpected payload in handshake extension; Aborting.");
                     stream.Dispose();
                     //connection.Stop();
+                }
+                if (extensionResponse[1] != 0)
+                {
+                    Console.WriteLine("Derp derp write this later");
+                    stream.Dispose();
+                    // close this derps
                 }
 
                 var theirExtensionDict = new byte[length - 2];
