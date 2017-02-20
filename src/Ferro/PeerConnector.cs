@@ -27,6 +27,7 @@ namespace Ferro
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
             myIpAddress = ipAddress;
             peerId.FillRandom();
+            EnableExtensions();
         }
 
         // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
@@ -36,18 +37,12 @@ namespace Ferro
             extensionsEnabled = true;
         }
 
-        public void Handshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
+        public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
-            EnableExtensions();
+            TcpClient connection = new TcpClient();
+            connection.ConnectAsync(peerIP, peerPort).Wait();
 
-            //TcpListener connection = new TcpListener(myIpAddress, myPort);
-            //connection.Start();
-
-            TcpClient client = new TcpClient();
-            client.ConnectAsync(peerIP, peerPort).Wait();
-
-
-            if (!client.Connected)
+            if (!connection.Connected)
             {
                 throw new Exception("Failed to connect to peer.");
             }
@@ -59,15 +54,13 @@ namespace Ferro
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + extensionBitField.Length);
             peerId.CopyTo(initialHandshake, fixedHeader.Length + extensionBitField.Length + infoHash.Length);
 
-            Console.WriteLine("Sending our handshake: ");
-            Console.WriteLine(initialHandshake.FromASCII());
-            NetworkStream stream = client.GetStream();
+            Console.WriteLine("Sending our handshake to " + peerIP + ":" + peerPort);
+            NetworkStream stream = connection.GetStream();
             stream.Write(initialHandshake);
 
             var response = new byte[256];
             stream.Read(response, 0, response.Length);
-            Console.WriteLine("Received response: ");
-            Console.WriteLine(response.FromASCII());
+            Console.WriteLine("Received response from peer.");
 
             byte[] theirFixedHeader = new byte[20];
             byte[] theirBuffer = new byte[8];
@@ -77,9 +70,8 @@ namespace Ferro
             Array.Copy(response, 0, theirFixedHeader, 0, 20);
             if (!theirFixedHeader.SequenceEqual(fixedHeader))
             {
-                Console.WriteLine("Peer failed to return fixed header; aborting connection.");
                 stream.Dispose();
-                //connection.Stop();
+                throw new Exception("Peer failed to return fixed header; aborting connection.");
             }
 
             Array.Copy(response, 20, theirBuffer, 0, 8);
@@ -92,9 +84,8 @@ namespace Ferro
             Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
             if (!theirInfoHash.SequenceEqual(infoHash))
             {
-                Console.WriteLine("Peer failed to return a matching infohash; aborting connection.");
                 stream.Dispose();
-                //connection.Stop();
+                throw new Exception("Peer failed to return a matching infohash; aborting connection.");
             }
 
             Array.Copy(response, 48, theirPeerId, 0, 20);
@@ -102,12 +93,14 @@ namespace Ferro
 
             if (extensionsEnabled && theirExtensionsEnabled)
             {
+                Console.WriteLine("Peer has extensions enabled. Sending extension header...");
                 var extensionDict = GenerateExtentionDict();
                 var extensionHeader = new byte[extensionDict.Length + 2];
                 extensionHeader[0] = 20;
                 extensionHeader[1] = 0;
                 extensionDict.CopyTo(extensionHeader, 2);
                 stream.Write(extensionDict);
+                Console.WriteLine(Bencoding.ToHuman(extensionDict));
 
                 // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
                 // I'm using Linq to reverse the thing.
@@ -128,15 +121,13 @@ namespace Ferro
                 Array.Copy(response, 72, extensionResponse, 0, length);
                 if (extensionResponse[0] != 20)
                 {
-                    Console.WriteLine("Unexpected payload in handshake extension; Aborting.");
                     stream.Dispose();
-                    //connection.Stop();
+                    throw new Exception("Unexpected payload in handshake extension; Aborting.");
                 }
                 if (extensionResponse[1] != 0)
                 {
-                    Console.WriteLine("Derp derp write this later");
                     stream.Dispose();
-                    // close this derps
+                    throw new Exception("Derp derp write this later");
                 }
 
                 var theirExtensionDict = new byte[length - 2];
@@ -147,13 +138,10 @@ namespace Ferro
                 Console.WriteLine("Peer's handshake extension:");
                 Console.WriteLine(humanReadableDict);
             }
-            
-            //connection.Stop();
         }
 
         private byte[] GenerateExtentionDict()
         {
-            // byte[]
             var extensionDict = new Dictionary<byte[], object>();
             var supportedExtensions = new Dictionary<byte[], object>();
            
