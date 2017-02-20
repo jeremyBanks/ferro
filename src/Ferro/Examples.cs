@@ -1,5 +1,6 @@
 ﻿﻿using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Ferro
 {
@@ -15,15 +16,28 @@ namespace Ferro
                 return 1;
             }
 
-            dhtClient(testAddress);
+            dhtClient(testAddress).Wait();
             tcpPeerProtocol(testAddress);
 
             return 0;
         }
 
-        static void dhtClient(IPAddress testAddress) {
+        static async Task dhtClient(IPAddress testAddress) {
             var dht = new DHTClient();
-            dht.Ping(new IPEndPoint(testAddress, 9527)).Wait();
+
+            var testNode = new IPEndPoint(testAddress, 9527);
+            var testNodeId = await dht.Ping(testNode);
+
+            Console.WriteLine(
+                $"Successfully pinged {testNode} and got response with node ID {testNodeId.ToHex()}");
+            
+            var infoHash = "ea45080eae6eab465f647e6366f775bf25f69a61".FromHex();
+
+            var peers = await dht.GetPeers(infoHash);
+
+            Console.WriteLine(
+                $"Requested peers for {infoHash.ToHex()} and got some response!");
+            
         }
 
         static void tcpPeerProtocol(IPAddress testAddress) {
