@@ -13,8 +13,6 @@ namespace Ferro
         // This is the port we'll be listening on
         private Int32 myPort = 6881;
         private IPAddress myIpAddress;
-        private byte[] fixedHeader = new byte[20];
-        private byte[] extensionBitField = new byte[8];
         // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         private byte[] peerId = new byte[20];
 
@@ -23,22 +21,20 @@ namespace Ferro
 
         public PeerConnection(IPAddress ipAddress)
         {
-            fixedHeader[0] = Convert.ToByte(19);
-            "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
             myIpAddress = ipAddress;
             peerId.FillRandom();
-            EnableExtensions();
-        }
-
-        // See BEP 10 http://www.bittorrent.org/beps/bep_0010.html
-        private void EnableExtensions()
-        {
-            extensionBitField[5] = (byte) 16;
-            extensionsEnabled = true;
         }
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
+            var fixedHeader = new byte[20];
+            fixedHeader[0] = (byte) 19;
+            "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
+
+            var bufferBitfield = new byte[8];
+            bufferBitfield[5] = (byte) 16;
+            extensionsEnabled = true;
+
             TcpClient connection = new TcpClient();
             connection.ConnectAsync(peerIP, peerPort).Wait();
 
@@ -50,9 +46,9 @@ namespace Ferro
             // Put all of our handshake data into a byte array
             var initialHandshake = new byte[68];
             fixedHeader.CopyTo(initialHandshake, 0);
-            extensionBitField.CopyTo(initialHandshake, fixedHeader.Length);
-            infoHash.CopyTo(initialHandshake, fixedHeader.Length + extensionBitField.Length);
-            peerId.CopyTo(initialHandshake, fixedHeader.Length + extensionBitField.Length + infoHash.Length);
+            bufferBitfield.CopyTo(initialHandshake, fixedHeader.Length);
+            infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
+            peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
             Console.WriteLine("Sending our handshake to " + peerIP + ":" + peerPort);
             NetworkStream stream = connection.GetStream();
@@ -96,8 +92,8 @@ namespace Ferro
                 Console.WriteLine("Peer has extensions enabled. Sending extension header...");
                 var extensionDict = GenerateExtentionDict();
                 var extensionHeader = new byte[extensionDict.Length + 2];
-                extensionHeader[0] = 20;
-                extensionHeader[1] = 0;
+                extensionHeader[0] = (byte) 20;
+                extensionHeader[1] = (byte) 0;
                 extensionDict.CopyTo(extensionHeader, 2);
                 stream.Write(extensionDict);
                 Console.WriteLine(Bencoding.ToHuman(extensionDict));
@@ -138,6 +134,8 @@ namespace Ferro
                 Console.WriteLine("Peer's handshake extension:");
                 Console.WriteLine(humanReadableDict);
             }
+
+            stream.Dispose();
         }
 
         private byte[] GenerateExtentionDict()
