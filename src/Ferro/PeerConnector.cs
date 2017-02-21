@@ -41,7 +41,6 @@ namespace Ferro
                 throw new Exception("Failed to connect to peer.");
             }
 
-            // Put all of our handshake data into a byte array
             var initialHandshake = new byte[68];
             fixedHeader.CopyTo(initialHandshake, 0);
             bufferBitfield.CopyTo(initialHandshake, fixedHeader.Length);
@@ -52,29 +51,26 @@ namespace Ferro
             NetworkStream stream = connection.GetStream();
             stream.Write(initialHandshake);
 
-            var response = new byte[256];
-            stream.Read(response, 0, response.Length);
             Console.WriteLine("Received response from peer.");
-
             byte[] theirFixedHeader = new byte[20];
             byte[] theirBuffer = new byte[8];
             byte[] theirInfoHash = new byte[20];
             byte[] theirPeerId = new byte[20];
 
-            Array.Copy(response, 0, theirFixedHeader, 0, 20);
+            stream.Read(theirFixedHeader, 0, 20);
             if (!theirFixedHeader.SequenceEqual(fixedHeader))
             {
                 stream.Dispose();
                 throw new Exception("Peer failed to return fixed header; aborting connection.");
             }
 
-            Array.Copy(response, 20, theirBuffer, 0, 8);
+            stream.Read(theirBuffer, 0, 8);
             if (theirBuffer[5] == 16)
             {
                 theirExtensionsEnabled = true;
             }
 
-            Array.Copy(response, 28, theirInfoHash, 0, 20);
+            stream.Read(theirInfoHash, 0, 20);
             Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
             if (!theirInfoHash.SequenceEqual(infoHash))
             {
@@ -82,26 +78,17 @@ namespace Ferro
                 throw new Exception("Peer failed to return a matching infohash; aborting connection.");
             }
 
-            Array.Copy(response, 48, theirPeerId, 0, 20);
+            stream.Read(theirPeerId, 0, 20);
             Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
             if (extensionsEnabled && theirExtensionsEnabled)
             {
-                Console.WriteLine("Peer has extensions enabled. Sending extension header...");
-                var extensionDict = GenerateExtentionDict();
-                var extensionHeader = new byte[extensionDict.Length + 2];
-                extensionHeader[0] = (byte) 20;
-                extensionHeader[1] = (byte) 0;
-                extensionDict.CopyTo(extensionHeader, 2);
-                stream.Write(extensionDict);
-                Console.WriteLine(Bencoding.ToHuman(extensionDict));
-
                 // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
                 // I'm using Linq to reverse the thing.
                 // TODO: Write a more versitile method to check and do this if necessary.
                 var length = 0;
                 var lengthPrefix = new byte[4];
-                Array.Copy(response, 68, lengthPrefix, 0, 4);
+                stream.Read(lengthPrefix, 0, 4);
                 if (BitConverter.IsLittleEndian)
                 {
                     length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
@@ -112,7 +99,7 @@ namespace Ferro
                 }
 
                 var extensionResponse = new byte[length];
-                Array.Copy(response, 72, extensionResponse, 0, length);
+                stream.Read(extensionResponse, 0, length);
                 if (extensionResponse[0] != 20)
                 {
                     stream.Dispose();
@@ -128,9 +115,17 @@ namespace Ferro
                 Array.Copy(extensionResponse, 2, theirExtensionDict, 0, length - 2);
 
                 var decodedDict = Bencoding.Decode(theirExtensionDict);
-                var humanReadableDict = Bencoding.ToHuman(theirExtensionDict);
-                Console.WriteLine("Peer's handshake extension:");
-                Console.WriteLine(humanReadableDict);
+                Console.WriteLine("Peer's extension header:");
+                Console.WriteLine(Bencoding.ToHuman(theirExtensionDict));
+
+                Console.WriteLine("Sending our extension header...");
+                var extensionDict = GenerateExtentionDict();
+                var extensionHeader = new byte[extensionDict.Length + 2];
+                extensionHeader[0] = (byte) 20;
+                extensionHeader[1] = (byte) 0;
+                extensionDict.CopyTo(extensionHeader, 2);
+                stream.Write(extensionDict);
+                Console.WriteLine(Bencoding.ToHuman(extensionDict));
             }
 
             stream.Dispose();
