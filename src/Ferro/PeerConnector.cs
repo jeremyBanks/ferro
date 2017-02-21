@@ -9,10 +9,10 @@ namespace Ferro
 {
     public class PeerConnection
     {
-        private Int32 myPort = 6881;
-        private IPAddress myIpAddress;
+        readonly private Int32 myPort = 6881;
+        readonly private IPAddress myIpAddress;
         // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
-        private byte[] peerId = new byte[20];
+        readonly private byte[] peerId = new byte[20];
 
         private bool extensionsEnabled = false;
         private bool theirExtensionsEnabled = false;
