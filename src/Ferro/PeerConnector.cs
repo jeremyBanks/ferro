@@ -9,8 +9,6 @@ namespace Ferro
 {
     public class PeerConnection
     {
-        // We probably want to keep this private and potentially constant
-        // This is the port we'll be listening on
         private Int32 myPort = 6881;
         private IPAddress myIpAddress;
         // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
