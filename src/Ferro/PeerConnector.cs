@@ -83,52 +83,60 @@ namespace Ferro
 
             if (extensionsEnabled && theirExtensionsEnabled)
             {
-                // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
-                // I'm using Linq to reverse the thing.
-                // TODO: Write a more versitile method to check and do this if necessary.
-                var length = 0;
-                var lengthPrefix = new byte[4];
-                stream.Read(lengthPrefix, 0, 4);
-                if (BitConverter.IsLittleEndian)
-                {
-                    length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
-                }
-                else
-                {
-                    length += BitConverter.ToInt32(lengthPrefix, 0);
-                }
-
-                var extensionResponse = new byte[length];
-                stream.Read(extensionResponse, 0, length);
-                if (extensionResponse[0] != 20)
-                {
-                    stream.Dispose();
-                    throw new Exception("Unexpected payload in handshake extension; Aborting.");
-                }
-                if (extensionResponse[1] != 0)
-                {
-                    stream.Dispose();
-                    throw new Exception("Derp derp write this later");
-                }
-
-                var theirExtensionDict = new byte[length - 2];
-                Array.Copy(extensionResponse, 2, theirExtensionDict, 0, length - 2);
-
-                var decodedDict = Bencoding.Decode(theirExtensionDict);
+                var theirExtensionHeader = GetPeerExtensionHeader(stream);
+                var decodedExtension = Bencoding.Decode(theirExtensionHeader);
                 Console.WriteLine("Peer's extension header:");
-                Console.WriteLine(Bencoding.ToHuman(theirExtensionDict));
+                Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
 
                 Console.WriteLine("Sending our extension header...");
+
                 var extensionDict = GenerateExtentionDict();
                 var extensionHeader = new byte[extensionDict.Length + 2];
-                extensionHeader[0] = (byte) 20;
-                extensionHeader[1] = (byte) 0;
+                extensionHeader[0] = (byte)20;
+                extensionHeader[1] = (byte)0;
                 extensionDict.CopyTo(extensionHeader, 2);
                 stream.Write(extensionDict);
+
                 Console.WriteLine(Bencoding.ToHuman(extensionDict));
             }
 
             stream.Dispose();
+        }
+
+        private byte[] GetPeerExtensionHeader(NetworkStream stream)
+        {
+            // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
+            // I'm using Linq to reverse the thing.
+            // TODO: Write a more versitile method to check and do this if necessary.
+            var length = 0;
+            var lengthPrefix = new byte[4];
+            stream.Read(lengthPrefix, 0, 4);
+            if (BitConverter.IsLittleEndian)
+            {
+                length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
+            }
+            else
+            {
+                length += BitConverter.ToInt32(lengthPrefix, 0);
+            }
+
+            var extensionResponse = new byte[length];
+            stream.Read(extensionResponse, 0, length);
+            if (extensionResponse[0] != 20)
+            {
+                stream.Dispose();
+                throw new Exception("Unexpected payload in handshake extension; Aborting.");
+            }
+            if (extensionResponse[1] != 0)
+            {
+                stream.Dispose();
+                throw new Exception("Derp derp write this later");
+            }
+
+            var theirExtensionDict = new byte[length - 2];
+            Array.Copy(extensionResponse, 2, theirExtensionDict, 0, length - 2);
+
+            return theirExtensionDict;
         }
 
         private byte[] GenerateExtentionDict()
