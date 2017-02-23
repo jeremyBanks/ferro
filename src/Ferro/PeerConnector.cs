@@ -108,17 +108,10 @@ namespace Ferro
             // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
             // I'm using Linq to reverse the thing.
             // TODO: Write a more versitile method to check and do this if necessary.
-            var length = 0;
+            //var length = 0;
             var lengthPrefix = new byte[4];
             stream.Read(lengthPrefix, 0, 4);
-            if (BitConverter.IsLittleEndian)
-            {
-                length += BitConverter.ToInt32(lengthPrefix.Reverse().ToArray(), 0);
-            }
-            else
-            {
-                length += BitConverter.ToInt32(lengthPrefix, 0);
-            }
+            var length = lengthPrefix.Decode32BitInteger();
 
             var extensionResponse = new byte[length];
             stream.Read(extensionResponse, 0, length);
