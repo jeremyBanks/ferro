@@ -143,14 +143,14 @@ namespace Ferro
         {
             var extensionDict = new Dictionary<byte[], object>();
             var supportedExtensions = new Dictionary<byte[], object>();
-           
+
             // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
             // currently hardcoding metadata_size -- need to get it from actual source
-            supportedExtensions.Add("ut_metadata".ToASCII(), (Int64) 3);
-            extensionDict.Add("m".ToASCII(), supportedExtensions);
-            extensionDict.Add("metadata_size".ToASCII(), (Int64) 16108);
-            extensionDict.Add("p".ToASCII(), (Int64) myPort);
-            extensionDict.Add("v".ToASCII(), "Ferro 0.1.0".ToASCII());
+            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 3;
+            extensionDict["m".ToASCII()] = supportedExtensions;
+            extensionDict["metadata_size".ToASCII()] = (Int64) 16108;
+            extensionDict["p".ToASCII()] = (Int64) myPort;
+            extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 
             return Bencoding.Encode(extensionDict);
         }
