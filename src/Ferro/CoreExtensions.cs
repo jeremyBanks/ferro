@@ -84,5 +84,21 @@ namespace Ferro {
             }
             return bytes;
         }
+
+        public static Int32 Decode32BitInteger(this byte[] bytes)
+        {
+            var num = 0;
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+                num += BitConverter.ToInt32(bytes, 0);
+            }
+            else
+            {
+                num += BitConverter.ToInt32(bytes, 0);
+            }
+
+            return num;
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace Ferro
             }
 
             dhtClient(testAddress).Wait();
+            Console.Write("\n");
             tcpPeerProtocol(testAddress);
 
             return 0;
@@ -41,10 +42,10 @@ namespace Ferro
         }
 
         static void tcpPeerProtocol(IPAddress testAddress) {
-            var connector = new PeerConnector(IPAddress.Any);
+            var connector = new PeerConnection(IPAddress.Any);
             var infoHash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
 
-            connector.Handshake(testAddress, 45566, infoHash);
+            connector.InitiateHandshake(testAddress, 45566, infoHash);
             Console.WriteLine("Finished with Handshake");
         }
         
