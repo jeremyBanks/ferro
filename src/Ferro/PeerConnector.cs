@@ -105,10 +105,6 @@ namespace Ferro
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
         {
-            // BitConverter assumes a little-endian byte array, and since we're getting it big-endian,
-            // I'm using Linq to reverse the thing.
-            // TODO: Write a more versitile method to check and do this if necessary.
-            //var length = 0;
             var lengthPrefix = new byte[4];
             stream.Read(lengthPrefix, 0, 4);
             var length = lengthPrefix.Decode32BitInteger();
@@ -123,7 +119,7 @@ namespace Ferro
             if (extensionResponse[1] != 0)
             {
                 stream.Dispose();
-                throw new Exception("Derp derp write this later");
+                throw new Exception("Unexpected extended message id; Aborting.");
             }
 
             var theirExtensionDict = new byte[length - 2];
