@@ -91,10 +91,13 @@ namespace Ferro
                 Console.WriteLine("Sending our extension header...");
 
                 var extensionDict = GenerateExtentionDict();
-                var extensionHeader = new byte[extensionDict.Length + 2];
-                extensionHeader[0] = (byte)20;
-                extensionHeader[1] = (byte)0;
-                extensionDict.CopyTo(extensionHeader, 2);
+                var extensionHeader = new byte[extensionDict.Length + 6];
+                var lengthPrefix = BitConverter.GetBytes(extensionDict.Length + 2);
+                Array.Reverse(lengthPrefix); // Must be big-endian
+                Array.Copy(lengthPrefix, extensionHeader, 4);
+                extensionHeader[4] = 20;
+                extensionHeader[5] = 0;
+                extensionDict.CopyTo(extensionHeader, 6);
                 stream.Write(extensionDict);
 
                 Console.WriteLine(Bencoding.ToHuman(extensionDict));

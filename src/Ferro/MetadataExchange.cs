@@ -22,11 +22,11 @@ namespace Ferro
             var encodedRequest = Bencoding.Encode(request);
 
             var message = new byte[encodedRequest.Length + 6];
-            var lengthPrefix = BitConverter.GetBytes(encodedRequest.Length);
+            var lengthPrefix = BitConverter.GetBytes(encodedRequest.Length + 2);
             Array.Reverse(lengthPrefix); // must be big-endian
             Array.Copy(lengthPrefix, message, 4);
             message[4] = 20;
-            message[5] = 1;
+            message[5] = 2;
             lengthPrefix.CopyTo(message, 6);
             stream.Write(message);
 
