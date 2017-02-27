@@ -100,7 +100,9 @@ namespace Ferro
                 Console.WriteLine(Bencoding.ToHuman(extensionDict));
             }
 
-            stream.Dispose();
+            var metadata = new MetadataExchange();
+            metadata.SendInitialRequest(stream, connection);
+            //stream.Dispose();
         }
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
@@ -135,7 +137,8 @@ namespace Ferro
 
             // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
             // currently hardcoding metadata_size -- need to get it from actual source
-            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 3;
+            // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
+            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 1;
             extensionDict["m".ToASCII()] = supportedExtensions;
             extensionDict["metadata_size".ToASCII()] = (Int64) 16108;
             extensionDict["p".ToASCII()] = (Int64) myPort;
