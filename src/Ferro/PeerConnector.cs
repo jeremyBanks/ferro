@@ -105,7 +105,6 @@ namespace Ferro
 
             var metadata = new MetadataExchange();
             metadata.SendInitialRequest(stream, connection);
-            //stream.Dispose();
         }
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
@@ -143,7 +142,6 @@ namespace Ferro
             // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
             supportedExtensions["ut_metadata".ToASCII()] = (Int64) 1;
             extensionDict["m".ToASCII()] = supportedExtensions;
-            extensionDict["metadata_size".ToASCII()] = (Int64) 16108;
             extensionDict["p".ToASCII()] = (Int64) myPort;
             extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 
