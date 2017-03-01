@@ -11,7 +11,7 @@ namespace Ferro
     {
         public void SendInitialRequest(NetworkStream stream, TcpClient connection)
         {
-            if (!stream.CanWrite || !connection.Connected)
+            if (!connection.Connected)
             {
                 throw new Exception("Disconnected from peer after handshake.");
             }
@@ -26,15 +26,28 @@ namespace Ferro
             Array.Reverse(lengthPrefix); // must be big-endian
             Array.Copy(lengthPrefix, message, 4);
             message[4] = 20;
-            message[5] = 2;
+            message[5] = 1;
             lengthPrefix.CopyTo(message, 6);
             stream.Write(message);
 
-            var response = new byte[16384]; // each response is a piece of up to 16kb
-            stream.Read(response, 0, 16384);
+            var responseLengthPrefix = new byte[4];
+            stream.Read(responseLengthPrefix, 0, 4);
+            var length = responseLengthPrefix.Decode32BitInteger();
 
-            var decodedResponse = Bencoding.Decode(response);
-            Console.WriteLine(Bencoding.ToHuman(response));
+            var response = new byte[length + 2]; // each response is a piece of up to 16kb
+            stream.Read(response, 0, length + 2);
+
+            if (response[0] != 20)
+            {
+                stream.Dispose();
+                throw new Exception("Unexpected payload in handshake extension; Aborting.");
+            }
+            // will handle response[1] once we can reliably grab the peer's identifier for the ut_metadata protocol
+
+            var responseBody = new byte[length];
+            Array.Copy(response, 2, responseBody, 0, length);
+            var decodedResponse = Bencoding.Decode(responseBody);
+            Console.WriteLine(Bencoding.ToHuman(responseBody));
         }
     }
 }
