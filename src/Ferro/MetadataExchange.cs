@@ -18,7 +18,7 @@ namespace Ferro
 
             var request = new Dictionary<byte[], object>();
             request["msg_type".ToASCII()] = (Int64) 0; // 0 here indicates an initial request
-            request["piece".ToASCII()] = (Int64) 1;
+            request["piece".ToASCII()] = (Int64) 0;
             var encodedRequest = Bencoding.Encode(request);
             Console.WriteLine("request: ");
             Console.WriteLine(Bencoding.ToHuman(encodedRequest));
@@ -28,7 +28,7 @@ namespace Ferro
             Array.Reverse(lengthPrefix); // must be big-endian
             Array.Copy(lengthPrefix, message, 4);
             message[4] = 20;
-            message[5] = 2;
+            message[5] = 2; // should reflect the ext id the PEER has specified in their handshake
             encodedRequest.CopyTo(message, 6);
             stream.Write(message);
 
