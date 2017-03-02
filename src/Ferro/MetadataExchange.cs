@@ -15,43 +15,6 @@ namespace Ferro
             {
                 throw new Exception("Disconnected from peer after handshake.");
             }
-
-            var request = new Dictionary<byte[], object>();
-            request["msg_type".ToASCII()] = (Int64) 0; // 0 here indicates an initial request
-            request["piece".ToASCII()] = (Int64) 0;
-            var encodedRequest = Bencoding.Encode(request);
-            Console.WriteLine("request: ");
-            Console.WriteLine(Bencoding.ToHuman(encodedRequest));
-
-            var message = new byte[encodedRequest.Length + 6];
-            var lengthPrefix = BitConverter.GetBytes(encodedRequest.Length + 2);
-            Array.Reverse(lengthPrefix); // must be big-endian
-            Array.Copy(lengthPrefix, message, 4);
-            message[4] = 20;
-            message[5] = 2; // should reflect the ext id the PEER has specified in their handshake
-            encodedRequest.CopyTo(message, 6);
-            Console.WriteLine(encodedRequest.ToHuman());
-            Console.WriteLine(message.ToHuman());
-            stream.Write(message);
-
-            var responseLengthPrefix = new byte[4];
-            stream.Read(responseLengthPrefix, 0, 4);
-            var length = responseLengthPrefix.Decode32BitInteger();
-
-            var response = new byte[length + 2]; // each response is a piece of up to 16kb
-            stream.Read(response, 0, length + 2);
-
-            if (response[0] != 20)
-            {
-                stream.Dispose();
-                throw new Exception("Unexpected payload; Aborting.");
-            }
-            // will handle response[1] once we can reliably grab the peer's identifier for the ut_metadata protocol
-
-            var responseBody = new byte[length];
-            Array.Copy(response, 2, responseBody, 0, length);
-            var decodedResponse = Bencoding.Decode(responseBody);
-            Console.WriteLine(Bencoding.ToHuman(responseBody));
         }
     }
 }
