@@ -104,7 +104,7 @@ namespace Ferro
             }
 
             var metadata = new MetadataExchange();
-            metadata.SendInitialRequest(stream, connection);
+            metadata.RequestMetadata(stream, connection, 2);
         }
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
