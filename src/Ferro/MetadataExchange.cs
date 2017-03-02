@@ -30,6 +30,8 @@ namespace Ferro
             message[4] = 20;
             message[5] = 2; // should reflect the ext id the PEER has specified in their handshake
             encodedRequest.CopyTo(message, 6);
+            Console.WriteLine(encodedRequest.ToHuman());
+            Console.WriteLine(message.ToHuman());
             stream.Write(message);
 
             var responseLengthPrefix = new byte[4];

@@ -140,8 +140,9 @@ namespace Ferro
             // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
             // currently hardcoding metadata_size -- need to get it from actual source
             // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
-            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 1;
+            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
+            //extensionDict["metadata_size".ToASCII()] = (Int64) 0;
             extensionDict["p".ToASCII()] = (Int64) myPort;
             extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 
