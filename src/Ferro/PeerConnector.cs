@@ -78,7 +78,9 @@ namespace Ferro
                 if (extensionsEnabled && theirExtensionsEnabled)
                 {
                     var theirExtensionHeader = GetPeerExtensionHeader(stream);
-                    var decodedExtension = Bencoding.Decode(theirExtensionHeader);
+                    dynamic decodedExtensionHeader = Bencoding.Decode(theirExtensionHeader);
+                    dynamic theirExtensions = decodedExtensionHeader["m".ToASCII()];
+                    
                     Console.WriteLine("Peer's extension header:");
                     Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
 
@@ -94,16 +96,20 @@ namespace Ferro
                     stream.Write(extensionHeader);
 
                     Console.WriteLine(Bencoding.ToHuman(extensionDict));
+
+                    // Send interested message
+                    stream.Write(1.EncodeBytes());
+                    stream.Write(new byte[1]{2});
+                    Console.WriteLine("Sent interested message.");
+
+                    if (theirExtensions.ContainsKey("ut_metadata".ToASCII())) {
+                        Console.WriteLine("They also support metadata exchange. Lets try that.");
+                        var theirMetadataExtensionId = (byte) theirExtensions["ut_metadata".ToASCII()];
+
+                        var metadata = new MetadataExchange();
+                        metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId);
+                    }
                 }
-
-                // Send interested message
-                stream.Write(1.EncodeBytes());
-                stream.Write(new byte[1]{2});
-                Console.WriteLine("Sent interested message.");
-
-
-                var metadata = new MetadataExchange();
-                metadata.RequestMetadata(stream, connection, 2);
             }
         }
 

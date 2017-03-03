@@ -6,15 +6,16 @@ namespace Ferro
 {
     public class MetadataExchange
     { 
-        // extCode refers to the value peer has associated with ut_metadata
-        public void RequestMetadata(NetworkStream stream, TcpClient connection, int extCode)
+        // ourExtCode refers to the value we have associated with ut_metadata
+        // theirExtCode refers to the value they have associated with ut_metadata
+        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode)
         {
             if (!connection.Connected)
             {
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            var initialRequest = ConstructMessage(extCode, 0, 0);
+            var initialRequest = ConstructMessage(ourExtCode, 0, 0);
             Console.WriteLine("Sending message: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
@@ -30,7 +31,7 @@ namespace Ferro
                     }
                 }
 
-                Console.WriteLine("Their length: " + theirLength);
+                Console.WriteLine($"Got message with length {theirLength}.");
                 var peerResponse = stream.ReadBytes(theirLength);
                 var responseTypeId = peerResponse[0];
                 switch (responseTypeId)
@@ -38,6 +39,22 @@ namespace Ferro
                     case 20:
                         Console.WriteLine("It's an extension message! Hurrah!");
                         // TODO: handle it, then return the result so we stop reading shit
+
+                        var extensionId = peerResponse[1];
+
+                        if (extensionId == theirExtCode) {
+                            Console.WriteLine("It's a metadata exchange message!");
+                            var data = peerResponse.Slice(2);
+                            long dictSize;
+                            var dict = Bencoding.DecodeFirst(data, out dictSize);
+                            var postDict = data.Slice((Int32) dictSize);
+
+                            Console.WriteLine($"Got dictionary... {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
+                        
+                        } else {
+                            Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
+                        }
+
                     break;
 
                     case 0:
@@ -65,7 +82,7 @@ namespace Ferro
 
 
         // For messages with msgType 0 (request) and 2 (reject)
-        public static byte[] ConstructMessage(int extCode, int msgType, int piece)
+        public static byte[] ConstructMessage(int ourExtCode, int msgType, int piece)
         {
             var messageDict = new Dictionary<byte[], object>();
             messageDict["msg_type".ToASCII()] = (Int64)msgType;
@@ -77,14 +94,14 @@ namespace Ferro
             var message = new byte[encodedMsg.Length + 6];
             length.CopyTo(message, 0);
             message[4] = 20;
-            message[5] = (byte)extCode;
+            message[5] = (byte)ourExtCode;
             encodedMsg.CopyTo(message, 6);
 
             return message;
         }
 
         // For messages with msgType 1 (data)
-        public static byte[] ConstructMessage(int extCode, int msgType, int piece, int length)
+        public static byte[] ConstructMessage(int ourExtCode, int msgType, int piece, int length)
         {
             return new byte[4];
         }
