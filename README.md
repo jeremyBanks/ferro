@@ -1,8 +1,26 @@
-Ferro is a BitTorrent client, library, and/or something, written in C# on .NET Core.
+# Ferro
 
-We're not very experienced with C#, so look elsewhere if you want good code.
+<https://gitlab.com/banks/ferro>
 
-## Developer Resources
+Ferro is a BitTorrent client and library.
+
+It's written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
+
+## Development Tips
+
+### Using `dotnet` in the shell (maybe with Visual Studio Code)
+
+`make peer` and `make stop-peer` will start and stop our test rTorrent/ruTorrent Docker image using data from `./test-peer-data/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, run `make stop-peer` and then replace the contents of `./test-peer-data/` with those of `./test-peer-state/`.
+
+`make run` runs our main program (which doesn't do very much yet).
+
+`make test` runs what few unit tests we have.
+
+### Using Visual Studio
+
+Ask Chris? ¯\\\_(ツ)\_/¯
+
+## BitTorrent References
 
 - [Official Index of BitTorrent Enhancement Proposals (Specifications)](http://www.bittorrent.org/beps/bep_0000.html)
 - [BitTorrent Protocol and Bencoding (BEP 3)](http://www.bittorrent.org/beps/bep_0003.html)  
