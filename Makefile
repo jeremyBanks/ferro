@@ -20,11 +20,13 @@ run:
 	cd ./src/Ferro/ && dotnet run 127.0.0.1;
 
 peer:
+	rm -rf ./test-peer-state/;
+	cp -R ./test-peer-data/ ./test-peer-state/;
 	docker pull registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
 	docker run -d \
 		-p 8042:80 -p 45566:45566 -p 9527:9527/udp \
 		--dns 8.8.8.8 \
-		-v $(PWD)/test-peer-data:/rtorrent  \
+		-v $(PWD)/test-peer-state:/rtorrent  \
 		-e UPLOAD_RATE=1024 \
 		registry.gitlab.com/banks/ferro:docktorrent;
 	docker ps;
