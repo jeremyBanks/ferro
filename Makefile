@@ -1,8 +1,11 @@
 __default:
+	make stop-peer || true;
+	make peer;
 	make deps;
 	make build;
 	make test;
 	make run;
+	make stop-peer;
 
 .PHONY: __default deps build test run peer stop-peer
 
