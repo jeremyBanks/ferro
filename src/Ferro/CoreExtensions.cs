@@ -98,12 +98,20 @@ namespace Ferro {
             if (bytes.Length != 4) {
                 throw new Exception($"bytes must have length 4, is {bytes.Length}");
             }
+            return (
+                (bytes[0] << (8 * 3)) |
+                (bytes[1] << (8 * 2)) | 
+                (bytes[2] << (8 * 1)) | 
+                (bytes[3] << (8 * 0)));
+        }
 
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(bytes);
-            }
-            return BitConverter.ToInt32(bytes, 0);
+        public static byte[] EncodeBytes(this Int32 number) {
+            return new byte[4] {
+                (byte) ((number >> (8 * 3)) & 0xFF),
+                (byte) ((number >> (8 * 2)) & 0xFF),
+                (byte) ((number >> (8 * 1)) & 0xFF),
+                (byte) ((number >> (8 * 0)) & 0xFF)
+            };
         }
     }
 }

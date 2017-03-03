@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 
@@ -30,8 +29,8 @@ namespace Ferro
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
 
             var bufferBitfield = new byte[8];
-            bufferBitfield[5] = (byte) 16;
-            extensionsEnabled = true;
+            // bufferBitfield[5] = (byte) 16;
+            // extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
             connection.ConnectAsync(peerIP, peerPort).Wait();
@@ -87,7 +86,7 @@ namespace Ferro
 
                     var extensionDict = GenerateExtentionDict();
                     var extensionHeader = new byte[extensionDict.Length + 6];
-                    var lengthPrefix = BitConverter.GetBytes(extensionDict.Length + 2);
+                    var lengthPrefix = (extensionDict.Length + 2).EncodeBytes();
                     Array.Reverse(lengthPrefix); // Must be big-endian
                     Array.Copy(lengthPrefix, extensionHeader, 4);
                     extensionHeader[4] = 20;
@@ -134,7 +133,7 @@ namespace Ferro
             // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
             // currently hardcoding metadata_size -- need to get it from actual source
             // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
-            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
+            // supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
             //extensionDict["metadata_size".ToASCII()] = (Int64)0;
             extensionDict["p".ToASCII()] = (Int64) myPort;

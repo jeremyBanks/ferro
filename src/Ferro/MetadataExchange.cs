@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net;
 using System.Net.Sockets;
 
 namespace Ferro
@@ -17,25 +14,52 @@ namespace Ferro
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            var initialRequest = ConstructMessage(extCode, 0, 0);
-            Console.WriteLine("Sending message: " + initialRequest.ToHuman());
-            stream.Write(initialRequest);
+            while (true) {
+                // var initialRequest = ConstructMessage(extCode, 0, 0);
+                // Console.WriteLine("Sending message: " + initialRequest.ToHuman());
+                // stream.Write(initialRequest);
 
-            Int32 theirLength = 0;
-            // Read lengths until we get a non-zero (non-keepalive) length.
-            while (theirLength == 0) {
-                var theirPrefix = stream.ReadBytes(4);
-                theirLength = theirPrefix.Decode32BitInteger();
-                if (theirLength == 0) {
-                    Console.WriteLine("Got keepalive.");
+                Int32 theirLength = 0;
+                // Read lengths until we get a non-zero (non-keepalive) length.
+                while (theirLength == 0) {
+                    var theirPrefix = stream.ReadBytes(4);
+                    theirLength = theirPrefix.Decode32BitInteger();
+                    if (theirLength == 0) {
+                        Console.WriteLine("Got keepalive. Let's send our own!");
+                        stream.Write(new byte[4]);
+                    }
                 }
-            }
 
-            Console.WriteLine("Their length: " + theirLength);
-            var peerResponse = stream.ReadBytes(theirLength);
-            if (peerResponse[0] != 20)
-            {
-                Console.WriteLine("Unexpected payload; aborting.");
+                Console.WriteLine("Their length: " + theirLength);
+                var peerResponse = stream.ReadBytes(theirLength);
+                var responseTypeId = peerResponse[0];
+                switch (responseTypeId)
+                {  
+                    case 20:
+                        Console.WriteLine("It's an extension message! Hurrah!");
+                        // TODO: handle it, then return the result so we stop reading shit
+                    break;
+
+                    case 0:
+                        Console.WriteLine("It's a choke message! :(");
+                    break;
+
+                    case 1:
+                        Console.WriteLine("It's an unchoke message! :D");
+                    break;
+
+                    case 2:
+                        Console.WriteLine("It's an interested message! <3");
+                    break;
+
+                    case 4:
+                        Console.WriteLine("It's a not interested message! </3");
+                    break;
+
+                    default:
+                        Console.WriteLine($"Unexpected message type {responseTypeId}; aborting.");
+                    break;
+                }
             }
         }
 
@@ -48,7 +72,7 @@ namespace Ferro
             messageDict["piece".ToASCII()] = (Int64)piece;
             var encodedMsg = Bencoding.Encode(messageDict);
 
-            var length = BitConverter.GetBytes(encodedMsg.Length + 2);
+            var length = (encodedMsg.Length + 2).EncodeBytes();
             Array.Reverse(length);
 
             var message = new byte[encodedMsg.Length + 6];

@@ -25,7 +25,7 @@ namespace Ferro  {
                 Encode(stream, (Int64) value);
             } else {
                 throw new EncodingException(
-                    $"Cannot encode value of type ${value.GetType()}.");
+                    $"Cannot encode value of type {value.GetType()}.");
             }
         }
 
