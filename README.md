@@ -1,4 +1,5 @@
 Ferro is a BitTorrent client, library, and/or something like that.
+We're not very experienced with C#, so beware if you were expecting good code.
 
 ## Developer Resources
 
@@ -8,7 +9,6 @@ Ferro is a BitTorrent client, library, and/or something like that.
 - [Unofficial BitTorrent Specification](https://wiki.theory.org/BitTorrentSpecification)  
   Alternative description that may help understanding of certain parts.
 - [My brief summary of how decentralized torrents work](https://stackoverflow.com/a/22240583/1114)
-- [WebTorrent FAQ](https://webtorrent.io/faq)
 - [Multiple Tracker Metadata Extension (BEP 12)](http://www.bittorrent.org/beps/bep_0012.html)  
   Small extension to allow multiple trackers in torrent file.
 - [BitTorrent Extension Protocol (BEP 10)](http://www.bittorrent.org/beps/bep_0010.html)  
