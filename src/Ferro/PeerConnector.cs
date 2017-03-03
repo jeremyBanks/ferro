@@ -29,8 +29,8 @@ namespace Ferro
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
 
             var bufferBitfield = new byte[8];
-            // bufferBitfield[5] = (byte) 16;
-            // extensionsEnabled = true;
+            bufferBitfield[5] = (byte) 16;
+            extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
             connection.ConnectAsync(peerIP, peerPort).Wait();
@@ -87,15 +87,20 @@ namespace Ferro
                     var extensionDict = GenerateExtentionDict();
                     var extensionHeader = new byte[extensionDict.Length + 6];
                     var lengthPrefix = (extensionDict.Length + 2).EncodeBytes();
-                    Array.Reverse(lengthPrefix); // Must be big-endian
                     Array.Copy(lengthPrefix, extensionHeader, 4);
                     extensionHeader[4] = 20;
                     extensionHeader[5] = 0;
                     extensionDict.CopyTo(extensionHeader, 6);
-                    stream.Write(extensionDict);
+                    stream.Write(extensionHeader);
 
                     Console.WriteLine(Bencoding.ToHuman(extensionDict));
                 }
+
+                // Send interested message
+                stream.Write(1.EncodeBytes());
+                stream.Write(new byte[1]{2});
+                Console.WriteLine("Sent interested message.");
+
 
                 var metadata = new MetadataExchange();
                 metadata.RequestMetadata(stream, connection, 2);
@@ -133,11 +138,11 @@ namespace Ferro
             // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
             // currently hardcoding metadata_size -- need to get it from actual source
             // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
-            // supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
+            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
-            //extensionDict["metadata_size".ToASCII()] = (Int64)0;
-            extensionDict["p".ToASCII()] = (Int64) myPort;
-            extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
+            // extensionDict["metadata_size".ToASCII()] = (Int64) 0;
+            // extensionDict["p".ToASCII()] = (Int64) myPort;
+            // extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 
             return Bencoding.Encode(extensionDict);
         }

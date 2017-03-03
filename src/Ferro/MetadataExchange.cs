@@ -14,11 +14,11 @@ namespace Ferro
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            while (true) {
-                // var initialRequest = ConstructMessage(extCode, 0, 0);
-                // Console.WriteLine("Sending message: " + initialRequest.ToHuman());
-                // stream.Write(initialRequest);
+            var initialRequest = ConstructMessage(extCode, 0, 0);
+            Console.WriteLine("Sending message: " + initialRequest.ToHuman());
+            stream.Write(initialRequest);
 
+            while (true) {
                 Int32 theirLength = 0;
                 // Read lengths until we get a non-zero (non-keepalive) length.
                 while (theirLength == 0) {
@@ -73,7 +73,6 @@ namespace Ferro
             var encodedMsg = Bencoding.Encode(messageDict);
 
             var length = (encodedMsg.Length + 2).EncodeBytes();
-            Array.Reverse(length);
 
             var message = new byte[encodedMsg.Length + 6];
             length.CopyTo(message, 0);
