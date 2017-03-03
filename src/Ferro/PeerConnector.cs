@@ -141,8 +141,8 @@ namespace Ferro
             supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
             // extensionDict["metadata_size".ToASCII()] = (Int64) 0;
-            // extensionDict["p".ToASCII()] = (Int64) myPort;
-            // extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
+            extensionDict["p".ToASCII()] = (Int64) myPort;
+            extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 
             return Bencoding.Encode(extensionDict);
         }
