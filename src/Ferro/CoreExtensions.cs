@@ -11,9 +11,14 @@ namespace Ferro {
 
         public static byte[] ReadBytes(this Stream stream, Int32 length) {
             var buffer = new byte[length];
-            var actual = stream.Read(buffer, 0, length);
-            if (actual < length) {
-                throw new Exception($"Read {actual} bytes expecting {length}.");
+            var total = 0;
+            while (total < length) {
+                var remaining = length - total;
+                var pieceSize = stream.Read(buffer, total, remaining);
+                if (pieceSize == 0) {
+                    throw new Exception($"Unexpected end of stream reading {length} bytes.");
+                }
+                total += pieceSize;
             }
             return buffer;
         }
