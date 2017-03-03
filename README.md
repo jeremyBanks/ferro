@@ -1,5 +1,6 @@
-Ferro is a BitTorrent client, library, and/or something like that.
-We're not very experienced with C#, so beware if you were expecting good code.
+Ferro is a BitTorrent client, library, and/or something, written in C# on .NET Core.
+
+We're not very experienced with C#, so look elsewhere if you want good code.
 
 ## Developer Resources
 
