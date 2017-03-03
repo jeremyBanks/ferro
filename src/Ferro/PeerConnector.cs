@@ -48,63 +48,63 @@ namespace Ferro
             peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
             Console.WriteLine("Sending our handshake to " + peerIP + ":" + peerPort);
-            NetworkStream stream = connection.GetStream();
-            stream.Write(initialHandshake);
-
-            Console.WriteLine("Received response from peer.");
-            byte[] theirFixedHeader = new byte[20];
-            byte[] theirBuffer = new byte[8];
-            byte[] theirInfoHash = new byte[20];
-            byte[] theirPeerId = new byte[20];
-
-            stream.Read(theirFixedHeader, 0, 20);
-            if (!theirFixedHeader.SequenceEqual(fixedHeader))
+            using (var stream = connection.GetStream())
             {
-                stream.Dispose();
-                throw new Exception("Peer failed to return fixed header; aborting connection.");
+                stream.Write(initialHandshake);
+
+                Console.WriteLine("Received response from peer.");
+                byte[] theirFixedHeader = new byte[20];
+                byte[] theirBuffer = new byte[8];
+                byte[] theirInfoHash = new byte[20];
+                byte[] theirPeerId = new byte[20];
+
+                stream.Read(theirFixedHeader, 0, 20);
+                if (!theirFixedHeader.SequenceEqual(fixedHeader))
+                {
+                    throw new Exception("Peer failed to return fixed header; aborting connection.");
+                }
+
+                stream.Read(theirBuffer, 0, 8);
+                if (theirBuffer[5] == 16)
+                {
+                    theirExtensionsEnabled = true;
+                }
+
+                stream.Read(theirInfoHash, 0, 20);
+                Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
+                if (!theirInfoHash.SequenceEqual(infoHash))
+                {
+                    throw new Exception("Peer failed to return a matching infohash; aborting connection.");
+                }
+
+                stream.Read(theirPeerId, 0, 20);
+                Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
+
+                if (extensionsEnabled && theirExtensionsEnabled)
+                {
+                    var theirExtensionHeader = GetPeerExtensionHeader(stream);
+                    var decodedExtension = Bencoding.Decode(theirExtensionHeader);
+                    Console.WriteLine("Peer's extension header:");
+                    Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
+
+                    Console.WriteLine("Sending our extension header...");
+
+                    var extensionDict = GenerateExtentionDict();
+                    var extensionHeader = new byte[extensionDict.Length + 6];
+                    var lengthPrefix = BitConverter.GetBytes(extensionDict.Length + 2);
+                    Array.Reverse(lengthPrefix); // Must be big-endian
+                    Array.Copy(lengthPrefix, extensionHeader, 4);
+                    extensionHeader[4] = 20;
+                    extensionHeader[5] = 0;
+                    extensionDict.CopyTo(extensionHeader, 6);
+                    stream.Write(extensionDict);
+
+                    Console.WriteLine(Bencoding.ToHuman(extensionDict));
+                }
+
+                var metadata = new MetadataExchange();
+                metadata.RequestMetadata(stream, connection, 2);
             }
-
-            stream.Read(theirBuffer, 0, 8);
-            if (theirBuffer[5] == 16)
-            {
-                theirExtensionsEnabled = true;
-            }
-
-            stream.Read(theirInfoHash, 0, 20);
-            Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
-            if (!theirInfoHash.SequenceEqual(infoHash))
-            {
-                stream.Dispose();
-                throw new Exception("Peer failed to return a matching infohash; aborting connection.");
-            }
-
-            stream.Read(theirPeerId, 0, 20);
-            Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
-
-            if (extensionsEnabled && theirExtensionsEnabled)
-            {
-                var theirExtensionHeader = GetPeerExtensionHeader(stream);
-                var decodedExtension = Bencoding.Decode(theirExtensionHeader);
-                Console.WriteLine("Peer's extension header:");
-                Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
-
-                Console.WriteLine("Sending our extension header...");
-
-                var extensionDict = GenerateExtentionDict();
-                var extensionHeader = new byte[extensionDict.Length + 6];
-                var lengthPrefix = BitConverter.GetBytes(extensionDict.Length + 2);
-                Array.Reverse(lengthPrefix); // Must be big-endian
-                Array.Copy(lengthPrefix, extensionHeader, 4);
-                extensionHeader[4] = 20;
-                extensionHeader[5] = 0;
-                extensionDict.CopyTo(extensionHeader, 6);
-                stream.Write(extensionDict);
-
-                Console.WriteLine(Bencoding.ToHuman(extensionDict));
-            }
-
-            var metadata = new MetadataExchange();
-            metadata.RequestMetadata(stream, connection, 2);
         }
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
@@ -142,7 +142,7 @@ namespace Ferro
             // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
             supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
-            //extensionDict["metadata_size".ToASCII()] = (Int64) 0;
+            //extensionDict["metadata_size".ToASCII()] = (Int64)0;
             extensionDict["p".ToASCII()] = (Int64) myPort;
             extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 

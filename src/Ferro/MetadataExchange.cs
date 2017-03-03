@@ -18,12 +18,27 @@ namespace Ferro
             }
 
             var initialRequest = ConstructMessage(extCode, 0, 0);
+            Console.WriteLine("Sending message: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
-            var test = new byte[4];
-            stream.Read(test, 0, 4);
-            Console.WriteLine(test.ToHuman());
+            var theirPrefix = new byte[4];
+            stream.Read(theirPrefix, 0, 4);
+            var theirLength = theirPrefix.Decode32BitInteger();
+
+            if (theirLength == 0)
+            {
+                throw new Exception("No response from peer; aborting.");
+            }
+
+            Console.WriteLine("Their length: " + theirLength);
+            var peerResponse = new byte[theirLength];
+            stream.Read(peerResponse, 0, theirLength);
+            if (peerResponse[0] != 20)
+            {
+                Console.WriteLine("Unexpected payload; aborting.");
+            }
         }
+
 
         // For messages with msgType 0 (request) and 2 (reject)
         public static byte[] ConstructMessage(int extCode, int msgType, int piece)
