@@ -4,10 +4,18 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace Ferro {
-    // Extensions methods on core types that we use internally.
     public static class CoreExtensions {
         public static void Write(this Stream stream, byte[] bytes) {
             stream.Write(bytes, 0, bytes.Length);
+        }
+
+        public static byte[] ReadBytes(this Stream stream, Int32 length) {
+            var buffer = new byte[length];
+            var actual = stream.Read(buffer, 0, length);
+            if (actual < length) {
+                throw new Exception($"Read ${actual} bytes expecting ${length}.");
+            }
+            return buffer;
         }
 
         // Produces a human developer-friendly respresentation of the bytes.
@@ -87,18 +95,15 @@ namespace Ferro {
 
         public static Int32 Decode32BitInteger(this byte[] bytes)
         {
-            var num = 0;
+            if (bytes.Length != 4) {
+                throw new Exception($"bytes must have length 4, is ${bytes.Length}");
+            }
+
             if (BitConverter.IsLittleEndian)
             {
                 Array.Reverse(bytes);
-                num += BitConverter.ToInt32(bytes, 0);
             }
-            else
-            {
-                num += BitConverter.ToInt32(bytes, 0);
-            }
-
-            return num;
+            return BitConverter.ToInt32(bytes, 0);
         }
     }
 }

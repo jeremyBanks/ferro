@@ -53,31 +53,27 @@ namespace Ferro
                 stream.Write(initialHandshake);
 
                 Console.WriteLine("Received response from peer.");
-                byte[] theirFixedHeader = new byte[20];
-                byte[] theirBuffer = new byte[8];
-                byte[] theirInfoHash = new byte[20];
-                byte[] theirPeerId = new byte[20];
-
-                stream.Read(theirFixedHeader, 0, 20);
+                
+                var theirFixedHeader = stream.ReadBytes(20);
                 if (!theirFixedHeader.SequenceEqual(fixedHeader))
                 {
                     throw new Exception("Peer failed to return fixed header; aborting connection.");
                 }
 
-                stream.Read(theirBuffer, 0, 8);
+                var theirBuffer = stream.ReadBytes(8);
                 if (theirBuffer[5] == 16)
                 {
                     theirExtensionsEnabled = true;
                 }
 
-                stream.Read(theirInfoHash, 0, 20);
+                var theirInfoHash = stream.ReadBytes(20);
                 Console.WriteLine("Peer's infohash is: " + theirInfoHash.FromASCII());
                 if (!theirInfoHash.SequenceEqual(infoHash))
                 {
                     throw new Exception("Peer failed to return a matching infohash; aborting connection.");
                 }
 
-                stream.Read(theirPeerId, 0, 20);
+                var theirPeerId = stream.ReadBytes(20);
                 Console.WriteLine("The peer's peer ID is " + theirPeerId.FromASCII());
 
                 if (extensionsEnabled && theirExtensionsEnabled)
@@ -109,12 +105,10 @@ namespace Ferro
 
         private byte[] GetPeerExtensionHeader(NetworkStream stream)
         {
-            var lengthPrefix = new byte[4];
-            stream.Read(lengthPrefix, 0, 4);
+            var lengthPrefix = stream.ReadBytes(4);
             var length = lengthPrefix.Decode32BitInteger();
 
-            var extensionResponse = new byte[length];
-            stream.Read(extensionResponse, 0, length);
+            var extensionResponse = stream.ReadBytes(length);
             if (extensionResponse[0] != 20)
             {
                 stream.Dispose();

@@ -21,8 +21,7 @@ namespace Ferro
             Console.WriteLine("Sending message: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
-            var theirPrefix = new byte[4];
-            stream.Read(theirPrefix, 0, 4);
+            var theirPrefix = stream.ReadBytes(4);
             var theirLength = theirPrefix.Decode32BitInteger();
 
             if (theirLength == 0)
@@ -31,8 +30,7 @@ namespace Ferro
             }
 
             Console.WriteLine("Their length: " + theirLength);
-            var peerResponse = new byte[theirLength];
-            stream.Read(peerResponse, 0, theirLength);
+            var peerResponse = stream.ReadBytes(theirLength);
             if (peerResponse[0] != 20)
             {
                 Console.WriteLine("Unexpected payload; aborting.");
