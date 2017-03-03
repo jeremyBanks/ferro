@@ -13,7 +13,7 @@ namespace Ferro {
             var buffer = new byte[length];
             var actual = stream.Read(buffer, 0, length);
             if (actual < length) {
-                throw new Exception($"Read ${actual} bytes expecting ${length}.");
+                throw new Exception($"Read {actual} bytes expecting {length}.");
             }
             return buffer;
         }
@@ -96,7 +96,7 @@ namespace Ferro {
         public static Int32 Decode32BitInteger(this byte[] bytes)
         {
             if (bytes.Length != 4) {
-                throw new Exception($"bytes must have length 4, is ${bytes.Length}");
+                throw new Exception($"bytes must have length 4, is {bytes.Length}");
             }
 
             if (BitConverter.IsLittleEndian)

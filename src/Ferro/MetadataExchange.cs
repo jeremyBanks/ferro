@@ -21,12 +21,14 @@ namespace Ferro
             Console.WriteLine("Sending message: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
-            var theirPrefix = stream.ReadBytes(4);
-            var theirLength = theirPrefix.Decode32BitInteger();
-
-            if (theirLength == 0)
-            {
-                throw new Exception("No response from peer; aborting.");
+            Int32 theirLength = 0;
+            // Read lengths until we get a non-zero (non-keepalive) length.
+            while (theirLength == 0) {
+                var theirPrefix = stream.ReadBytes(4);
+                theirLength = theirPrefix.Decode32BitInteger();
+                if (theirLength == 0) {
+                    Console.WriteLine("Got keepalive.");
+                }
             }
 
             Console.WriteLine("Their length: " + theirLength);
