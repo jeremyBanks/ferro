@@ -15,8 +15,9 @@ namespace Ferro
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
+            // Request the first piece.
             var initialRequest = ConstructMessage(ourExtCode, 0, 0);
-            Console.WriteLine("Sending message: " + initialRequest.ToHuman());
+            Console.WriteLine("Sending request for first metadata piece: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
             while (true) {
@@ -49,7 +50,7 @@ namespace Ferro
                             var dict = Bencoding.DecodeFirst(data, out dictSize);
                             var postDict = data.Slice((Int32) dictSize);
 
-                            Console.WriteLine($"Got dictionary... {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
+                            Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
                         
                         } else {
                             Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
