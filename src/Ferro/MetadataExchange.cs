@@ -84,10 +84,11 @@ namespace Ferro
                                 {
                                     Console.WriteLine("metadata verified!");
                                     DataHandler.SaveMetadata(combinedPieces);
+                                    Console.WriteLine("metadata saved.");
                                 }
                                 else
                                 {
-                                    Console.WriteLine("metadata not verified!");
+                                    Console.WriteLine("metadata verification failed!");
                                 }
                                 
                                 return;

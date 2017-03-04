@@ -10,13 +10,19 @@ namespace Ferro
     {
         public static void SaveMetadata(byte[] bytes)
         {
+            var info = Bencoding.Decode(bytes);
+            var metainfo = new Dictionary<byte[], object> {
+                {"info".ToASCII(), info}
+            };
+            var torrentFileData = Bencoding.Encode(metainfo);
+
             string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "file-store", "metadata", "example.torrent" };
             var path = Path.Combine(pathStrings);
 
-            File.Create(path, bytes.Length); // if the file already exists, completely overwrite it.
-            using (var stream = File.OpenWrite(path))
+            // if the file already exists, completely overwrite it.
+            using (var stream = File.Create(path))
             {
-                stream.Write(bytes, 0, bytes.Length);
+                stream.Write(torrentFileData, 0, torrentFileData.Length);
             }
         }
     }
