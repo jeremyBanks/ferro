@@ -10,7 +10,6 @@ namespace Ferro
     {
         readonly private Int32 myPort = 6881;
         readonly private IPAddress myIpAddress;
-        // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
         readonly private byte[] peerId = new byte[20];
 
         private bool extensionsEnabled = false;
@@ -19,10 +18,12 @@ namespace Ferro
         public PeerConnection(IPAddress ipAddress)
         {
             myIpAddress = ipAddress;
+            // Append an implementation identifier to our peer id
             var idPrefix = "-FR0001-".ToASCII();
+            idPrefix.CopyTo(peerId, 0);
             var temp = new byte[12];
             temp.FillRandom();
-            idPrefix.CopyTo(peerId, 0);
+
             temp.CopyTo(peerId, 8);
         }
 
