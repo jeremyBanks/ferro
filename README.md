@@ -1,6 +1,26 @@
-Ferro is a BitTorrent client, library, and/or something like that.
+# Ferro
 
-## Developer Resources
+<https://gitlab.com/banks/ferro>
+
+Ferro is a BitTorrent client and library.
+
+It's written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
+
+## Development Tips
+
+### Using `dotnet` in the shell (maybe with Visual Studio Code)
+
+`make peer` and `make stop-peer` will start and stop our test rTorrent/ruTorrent Docker image using data from `./test-peer-data/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, run `make stop-peer` and then replace the contents of `./test-peer-data/` with those of `./test-peer-state/`.
+
+`make run` runs our main program (which doesn't do very much yet).
+
+`make test` runs what few unit tests we have.
+
+### Using Visual Studio
+
+Ask Chris? ¯\\\_(ツ)\_/¯
+
+## BitTorrent References
 
 - [Official Index of BitTorrent Enhancement Proposals (Specifications)](http://www.bittorrent.org/beps/bep_0000.html)
 - [BitTorrent Protocol and Bencoding (BEP 3)](http://www.bittorrent.org/beps/bep_0003.html)  
@@ -8,7 +28,6 @@ Ferro is a BitTorrent client, library, and/or something like that.
 - [Unofficial BitTorrent Specification](https://wiki.theory.org/BitTorrentSpecification)  
   Alternative description that may help understanding of certain parts.
 - [My brief summary of how decentralized torrents work](https://stackoverflow.com/a/22240583/1114)
-- [WebTorrent FAQ](https://webtorrent.io/faq)
 - [Multiple Tracker Metadata Extension (BEP 12)](http://www.bittorrent.org/beps/bep_0012.html)  
   Small extension to allow multiple trackers in torrent file.
 - [BitTorrent Extension Protocol (BEP 10)](http://www.bittorrent.org/beps/bep_0010.html)  

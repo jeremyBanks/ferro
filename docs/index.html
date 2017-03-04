@@ -1,0 +1,42 @@
+<!doctype html>
+
+<title>Ferro</title>
+
+<style>
+    html {
+        min-height: 100%;   
+        background-image: url(./ferro.png);
+        background-position: center;
+        background-size: 64px;
+        background-repeat: no-repeat;
+        animation-duration: 23s, 27s;
+        animation-name: sideways, upways;
+        animation-iteration-count: infinite;
+        animation-direction: default;
+        animation-timing-function: ease-in-out;
+    }
+
+    @keyframes sideways {
+        from { 
+            background-position-x: 90%;
+        }
+        50% {
+            background-position-x: 10%;
+        }
+        to {
+            background-position-x: 90%;
+        }
+    }
+
+    @keyframes upways {
+        from { 
+            background-position-y: 90%;
+        }
+        50% {
+            background-position-y: 10%;
+        }
+        to {
+            background-position-y: 90%;
+        }
+    }
+</style>
