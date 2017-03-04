@@ -52,8 +52,6 @@ namespace Ferro
                 {  
                     case 20:
                         Console.WriteLine("It's an extension message! Hurrah!");
-                        // TODO: handle it, then return the result so we stop reading shit
-
                         var extensionId = peerResponse[1];
 
                         if (extensionId == theirExtCode) {
@@ -125,19 +123,6 @@ namespace Ferro
                     break;
                 }
             }
-        }
-
-        private void HandleIncomingPiece(byte[] piece)
-        {
-            Console.WriteLine($"Handling a piece of metadata, of length {piece.Length}");
-            dynamic decodedPiece = Bencoding.Decode(piece);
-
-            foreach (KeyValuePair<byte[], object> item in decodedPiece)
-            {                 
-                Console.WriteLine($"{item.Key.FromASCII()} : {item.Value}");  
-            }
-            
-            
         }
 
         // For messages with msgType 0 (request) and 2 (reject)
