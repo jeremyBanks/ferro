@@ -44,8 +44,9 @@ namespace Ferro
         static void tcpPeerProtocol(IPAddress testAddress) {
             var connector = new PeerConnection(IPAddress.Any);
             var infoHash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
-
+            var infoHashMultiPiece = "34930674EF3BB9317FB5F263CCA830F52685235B".FromHex();
             connector.InitiateHandshake(testAddress, 45566, infoHash);
+            connector.InitiateHandshake(testAddress, 45566, infoHashMultiPiece);
             Console.WriteLine("Finished with Handshake");
         }
         

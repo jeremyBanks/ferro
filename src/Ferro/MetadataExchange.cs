@@ -14,7 +14,7 @@ namespace Ferro
 
         public MetadataExchange(Int64 metadataSize)
         {
-            var numberOfPieces = metadataSize > 16384 ? metadataSize / 16384 : 1;
+            var numberOfPieces = metadataSize > 16384 ? (int)Math.Ceiling(metadataSize / 16384.0) : 1;
             metadataPieces = new byte[numberOfPieces][];
             totalMetadata = metadataSize;
         }
@@ -66,7 +66,6 @@ namespace Ferro
                             Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
                             Console.WriteLine("storing...");
                             metadataPieces[currentPiece] = postDict;
-                            HandleIncomingPiece(postDict);
                             currentPiece++;
                             
                             if (currentPiece == metadataPieces.Length)
@@ -92,6 +91,10 @@ namespace Ferro
                                 
                                 return;
                             }
+
+                            var request = ConstructMessage(ourExtCode, 0, currentPiece);
+                            Console.WriteLine("Requesting the next piece of metadata...");
+                            stream.Write(request);
 
                         } else {
                             Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
