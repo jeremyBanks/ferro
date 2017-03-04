@@ -5,7 +5,17 @@ using System.Net.Sockets;
 namespace Ferro
 {
     public class MetadataExchange
-    { 
+    {
+        // This is where we will store pieces of metadata.
+        byte[][] metadataPieces;
+        Int32 currentPiece = 0;
+
+        public MetadataExchange(Int64 metadataSize)
+        {
+            var numberOfPieces = metadataSize > 16384 ? metadataSize / 16384 : 1;
+            metadataPieces = new byte[numberOfPieces][];
+        }
+
         // ourExtCode refers to the value we have associated with ut_metadata
         // theirExtCode refers to the value they have associated with ut_metadata
         public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode)
@@ -48,10 +58,15 @@ namespace Ferro
                             var data = peerResponse.Slice(2);
                             long dictSize;
                             var dict = Bencoding.DecodeFirst(data, out dictSize);
-                            var postDict = data.Slice((Int32) dictSize);
+                            var postDict = data.Slice((Int32) dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 
                             Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
+                            Console.WriteLine("storing...");
+                            metadataPieces[currentPiece] = postDict;
                             HandleIncomingPiece(postDict);
+                            currentPiece++;
+                            Console.WriteLine(metadataPieces.Length);
+
 
                         } else {
                             Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
@@ -82,15 +97,17 @@ namespace Ferro
             }
         }
 
-        private void HandleIncomingPiece(byte[] data)
+        private void HandleIncomingPiece(byte[] piece)
         {
-            Console.WriteLine($"Handling a piece of metadata, of length {data.Length}");
-            dynamic piece = Bencoding.Decode(data);
+            Console.WriteLine($"Handling a piece of metadata, of length {piece.Length}");
+            dynamic decodedPiece = Bencoding.Decode(piece);
 
-            foreach (KeyValuePair<byte[], object> item in piece)
-            {
-                Console.WriteLine($"{item.Key.FromASCII()} : {item.Value.ToString()}");
+            foreach (KeyValuePair<byte[], object> item in decodedPiece)
+            {                 
+                Console.WriteLine($"{item.Key.FromASCII()} : {item.Value}");  
             }
+            
+            
         }
 
         // For messages with msgType 0 (request) and 2 (reject)

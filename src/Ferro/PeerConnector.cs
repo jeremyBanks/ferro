@@ -106,7 +106,7 @@ namespace Ferro
                         Console.WriteLine("They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte) theirExtensions["ut_metadata".ToASCII()];
 
-                        var metadata = new MetadataExchange();
+                        var metadata = new MetadataExchange(decodedExtensionHeader["metadata_size".ToASCII()]);
                         metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId);
                     }
                 }
