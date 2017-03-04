@@ -19,11 +19,16 @@ namespace Ferro
         public PeerConnection(IPAddress ipAddress)
         {
             myIpAddress = ipAddress;
-            peerId.FillRandom();
+            var idPrefix = "-FR0001-".ToASCII();
+            var temp = new byte[12];
+            temp.FillRandom();
+            idPrefix.CopyTo(peerId, 0);
+            temp.CopyTo(peerId, 8);
         }
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
+            Console.WriteLine("Our peer id: " + peerId.FromASCII());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte) 19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
