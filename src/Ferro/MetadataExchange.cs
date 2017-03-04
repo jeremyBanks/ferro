@@ -14,7 +14,7 @@ namespace Ferro
 
         public MetadataExchange(Int64 metadataSize)
         {
-            var numberOfPieces = metadataSize > 16384 ? (int)Math.Ceiling(metadataSize / 16384.0) : 1;
+            var numberOfPieces = metadataSize > 16384 ? (int)Math.Ceiling(metadataSize / 16384.0) : 1; // Each piece up to last is 16384 bytes -> 16kb
             metadataPieces = new byte[numberOfPieces][];
             totalMetadata = metadataSize;
         }
@@ -83,6 +83,7 @@ namespace Ferro
                                 if (Enumerable.SequenceEqual(hash, infoHash))
                                 {
                                     Console.WriteLine("metadata verified!");
+                                    DataHandler.SaveMetadata(combinedPieces);
                                 }
                                 else
                                 {
