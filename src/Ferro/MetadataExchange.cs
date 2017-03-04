@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Linq;
 
 namespace Ferro
 {
@@ -9,16 +10,18 @@ namespace Ferro
         // This is where we will store pieces of metadata.
         byte[][] metadataPieces;
         Int32 currentPiece = 0;
+        Int64 totalMetadata;
 
         public MetadataExchange(Int64 metadataSize)
         {
             var numberOfPieces = metadataSize > 16384 ? metadataSize / 16384 : 1;
             metadataPieces = new byte[numberOfPieces][];
+            totalMetadata = metadataSize;
         }
 
         // ourExtCode refers to the value we have associated with ut_metadata
         // theirExtCode refers to the value they have associated with ut_metadata
-        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode)
+        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode, byte[] infoHash)
         {
             if (!connection.Connected)
             {
@@ -65,8 +68,30 @@ namespace Ferro
                             metadataPieces[currentPiece] = postDict;
                             HandleIncomingPiece(postDict);
                             currentPiece++;
-                            Console.WriteLine(metadataPieces.Length);
+                            
+                            if (currentPiece == metadataPieces.Length)
+                            {
+                                // verify metadata
+                                var combinedPieces = new byte[totalMetadata];
+                                var index = 0;
+                                foreach (var piece in metadataPieces)
+                                {
+                                    piece.CopyTo(combinedPieces, index);
+                                    index += piece.Length;
+                                }
 
+                                var hash = combinedPieces.Sha1();
+                                if (Enumerable.SequenceEqual(hash, infoHash))
+                                {
+                                    Console.WriteLine("metadata verified!");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("metadata not verified!");
+                                }
+                                
+                                return;
+                            }
 
                         } else {
                             Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
