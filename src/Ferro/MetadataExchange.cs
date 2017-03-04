@@ -51,7 +51,8 @@ namespace Ferro
                             var postDict = data.Slice((Int32) dictSize);
 
                             Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
-                        
+                            HandleIncomingPiece(postDict);
+
                         } else {
                             Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
                         }
@@ -81,9 +82,19 @@ namespace Ferro
             }
         }
 
+        private void HandleIncomingPiece(byte[] data)
+        {
+            Console.WriteLine($"Handling a piece of metadata, of length {data.Length}");
+            dynamic piece = Bencoding.Decode(data);
+
+            foreach (KeyValuePair<byte[], object> item in piece)
+            {
+                Console.WriteLine($"{item.Key.FromASCII()} : {item.Value.ToString()}");
+            }
+        }
 
         // For messages with msgType 0 (request) and 2 (reject)
-        public static byte[] ConstructMessage(int ourExtCode, int msgType, int piece)
+        private static byte[] ConstructMessage(int ourExtCode, int msgType, int piece)
         {
             var messageDict = new Dictionary<byte[], object>();
             messageDict["msg_type".ToASCII()] = (Int64)msgType;
@@ -102,7 +113,7 @@ namespace Ferro
         }
 
         // For messages with msgType 1 (data)
-        public static byte[] ConstructMessage(int ourExtCode, int msgType, int piece, int length)
+        private static byte[] ConstructMessage(int ourExtCode, int msgType, int piece, int length)
         {
             return new byte[4];
         }
