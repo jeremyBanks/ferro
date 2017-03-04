@@ -10,13 +10,14 @@ namespace Ferro
     {
         public static void SaveMetadata(byte[] bytes)
         {
-            var info = Bencoding.Decode(bytes);
+            dynamic info = Bencoding.Decode(bytes);
+            byte[] name = info["name".ToUTF8()];
             var metainfo = new Dictionary<byte[], object> {
                 {"info".ToASCII(), info}
             };
             var torrentFileData = Bencoding.Encode(metainfo);
 
-            string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "file-store", "metadata", "example.torrent" };
+            string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "file-store", "metadata", name.FromUTF8() + ".torrent" };
             var path = Path.Combine(pathStrings);
 
             // if the file already exists, completely overwrite it.
