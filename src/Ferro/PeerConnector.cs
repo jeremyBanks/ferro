@@ -21,10 +21,7 @@ namespace Ferro
             // Append an implementation identifier to our peer id
             var idPrefix = "-FR0001-".ToASCII();
             idPrefix.CopyTo(peerId, 0);
-            var temp = new byte[12];
-            temp.FillRandom();
-
-            temp.CopyTo(peerId, 8);
+            peerId.FillRandom(8);
         }
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
