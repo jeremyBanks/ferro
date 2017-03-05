@@ -351,7 +351,6 @@ namespace Ferro.UnitTests
                 }
             };
             var encoded = serialize(value);
-            Console.WriteLine(encoded.FromASCII());
             Assert.Equal("d5:hellold5:worldi102436eeee".ToASCII(), encoded);
             AssertRoundTrip(encoded);
         }

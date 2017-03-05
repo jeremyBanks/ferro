@@ -57,7 +57,7 @@ namespace Ferro
                         if (extensionId == theirExtCode) {
                             Console.WriteLine("It's a metadata exchange message!");
                             var data = peerResponse.Slice(2);
-                            long dictSize;
+                            Int64 dictSize;
                             dynamic dict = Bencoding.DecodeFirst(data, out dictSize);
                             var postDict = data.Slice((Int32) dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 

@@ -24,26 +24,42 @@ namespace Ferro {
             return buffer;
         }
 
-        // Efficient? No. But it's simple.
-        public static byte[] Slice(this byte[] bytes, Int32 start, Int32? end = null) {
-            var sureEnd = end != null ? (byte) end : bytes.Length;
+        // Returns a copy of the array from start index (inclusive) to end index (exclusive).
+        // Negative indicies are treated as offsets from the end of the string.
+        // This should match the behaviour of the JavaScript Array..slice() method.
+        public static byte[] Slice(this byte[] bytes, Int32? start = null, Int32? end = null) {
+            var realEnd = end != null ? (Int32) end : bytes.Length;
+            var realStart = start != null ? (Int32) start : 0;
 
-            if (start < 0) {
-                start = bytes.Length + start;
+            // Wrap negative indicies once.
+            if (realStart < 0) {
+                realStart = bytes.Length + realStart;
             }
-            if (start < 0) {
-                start = 0;
-            }
-            if (end < 0) {
-                end = bytes.Length + end;
-            }
-            if (end < start) {
-                end = start;
+            if (realEnd < 0) {
+                realEnd = bytes.Length + realEnd;
             }
 
-            var result = new byte[sureEnd - start];
-            Array.Copy(bytes, start, result, 0, sureEnd - start);
-            return result;
+            // Clamp to array bounds.
+            if (realStart < 0) {
+                realStart = 0;
+            }
+            if (realEnd < 0) {
+                realEnd = 0;
+            }
+            if (realStart > bytes.Length) {
+                realStart = bytes.Length;
+            }
+            if (realEnd > bytes.Length) {
+                realEnd = bytes.Length;
+            }
+
+            if (realEnd > realStart) {
+                var result = new byte[realEnd - realStart];
+                Array.Copy(bytes, realStart, result, 0, realEnd - realStart);
+                return result;
+            } else {
+                return new byte[0];
+            }
         }
 
         // Produces a human developer-friendly respresentation of the bytes.
