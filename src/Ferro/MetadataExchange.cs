@@ -58,8 +58,13 @@ namespace Ferro
                             Console.WriteLine("It's a metadata exchange message!");
                             var data = peerResponse.Slice(2);
                             long dictSize;
-                            var dict = Bencoding.DecodeFirst(data, out dictSize);
+                            dynamic dict = Bencoding.DecodeFirst(data, out dictSize);
                             var postDict = data.Slice((Int32) dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
+
+                            if (dict["piece".ToASCII()] != currentPiece)
+                            {
+                                throw new Exception($"Expected piece {currentPiece}. Instead, received {dict["piece".ToASCII()]}");
+                            }
 
                             Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
                             Console.WriteLine("storing...");
