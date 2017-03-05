@@ -107,35 +107,36 @@ namespace Ferro {
         }
 
         public void AddNode(IPEndPoint ep) {
+            Console.WriteLine($"DHT: Node added: {ep}");
             possibleNodes.Add(ep);
         }
 
         private async void connectionHealthLoop() {
             while (!canceled) {
+                Console.WriteLine($"DHT: {knownNodes.Count} good nodes, {possibleNodes.Count} potential");
+
                 if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
-                    // we can't do anything unless we have a node to bootstrap
-                    Console.WriteLine("DHT: Not connected -- no nodes.");
                     await Task.Delay(2500);
                     continue;
                 } 
 
-                if (knownNodes.Count < 16) {
-                    if (possibleNodes.Count > 0) {
-                        var ep = possibleNodes.Pop();
-                        Console.WriteLine($"Pinging possible node {ep} to check validity.");
-                        Ping(ep);
+                if (possibleNodes.Count > 0) {
+                    var ep = possibleNodes.Pop();
+                    Console.WriteLine($"Pinging possible node {ep} to check validity.");
+                    Ping(ep);
 
-                        await Task.Delay(1500);
-                        continue;
-                    } else {
-                        var id = new byte[20].FillRandom();
-                        Console.WriteLine(
-                            $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
-                        GetPeers(id);
+                    await Task.Delay(1500);
+                    continue;
+                }
 
-                        await Task.Delay(1000);
-                        continue;
-                    }
+                if (knownNodes.Count > 0 && knownNodes.Count < 16) {
+                    var id = new byte[20].FillRandom();
+                    Console.WriteLine(
+                        $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
+                    GetPeers(id);
+
+                    await Task.Delay(1000);
+                    continue;
                 }
 
                 connectedSource.TrySetResult(true);
@@ -285,8 +286,6 @@ namespace Ferro {
         public async Task<List<IPEndPoint>> GetPeers(byte[] infohash) {
             var visitedNodeAddresses = new HashSet<IPAddress>();
 
-            await Connected;
-
             var queries = 0;
 
             while (true) {
@@ -308,7 +307,9 @@ namespace Ferro {
                 }
 
                 if (closestNode == null) {
-                    throw new Exception($"Failed to find peers for {infohash} in the DHT.");
+                    Console.WriteLine($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT.");
+                    await Task.Delay(5000);
+                    continue;
                 }
 
                 var token = (lastToken = IncrementToken(lastToken));
@@ -326,16 +327,33 @@ namespace Ferro {
 
                 if (response.ContainsKey("nodes")) {
                     var compactNodes = response.GetBytes("nodes");
-                        
+                    
                     Console.WriteLine("Got closer nodes: " + compactNodes.ToHuman());
 
-                    break;
+                    var nodeCount = compactNodes.Length % 26;
+                    for (var i = 0; i < compactNodes.Length; i += 26) {
+                        // we disregard the node ID here, since we'll ping all of them and get it then
+                        AddNode(new IPEndPoint(
+                            new IPAddress(compactNodes.Slice(i + 20, i + 24)),
+                            compactNodes.Slice(i + 22, i + 26).Decode16BitInteger()));
+                    }
+
+                    continue;
                 } else {
                     var compactPeers = response.GetBytes("peers");
 
                     Console.WriteLine("Got peers: " + compactPeers.ToHuman());
 
-                    return new List<IPEndPoint> {};
+                    var peers = new List<IPEndPoint> {};
+
+                    var nodeCount = compactPeers.Length % 6;
+                    for (var i = 0; i < compactPeers.Length; i += 6) {
+                        peers.Add(new IPEndPoint(
+                            new IPAddress(compactPeers.Slice(i + 0, i + 4)),
+                            compactPeers.Slice(i + 2, i + 6).Decode16BitInteger()));
+                    }
+
+                    return peers;
                 }
             }
             

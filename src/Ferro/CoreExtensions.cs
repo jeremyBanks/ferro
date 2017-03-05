@@ -167,6 +167,23 @@ namespace Ferro {
             };
         }
 
+        public static Int32 Decode16BitInteger(this byte[] bytes)
+        {
+            if (bytes.Length != 4) {
+                throw new Exception($"bytes must have length 4, is {bytes.Length}");
+            }
+            return (
+                (bytes[0] << (8 * 1)) | 
+                (bytes[1] << (8 * 0)));
+        }
+
+        public static byte[] EncodeBytes(this Int16 number) {
+            return new byte[2] {
+                (byte) ((number >> (8 * 1)) & 0xFF),
+                (byte) ((number >> (8 * 0)) & 0xFF)
+            };
+        }
+
         public static dynamic Get(this Dictionary<byte[], object> bDict, string key) {
             return bDict[key.ToASCII()];
         }
