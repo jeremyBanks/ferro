@@ -111,15 +111,13 @@ namespace Ferro {
         }
 
         // Fills the array with secure random data.
-        public static byte[] FillRandom(this byte[] bytes, Int32 startIndex = 0)
+        public static byte[] FillRandom(this byte[] bytes)
         {
-            var temp = new byte[bytes.Length - startIndex];
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
-                rng.GetBytes(temp);
+                rng.GetBytes(bytes);
             }
 
-            temp.CopyTo(bytes, startIndex);
             return bytes;
         }
 

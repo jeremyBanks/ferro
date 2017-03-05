@@ -10,7 +10,7 @@ namespace Ferro
     {
         readonly private Int32 myPort = 6881;
         readonly private IPAddress myIpAddress;
-        readonly private byte[] peerId = new byte[20].FillRandom(8);
+        readonly private byte[] peerId = new byte[20].FillRandom();
 
         private bool extensionsEnabled = false;
         private bool theirExtensionsEnabled = false;
@@ -18,9 +18,7 @@ namespace Ferro
         public PeerConnection(IPAddress ipAddress)
         {
             myIpAddress = ipAddress;
-            // Append an implementation identifier to our peer id
-            var idPrefix = "-FR0001-".ToASCII();
-            idPrefix.CopyTo(peerId, 0);
+            "-FR0001-".ToASCII().CopyTo(peerId, 0);
         }
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
