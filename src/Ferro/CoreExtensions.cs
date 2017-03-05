@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -141,5 +142,14 @@ namespace Ferro {
                 (byte) ((number >> (8 * 0)) & 0xFF)
             };
         }
+
+        public static object Get(this Dictionary<byte[], object> bDict, string key) {
+            return bDict[key.ToASCII()];
+        }
+
+        public static void Set(this Dictionary<byte[], object> bDict, string key, object value) {
+            bDict[key.ToASCII()] = value;
+        }
     }
+    
 }
