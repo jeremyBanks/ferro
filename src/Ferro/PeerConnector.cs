@@ -78,8 +78,10 @@ namespace Ferro
                 if (extensionsEnabled && theirExtensionsEnabled)
                 {
                     var theirExtensionHeader = GetPeerExtensionHeader(stream);
-                    dynamic decodedExtensionHeader = Bencoding.Decode(theirExtensionHeader);
-                    dynamic theirExtensions = decodedExtensionHeader["m".ToASCII()];
+                    var decodedExtensionHeader =
+                        (Dictionary<byte[], object>) Bencoding.Decode(theirExtensionHeader);
+                    var theirExtensions =
+                        (Dictionary<byte[], object>) decodedExtensionHeader.Get("m");
                     
                     Console.WriteLine("Peer's extension header:");
                     Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
@@ -102,11 +104,11 @@ namespace Ferro
                     stream.Write(new byte[1]{2});
                     Console.WriteLine("Sent interested message.");
 
-                    if (theirExtensions.ContainsKey("ut_metadata".ToASCII())) {
+                    if (theirExtensions.ContainsKey("ut_metadata")) {
                         Console.WriteLine("They also support metadata exchange. Lets try that.");
-                        var theirMetadataExtensionId = (byte) theirExtensions["ut_metadata".ToASCII()];
+                        var theirMetadataExtensionId = (byte) theirExtensions.Get("ut_metadata");
 
-                        var metadata = new MetadataExchange(decodedExtensionHeader["metadata_size".ToASCII()]);
+                        var metadata = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));
                         metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
                     }
                 }
@@ -141,12 +143,12 @@ namespace Ferro
             var extensionDict = new Dictionary<byte[], object>();
             var supportedExtensions = new Dictionary<byte[], object>();
             
-            supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
-            extensionDict["m".ToASCII()] = supportedExtensions;
+            supportedExtensions.Set("ut_metadata", (Int64) 2);
+            extensionDict.Set("m", supportedExtensions);
             // metadata_size is unnecessary if we are requesting. If we're providing metadata, we should add this. 
-            // extensionDict["metadata_size".ToASCII()] = (Int64) 0; 
-            extensionDict["p".ToASCII()] = (Int64) myPort;
-            extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
+            // extensionDict.Set("metadata_size", (Int64) 0);
+            extensionDict.Set("p", (Int64) myPort);
+            extensionDict.Set("v", "Ferro 0.1.0".ToASCII());
 
             return Bencoding.Encode(extensionDict);
         }

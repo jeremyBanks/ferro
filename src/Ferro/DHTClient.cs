@@ -75,14 +75,14 @@ namespace Ferro {
 
                         var value = (Dictionary<byte[], object>) Bencoding.Decode(response.Data);
 
-                        var type = ((byte[]) value["y".ToASCII()]).FromASCII();
+                        var type = ((byte[]) value.Get("y")).FromASCII();
 
                         switch (type) {
                             case "r": {
                                 Console.WriteLine($"Got response message from {response.Source}.");
 
                                 var key = new DHTQueryKey {
-                                    Token = (byte[]) value["t".ToASCII()],
+                                    Token = (byte[]) value.Get("t"),
                                     EP = response.Source
                                 };
 
@@ -105,7 +105,7 @@ namespace Ferro {
                                 Console.WriteLine($"Got error mesage from {response.Source}.");
 
                                 var key = new DHTQueryKey {
-                                    Token = (byte[]) value["t".ToASCII()],
+                                    Token = (byte[]) value.Get("t"),
                                     EP = response.Source
                                 };
 
@@ -115,7 +115,7 @@ namespace Ferro {
                                     var responseSource = pendingQueries[key];
                                     pendingQueries.Remove(key);
 
-                                    var errors = (List<object>) value["e".ToASCII()];
+                                    var errors = (List<object>) value.Get("e");
                                     var code = (Int64) errors[0];
                                     var message = ((byte[]) errors[1]).FromASCII();
                                     
