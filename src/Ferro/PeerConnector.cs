@@ -10,8 +10,7 @@ namespace Ferro
     {
         readonly private Int32 myPort = 6881;
         readonly private IPAddress myIpAddress;
-        // TODO: Need to begin peer id with an implementation id -- format: `-FR1000-` (dash, callsign, version number, dash)
-        readonly private byte[] peerId = new byte[20];
+        readonly private byte[] peerId = new byte[20].FillRandom();
 
         private bool extensionsEnabled = false;
         private bool theirExtensionsEnabled = false;
@@ -19,11 +18,12 @@ namespace Ferro
         public PeerConnection(IPAddress ipAddress)
         {
             myIpAddress = ipAddress;
-            peerId.FillRandom();
+            "-FR0001-".ToASCII().CopyTo(peerId, 0);
         }
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
+            Console.WriteLine("Our peer id: " + peerId.FromASCII());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte) 19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
@@ -106,8 +106,8 @@ namespace Ferro
                         Console.WriteLine("They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte) theirExtensions["ut_metadata".ToASCII()];
 
-                        var metadata = new MetadataExchange();
-                        metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId);
+                        var metadata = new MetadataExchange(decodedExtensionHeader["metadata_size".ToASCII()]);
+                        metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
                     }
                 }
             }
@@ -140,13 +140,11 @@ namespace Ferro
         {
             var extensionDict = new Dictionary<byte[], object>();
             var supportedExtensions = new Dictionary<byte[], object>();
-
-            // ut_metadata and metadata_size indicate support for BEP 9, which we will add later.
-            // currently hardcoding metadata_size -- need to get it from actual source
-            // TODO: figure out how to get metadata_size and ut_metadata from peer's BEP 10 extension
+            
             supportedExtensions["ut_metadata".ToASCII()] = (Int64) 2;
             extensionDict["m".ToASCII()] = supportedExtensions;
-            // extensionDict["metadata_size".ToASCII()] = (Int64) 0;
+            // metadata_size is unnecessary if we are requesting. If we're providing metadata, we should add this. 
+            // extensionDict["metadata_size".ToASCII()] = (Int64) 0; 
             extensionDict["p".ToASCII()] = (Int64) myPort;
             extensionDict["v".ToASCII()] = "Ferro 0.1.0".ToASCII();
 

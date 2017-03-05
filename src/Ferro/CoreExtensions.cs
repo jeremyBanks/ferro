@@ -117,6 +117,7 @@ namespace Ferro {
             {
                 rng.GetBytes(bytes);
             }
+
             return bytes;
         }
 
