@@ -38,6 +38,11 @@ namespace Ferro {
         public Dictionary<byte[], dynamic> Data;
     }
 
+    class DHTNode {
+        public IPEndPoint EP;
+        public byte[] Id;
+    }
+
     // A client (not server) for the mainline BitTorrent DHT.
     public class DHTClient : IDisposable
     {
@@ -49,50 +54,98 @@ namespace Ferro {
         private bool canceled = false;
 
         // A task that completes once we have a healthy DHT connection.
-        readonly Task Connecting;
-        private TaskCompletionSource<bool> connectingSource;
+        readonly Task Connected;
+        private TaskCompletionSource<bool> connectedSource;
 
         // A task that completes once we the main task has bound a port and initialized.
         readonly Task Started;
         private TaskCompletionSource<bool> startedSource;
 
-        // A task for the DHT's background activites, that should keep runing for as long as it's active.
-        readonly Task Running;
-        
-        private HashSet<IPEndPoint> knownGoodNodes;
+        readonly Task MessageEventLoop;
 
-        // This is terrible.
-        byte nextToken = 0;
+        readonly Task ConnectionHealthLoop;
+        
+        // Endpoints that might be DHT nodes, but we haven't pinged yet.
+        private HashSet<IPEndPoint> possibleNodes;
+
+        // Nodes we've successfully pinged
+        private Dictionary<IPEndPoint, DHTNode> knownNodes;
+
+        byte[] lastToken = new byte[0];
 
         private Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>> pendingQueries;
 
         public DHTClient() {
-            connectingSource = new TaskCompletionSource<bool>();
-            Connecting = connectingSource.Task;
+            connectedSource = new TaskCompletionSource<bool>();
+            Connected = connectedSource.Task;
 
             nodeId = new byte[20].FillRandom();
-            knownGoodNodes = new HashSet<IPEndPoint>();
+            possibleNodes = new HashSet<IPEndPoint>();
+            knownNodes = new Dictionary<IPEndPoint, DHTNode>();
             pendingQueries = new Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>>();
             localEP = new IPEndPoint(IPAddress.Any, 6881);
 
             startedSource = new TaskCompletionSource<bool>();
             Started = startedSource.Task;
 
-            Running = Task.Run(new Action(main));
+            MessageEventLoop = Task.Run(new Action(messageEventLoop));
+            ConnectionHealthLoop = Task.Run(new Action(connectionHealthLoop));
 
-            // Mark other tasks as failed if the main task fails.
+
             Task.Run(async () => {
                 try {
-                    await Running;
+                    await MessageEventLoop;
+                    await ConnectionHealthLoop;
                 } catch (Exception ex) {
+                    // Mark other tasks as failed if the a main task fails.
+                    canceled = true;
                     startedSource.TrySetException(ex);
-                    connectingSource.TrySetException(ex);
+                    connectedSource.TrySetException(ex);
                     throw ex;
                 }
             });
         }
 
-        private async void main() {
+        public void AddNode(IPEndPoint ep) {
+            possibleNodes.Add(ep);
+        }
+
+        private async void connectionHealthLoop() {
+            while (!canceled) {
+                if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
+                    // we can't do anything unless we have a node to bootstrap
+                    Console.WriteLine("DHT: Not connected -- no nodes.");
+                    await Task.Delay(2500);
+                    continue;
+                } 
+
+                if (knownNodes.Count < 16) {
+                    if (possibleNodes.Count > 0) {
+                        var ep = possibleNodes.Pop();
+                        Console.WriteLine($"Pinging possible node {ep} to check validity.");
+                        Ping(ep);
+
+                        await Task.Delay(1500);
+                        continue;
+                    } else {
+                        var id = new byte[20].FillRandom();
+                        Console.WriteLine(
+                            $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
+                        GetPeers(id);
+
+                        await Task.Delay(1000);
+                        continue;
+                    }
+                }
+
+                connectedSource.TrySetResult(true);
+
+                Console.WriteLine("Our connection is good!");
+                await Task.Delay(5000);
+            }
+        }
+
+        private async void messageEventLoop() {
             using (socket = new UDPSocket(localEP)) {
                 startedSource.SetResult(true);
 
@@ -177,10 +230,31 @@ namespace Ferro {
             }
         }
 
+        // Increments the token, as a big-endian unsigned integer, adding new bytes if it overflows.
+        public static byte[] IncrementToken(byte[] token) {
+            for (var i = token.Length - 1; i >= 0; i--) {
+                if (token[i] < 0xFF) {
+                    var newToken = token.Slice();
+                    newToken[i]++;
+                    for (var j = i + 1; j < token.Length; j++) {
+                        newToken[j] = 0;
+                    }
+                    return newToken;
+                }
+            }
+            // If we get here, everything is currently 0xFF, so we need to add grow into another byte.
+            var expandedToken = new byte[token.Length + 1];
+            expandedToken[0] = 1;
+            return expandedToken;
+        }
+
         // Pings the DHT node at the given endpoint and returns its id, or throws an error.
         // If the node is pinged successfully, it adds it to routing table.
         public async Task<byte[]> Ping(IPEndPoint ep) {
-            var token = new byte[]{nextToken++};
+            // We won't ping it again if this fails.
+            possibleNodes.Remove(ep);
+
+            var token = (lastToken = IncrementToken(lastToken));
 
             var result = new TaskCompletionSource<DHTMessage>();
             var key = new DHTQueryKey { Token = token, EP = ep };
@@ -193,39 +267,79 @@ namespace Ferro {
 
             var nodeId = results.Data.GetDict("r").GetBytes("id");
 
-            knownGoodNodes.Add(ep);
+            knownNodes[ep] = new DHTNode() {
+                EP = ep,
+                Id = nodeId
+            };
 
             return nodeId;
         }
 
+        private List<DHTNode> getKnownNodesByCloseness(byte[] target) {
+            var nodes = knownNodes.Values.ToList();
+            var comparer = new XorDistanceComparer(target);
+            nodes.Sort((a, b) => comparer.Compare(a.Id, b.Id));
+            return nodes;
+        }
+
         public async Task<List<IPEndPoint>> GetPeers(byte[] infohash) {
-            // TODO: This is not complete.
-            // This should, up to like 10 times or something, ask the closest
-            // node to the target infohash if it knows any nodes closer to that,
-            // until it gets the result (a list of peers, not nodes) or gives up
-            // and returns an empty list or throws an exception.
-            foreach (var node in knownGoodNodes) {
-                var token = new byte[]{nextToken++};
+            var visitedNodeAddresses = new HashSet<IPAddress>();
+
+            await Connected;
+
+            var queries = 0;
+
+            while (true) {
+                if (queries++ > 32) {
+                    throw new Exception("query count sanity limit exceeded");
+                }
+
+                var nodes = getKnownNodesByCloseness(infohash);
+
+                DHTNode closestNode = null;
+
+                foreach (var node in nodes) {
+                    if (visitedNodeAddresses.Contains(node.EP.Address)) {
+                        continue;
+                    } else {
+                        visitedNodeAddresses.Add(node.EP.Address);
+                        closestNode = node;
+                    }
+                }
+
+                if (closestNode == null) {
+                    throw new Exception($"Failed to find peers for {infohash} in the DHT.");
+                }
+
+                var token = (lastToken = IncrementToken(lastToken));
 
                 var result = new TaskCompletionSource<DHTMessage>();
-                var key = new DHTQueryKey { Token = token, EP = node };
+                var key = new DHTQueryKey { Token = token, EP = closestNode.EP };
                 pendingQueries.Add(key, result);
 
                 Console.WriteLine($"Sending get_peers {key}...");
-                sendGetPeers(node, token, infohash);
+                sendGetPeers(closestNode.EP, token, infohash);
 
                 var results = await result.Task;
 
-                var nodesData = results.Data.GetDict("r").GetBytes("nodes");
+                var response = results.Data.GetDict("r");
 
-                Console.WriteLine("Got: " + Bencoding.ToHuman(Bencoding.Encode(results.Data)));
+                if (response.ContainsKey("nodes")) {
+                    var compactNodes = response.GetBytes("nodes");
+                        
+                    Console.WriteLine("Got closer nodes: " + compactNodes.ToHuman());
 
-                // We need to parse `nodesData` as NODES and ping them.
+                    break;
+                } else {
+                    var compactPeers = response.GetBytes("peers");
 
-                return new List<IPEndPoint> {};
+                    Console.WriteLine("Got peers: " + compactPeers.ToHuman());
+
+                    return new List<IPEndPoint> {};
+                }
             }
-
-            throw new Exception("had no good nodes to query");
+            
+            throw new Exception("this code path should not be possible");
         }
 
         void sendPing(IPEndPoint destination, byte[] token) {
@@ -288,5 +402,31 @@ namespace Ferro {
             GC.SuppressFinalize(this);
         }
         #endregion
+    }
+
+    // Defines an ordering of byte arrays based on their values after being xored with
+    // a given byte array. (In the DHT, this can be used to sort nodes based on how
+    // close they are to a target node/address).
+    public class XorDistanceComparer : IComparer<byte[]> {
+        // The target against which each value will be xored before ordering.
+        byte[] target;
+        public XorDistanceComparer(byte[] target) {
+            this.target = target;
+        }
+        public int Compare(byte[] x, byte[] y) {
+            if (target.Length != x.Length || target.Length != y.Length) {
+                throw new Exception("target and values must all have same length");
+            }
+            for (var i = 0; i < target.Length; i++) {
+                var xItem = x[i] ^ target[i];
+                var yItem = y[i] ^ target[i];
+                if (xItem > yItem) {
+                    return +1; // x contains a greater item first
+                } else if (yItem > xItem) {
+                    return -1; // y contains a greater item first
+                }
+            }
+            return 0;
+        }
     }
 }

@@ -63,32 +63,6 @@ namespace Ferro  {
         }
     }
 
-    // Defines an ordering of byte arrays based on their values after being xored with
-    // a given byte array. (In the DHT, this can be used to sort nodes based on how
-    // close they are to a target node/address).
-    public class XorDistanceComparer : IComparer<byte[]> {
-        // The target against which each value will be xored before ordering.
-        byte[] target;
-        public XorDistanceComparer(byte[] target) {
-            this.target = target;
-        }
-        public int Compare(byte[] x, byte[] y) {
-            if (target.Length != x.Length || target.Length != y.Length) {
-                throw new Exception("target and values must all have same length");
-            }
-            for (var i = 0; i < target.Length; i++) {
-                var xItem = x[i] ^ target[i];
-                var yItem = y[i] ^ target[i];
-                if (xItem > yItem) {
-                    return +1; // x contains a greater item first
-                } else if (yItem > xItem) {
-                    return -1; // y contains a greater item first
-                }
-            }
-            return 0;
-        }
-    }
-
     class ByteArrayComparer : IEqualityComparer<byte[]>, IComparer<byte[]> {
 
         // Leiconographic ordering of byte arrays.

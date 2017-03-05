@@ -18,44 +18,37 @@ namespace Ferro
             if (args.Length == 1) {
                 testAddress = IPAddress.Parse(args[0]);
             } else {
-                Console.WriteLine("usage: ferro TEST_IP_ADDRESS");
+                Console.WriteLine("usage: ferro BOOTSTRAP_PEER_IP_ADDRESS");
                 return 1;
             }
 
-            dhtClient(testAddress).Wait();
-            Console.Write("\n");
-            tcpPeerProtocol(testAddress);
-            
+            main(testAddress).Wait();
 
             return 0;
         }
 
-        static async Task dhtClient(IPAddress testAddress) {
+        static async Task main(IPAddress testAddress) {
             using (var dht = new DHTClient()) {
-                var testNode = new IPEndPoint(testAddress, 9527);
-                var testNodeId = await dht.Ping(testNode);
+                var bootstrapNode = new IPEndPoint(testAddress, 9527);
+                dht.AddNode(bootstrapNode);
 
-                Console.WriteLine(
-                    $"Successfully pinged {testNode} and got response with node ID {testNodeId.ToHex()}");
-                
-                var peers = await dht.GetPeers(veryTinyKnownInfohash);
-
-                Console.WriteLine(
-                    $"Requested peers for {veryTinyKnownInfohash.ToHex()} (known torrent) and got some response!");
-                
                 var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
 
                 Console.WriteLine(
-                    $"Requested peers for {ubuntuUnknownInfohash.ToHex()} (unknown torrent) and got some response!");
+                    $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got some response!");
+
+                foreach (var ep in ubuntuPeers) {
+                    Console.WriteLine("Attempting to connect to peer at ${ep}.");
+
+                    var connection = new PeerConnection(IPAddress.Any);
+                    connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
+
+                    break;
+                }
+
+                Console.WriteLine(ubuntuPeers);
+
             }
         }
-
-        static void tcpPeerProtocol(IPAddress testAddress) {
-            var connector = new PeerConnection(IPAddress.Any);
-            connector.InitiateHandshake(testAddress, 45566, veryTinyKnownInfohash);
-            connector.InitiateHandshake(testAddress, 45566, lessTinyKnownInfohash);
-            Console.WriteLine("Finished with Handshake");
-        }
-        
     }
 }

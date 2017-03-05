@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -22,6 +23,13 @@ namespace Ferro {
                 total += pieceSize;
             }
             return buffer;
+        }
+
+        // May not be thread-safe?
+        public static T Pop<T>(this HashSet<T> hashSet) {
+            var value = hashSet.First();
+            hashSet.Remove(value);
+            return value;
         }
 
         // Returns a copy of the array from start index (inclusive) to end index (exclusive).
