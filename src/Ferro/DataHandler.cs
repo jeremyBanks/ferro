@@ -11,7 +11,7 @@ namespace Ferro
         public static void SaveMetadata(byte[] bytes)
         {
             dynamic info = Bencoding.Decode(bytes);
-            byte[] name = info["name".ToUTF8()];
+            byte[] name = info["name".ToASCII()];
             var metainfo = new Dictionary<byte[], object> {
                 {"info".ToASCII(), info}
             };
