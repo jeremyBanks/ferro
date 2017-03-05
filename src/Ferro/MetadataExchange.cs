@@ -29,7 +29,7 @@ namespace Ferro
             }
 
             // Request the first piece.
-            var initialRequest = ConstructMessage(ourExtCode, 0, 0);
+            var initialRequest = ConstructRequestMessage(ourExtCode, 0);
             Console.WriteLine("Sending request for first metadata piece: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
@@ -97,7 +97,7 @@ namespace Ferro
                                 return;
                             }
 
-                            var request = ConstructMessage(ourExtCode, 0, currentPiece);
+                            var request = ConstructRequestMessage(ourExtCode, currentPiece);
                             Console.WriteLine("Requesting the next piece of metadata...");
                             stream.Write(request);
 
@@ -131,7 +131,7 @@ namespace Ferro
         }
 
         // For messages with msgType 0 (request) and 2 (reject)
-        private static byte[] ConstructMessage(int ourExtCode, int msgType, int piece)
+        private static byte[] ConstructGenericMessage(int ourExtCode, int msgType, int piece)
         {
             var messageDict = new Dictionary<byte[], object>();
             messageDict["msg_type".ToASCII()] = (Int64)msgType;
@@ -149,8 +149,18 @@ namespace Ferro
             return message;
         }
 
+        private static byte[] ConstructRequestMessage(int ourExtCode, int piece)
+        {
+            return ConstructGenericMessage(ourExtCode, 0, piece);
+        }
+
+        private static byte[] ConstructRejectMessage(int ourExtCode, int piece)
+        {
+            return ConstructGenericMessage(ourExtCode, 2, piece);
+        }
+
         // For messages with msgType 1 (data)
-        private static byte[] ConstructMessage(int ourExtCode, int msgType, int piece, int length)
+        private static byte[] ConstructRejectMessage(int ourExtCode, int piece, int length)
         {
             return new byte[4];
         }
