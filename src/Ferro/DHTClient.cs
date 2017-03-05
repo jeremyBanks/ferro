@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ferro {
     // Identifier for a DHT query that can be used as a dictionary key.
-    public class DHTQueryKey {
+    class DHTQueryKey {
         public IPEndPoint EP; // the ip and port of the dht node
         public byte[] Token; // the unique opaque token we sent with the query
 
@@ -34,21 +34,30 @@ namespace Ferro {
         }
     }
 
-    // TODO We need a utility to Sort a list of byte arrays using the BEP 5/Kad
-    // XOR metric distance from a given target infohash, to use in all of these functions.
-
-    public class DHTMessage {
+    class DHTMessage {
         public Dictionary<byte[], dynamic> Data;
     }
 
     // A client (not server) for the mainline BitTorrent DHT.
-    public class DHTClient
+    public class DHTClient : IDisposable
     {
-        readonly byte[] NodeId;
-        readonly IPEndPoint LocalEndPoint = new IPEndPoint(IPAddress.Any, 6881);
+        private byte[] nodeId;
+        private IPEndPoint localEP;
         private UDPSocket socket;
 
-        readonly Task Listening;
+        // Flag used to cancel main task.
+        private bool canceled = false;
+
+        // A task that completes once we have a healthy DHT connection.
+        readonly Task Connecting;
+        private TaskCompletionSource<bool> connectingSource;
+
+        // A task that completes once we the main task has bound a port and initialized.
+        readonly Task Started;
+        private TaskCompletionSource<bool> startedSource;
+
+        // A task for the DHT's background activites, that should keep runing for as long as it's active.
+        readonly Task Running;
         
         private HashSet<IPEndPoint> knownGoodNodes;
 
@@ -58,94 +67,114 @@ namespace Ferro {
         private Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>> pendingQueries;
 
         public DHTClient() {
-            pendingQueries = new Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>>();
+            connectingSource = new TaskCompletionSource<bool>();
+            Connecting = connectingSource.Task;
 
-            NodeId = new byte[20].FillRandom();
-
-            socket = new UDPSocket(LocalEndPoint);
-
+            nodeId = new byte[20].FillRandom();
             knownGoodNodes = new HashSet<IPEndPoint>();
+            pendingQueries = new Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>>();
+            localEP = new IPEndPoint(IPAddress.Any, 6881);
 
-            Listening = Task.Run(async () => {
-                while (true) {
-                    await Task.Delay(10);
+            startedSource = new TaskCompletionSource<bool>();
+            Started = startedSource.Task;
 
+            Running = Task.Run(new Action(main));
+
+            // Mark other tasks as failed if the main task fails.
+            Task.Run(async () => {
+                try {
+                    await Running;
+                } catch (Exception ex) {
+                    startedSource.TrySetException(ex);
+                    connectingSource.TrySetException(ex);
+                    throw ex;
+                }
+            });
+        }
+
+        private async void main() {
+            using (socket = new UDPSocket(localEP)) {
+                startedSource.SetResult(true);
+
+                while (!canceled) {
                     try {
-                        var response = await socket.ReceiveAsync();
-
-                        var value = Bencoding.DecodeDict(response.Data);
-
-                        var type = value.GetString("y");
-
-                        switch (type) {
-                            case "r": {
-                                Console.WriteLine($"Got response message from {response.Source}.");
-
-                                var key = new DHTQueryKey {
-                                    Token = value.GetBytes("t"),
-                                    EP = response.Source
-                                };
-
-                                Console.WriteLine("For query key: " + key);
-
-                                if (pendingQueries.ContainsKey(key)) {
-                                    var responseSource = pendingQueries[key];
-                                    pendingQueries.Remove(key);
-
-                                    responseSource.SetResult(new DHTMessage { Data = value });
-                                    Console.WriteLine("Resolved pending task.");
-                                } else {
-                                    Console.WriteLine("But I wasn't expecting that!");
-                                }
-
-                                break;
-                            }
-
-                            case "e": {
-                                Console.WriteLine($"Got error mesage from {response.Source}.");
-
-                                var key = new DHTQueryKey {
-                                    Token = value.GetBytes("t"),
-                                    EP = response.Source
-                                };
-
-                                Console.WriteLine("For query key: " + key);
-
-                                if (pendingQueries.ContainsKey(key)) {
-                                    var responseSource = pendingQueries[key];
-                                    pendingQueries.Remove(key);
-
-                                    var errors = value.GetList("e");
-                                    var code = (Int64) errors[0];
-                                    var message = ((byte[]) errors[1]).FromASCII();
-                                    
-                                    var exception = new Exception($"{code} {message}");
-                                    Console.WriteLine("Rejecting pending task.");
-                                    responseSource.SetException(new Exception[] { exception });
-                                } else {
-                                    Console.WriteLine("But I wasn't expecting that!");
-                                }
-
-                                break;
-                            }
-
-                            case "q": {
-                                Console.WriteLine($"Ignored query mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
-                                // do nothing because we're read-only
-                                break;
-                            }
-
-                            default: {
-                                Console.WriteLine($"Got unknown mesage from {response.Source}:\n{Bencoding.ToHuman(response.Data)}");
-                                // maybe we could send an error?
-                                break;
-                            }
-                        }
+                        handleMessage(await socket.ReceiveAsync());
                     } catch (Exception ex) {
                         Console.WriteLine("Exception! " + ex);  
                     }
                 }
-            });
+            }
+        }
+
+        private void handleMessage(UDPSocket.ReceivedPacket message) {
+            var value = Bencoding.DecodeDict(message.Data);
+
+            var type = value.GetString("y");
+
+            switch (type) {
+                case "r": {
+                    Console.WriteLine($"Got response message from {message.Source}.");
+
+                    var key = new DHTQueryKey {
+                        Token = value.GetBytes("t"),
+                        EP = message.Source
+                    };
+
+                    Console.WriteLine("For query key: " + key);
+
+                    if (pendingQueries.ContainsKey(key)) {
+                        var responseSource = pendingQueries[key];
+                        pendingQueries.Remove(key);
+
+                        responseSource.SetResult(new DHTMessage { Data = value });
+                        Console.WriteLine("Resolved pending task.");
+                    } else {
+                        Console.WriteLine("But I wasn't expecting that!");
+                    }
+
+                    break;
+                }
+
+                case "e": {
+                    Console.WriteLine($"Got error mesage from {message.Source}.");
+
+                    var key = new DHTQueryKey {
+                        Token = value.GetBytes("t"),
+                        EP = message.Source
+                    };
+
+                    Console.WriteLine("For query key: " + key);
+
+                    if (pendingQueries.ContainsKey(key)) {
+                        var responseSource = pendingQueries[key];
+                        pendingQueries.Remove(key);
+
+                        var errors = value.GetList("e");
+                        var code = (Int64) errors[0];
+                        var errorMessage = ((byte[]) errors[1]).FromASCII();
+                        
+                        var exception = new Exception($"{code} {errorMessage}");
+                        Console.WriteLine("Rejecting pending task.");
+                        responseSource.SetException(new Exception[] { exception });
+                    } else {
+                        Console.WriteLine("But I wasn't expecting that!");
+                    }
+
+                    break;
+                }
+
+                case "q": {
+                    Console.WriteLine($"Ignored query mesage from {message.Source}:\n{Bencoding.ToHuman(message.Data)}");
+                    // do nothing because we're read-only
+                    break;
+                }
+
+                default: {
+                    Console.WriteLine($"Got unknown mesage from {message.Source}:\n{Bencoding.ToHuman(message.Data)}");
+                    // maybe we could send an error?
+                    break;
+                }
+            }
         }
 
         // Pings the DHT node at the given endpoint and returns its id, or throws an error.
@@ -155,7 +184,7 @@ namespace Ferro {
 
             var result = new TaskCompletionSource<DHTMessage>();
             var key = new DHTQueryKey { Token = token, EP = ep };
-            pendingQueries[key] = result;
+            pendingQueries.Add(key, result);
 
             Console.WriteLine($"Sending ping {key}...");
             sendPing(ep, token);
@@ -180,7 +209,7 @@ namespace Ferro {
 
                 var result = new TaskCompletionSource<DHTMessage>();
                 var key = new DHTQueryKey { Token = token, EP = node };
-                pendingQueries[key] = result;
+                pendingQueries.Add(key, result);
 
                 Console.WriteLine($"Sending get_peers {key}...");
                 sendGetPeers(node, token, infohash);
@@ -188,6 +217,8 @@ namespace Ferro {
                 var results = await result.Task;
 
                 var nodesData = results.Data.GetDict("r").GetBytes("nodes");
+
+                Console.WriteLine("Got: " + Bencoding.ToHuman(Bencoding.Encode(results.Data)));
 
                 // We need to parse `nodesData` as NODES and ping them.
 
@@ -204,7 +235,7 @@ namespace Ferro {
             dict.Set("q", "ping");
             dict.Set("ro", 1);
             var args = Bencoding.Dict();
-            args.Set("id", NodeId);
+            args.Set("id", nodeId);
             dict.Set("a", args);
 
             var encoded = Bencoding.Encode(dict);
@@ -213,14 +244,13 @@ namespace Ferro {
         }
 
         void sendGetPeers(IPEndPoint destination, byte[] token, byte[] infohash) {
-
             var dict = Bencoding.Dict();
             dict.Set("t", token);
             dict.Set("y", "q");
             dict.Set("q", "get_peers");
             dict.Set("ro", 1);
             var args = Bencoding.Dict();
-            args.Set("id", NodeId);
+            args.Set("id", nodeId);
             args.Set("info_hash", infohash);
             dict.Set("a", args);
 
@@ -233,5 +263,30 @@ namespace Ferro {
         void sendFindNode() {
             throw new Exception("NOT IMPLEMENTED");
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                canceled = true;
+                socket?.Dispose();
+
+                disposedValue = true;
+            }
+        }
+
+        ~DHTClient() {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

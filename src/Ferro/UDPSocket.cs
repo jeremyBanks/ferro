@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Ferro
 {
     // Dumb async wrapper over the UDP Socket interface.
-    class UDPSocket {
+    class UDPSocket : IDisposable {
         readonly IPEndPoint localEndPoint;
         private Socket dotnetSocket;
 
@@ -59,8 +59,32 @@ namespace Ferro
         }
 
         public class ReceivedPacket {
-            public byte[] Data;            
+            public byte[] Data;
             public IPEndPoint Source;
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                dotnetSocket.Dispose();
+
+                disposedValue = true;
+            }
+        }
+
+        ~UDPSocket() {
+          Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
