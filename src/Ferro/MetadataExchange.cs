@@ -58,12 +58,12 @@ namespace Ferro
                             Console.WriteLine("It's a metadata exchange message!");
                             var data = peerResponse.Slice(2);
                             Int64 dictSize;
-                            dynamic dict = Bencoding.DecodeFirst(data, out dictSize);
+                            var dict = Bencoding.DecodeFirstDict(data, out dictSize);
                             var postDict = data.Slice((Int32) dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 
-                            if (dict["piece".ToASCII()] != currentPiece)
+                            if (dict.GetInt("piece") != currentPiece)
                             {
-                                throw new Exception($"Expected piece {currentPiece}. Instead, received {dict["piece".ToASCII()]}");
+                                throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
                             }
 
                             Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
@@ -134,8 +134,8 @@ namespace Ferro
         private static byte[] ConstructGenericMessage(int ourExtCode, int msgType, int piece)
         {
             var messageDict = new Dictionary<byte[], object>();
-            messageDict["msg_type".ToASCII()] = (Int64)msgType;
-            messageDict["piece".ToASCII()] = (Int64)piece;
+            messageDict.Set("msg_type", msgType);
+            messageDict.Set("piece", piece);
             var encodedMsg = Bencoding.Encode(messageDict);
 
             var length = (encodedMsg.Length + 2).EncodeBytes();
@@ -143,7 +143,7 @@ namespace Ferro
             var message = new byte[encodedMsg.Length + 6];
             length.CopyTo(message, 0);
             message[4] = 20;
-            message[5] = (byte)ourExtCode;
+            message[5] = (byte) ourExtCode;
             encodedMsg.CopyTo(message, 6);
 
             return message;

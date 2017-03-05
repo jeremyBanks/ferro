@@ -4,6 +4,10 @@ using System.Text;
 
 namespace Ferro  {
     partial class Bencoding {
+        public static Dictionary<byte[], object> Dict() {
+            return new Dictionary<byte[], object>(ByteArrayComparer.Instance);
+        }
+
         // Creates a human-readable formatting of the bencoded data.
         public static string ToHuman(byte[] data) {
             var value = Bencoding.Decode(data);
