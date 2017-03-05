@@ -147,12 +147,36 @@ namespace Ferro {
             return bDict[key.ToASCII()];
         }
 
+        public static Dictionary<byte[], object> GetDict(this Dictionary<byte[], object> bDict, string key) {
+            return (Dictionary<byte[], object>) bDict[key.ToASCII()];
+        }
+
+        public static Int64 GetInt(this Dictionary<byte[], object> bDict, string key) {
+            return (Int64) bDict[key.ToASCII()];
+        }
+
+        public static byte[] GetBytes(this Dictionary<byte[], object> bDict, string key) {
+            return (byte[]) bDict[key.ToASCII()];
+        }
+
+        public static string GetString(this Dictionary<byte[], object> bDict, string key) {
+            return bDict.GetBytes(key).FromUTF8();
+        }
+
+        public static List<object> GetList(this Dictionary<byte[], object> bDict, string key) {
+            return (List<object>) bDict[key.ToASCII()];
+        }
+
         public static bool ContainsKey(this Dictionary<byte[], object> bDict, string key) {
             return bDict.ContainsKey(key.ToASCII());
         }
 
         public static void Set(this Dictionary<byte[], object> bDict, string key, string value) {
             bDict[key.ToASCII()] = value.ToASCII();
+        }
+
+        public static void Set(this Dictionary<byte[], object> bDict, string key, Int32 value) {
+            bDict[key.ToASCII()] = (Int64) value;
         }
 
         public static void Set(this Dictionary<byte[], object> bDict, string key, object value) {

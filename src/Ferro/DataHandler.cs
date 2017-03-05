@@ -10,11 +10,10 @@ namespace Ferro
     {
         public static void SaveMetadata(byte[] bytes)
         {
-            var info = (Dictionary<byte[], object>) Bencoding.Decode(bytes);
-            byte[] name = info.Get("name");
-            var metainfo = new Dictionary<byte[], object> {
-                {"info".ToASCII(), info}
-            };
+            var info = Bencoding.DecodeDict(bytes);
+            var name = info.GetBytes("name");
+            var metainfo = Bencoding.Dict();
+            metainfo.Set("info", info);
             var torrentFileData = Bencoding.Encode(metainfo);
 
             string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "file-store", "metadata", name.FromUTF8() + ".torrent" };

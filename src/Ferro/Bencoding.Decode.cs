@@ -13,6 +13,7 @@ namespace Ferro  {
                 return value;
             }
         }
+
         public static object DecodeFirst(byte[] bytes, out Int64 count) {
             using (var stream = new MemoryStream(bytes)) {
                 var value = Decode(stream);
@@ -203,6 +204,18 @@ namespace Ferro  {
                     throw new DecodingException(
                         $"Unexpected initial byte in value: {first} '{char.ConvertFromUtf32(first)}'.");
             }
+        }
+
+        public static Dictionary<byte[], object> DecodeDict(byte[] bytes) {
+            return (Dictionary<byte[], object>) Decode(bytes);
+        }
+
+        public static Dictionary<byte[], object> DecodeFirstDict(byte[] bytes,  out Int64 count) {
+            return (Dictionary<byte[], object>) DecodeFirst(bytes, out count);
+        }
+
+        public static object DecodeDict(Stream stream, bool nullForCollectionEnd = false) {
+            return (Dictionary<byte[], object>) Decode(stream, nullForCollectionEnd: nullForCollectionEnd);
         }
 
         public class DecodingException : Exception {

@@ -78,10 +78,8 @@ namespace Ferro
                 if (extensionsEnabled && theirExtensionsEnabled)
                 {
                     var theirExtensionHeader = GetPeerExtensionHeader(stream);
-                    var decodedExtensionHeader =
-                        (Dictionary<byte[], object>) Bencoding.Decode(theirExtensionHeader);
-                    var theirExtensions =
-                        (Dictionary<byte[], object>) decodedExtensionHeader.Get("m");
+                    var decodedExtensionHeader = Bencoding.DecodeDict(theirExtensionHeader);
+                    var theirExtensions = decodedExtensionHeader.GetDict("m");
                     
                     Console.WriteLine("Peer's extension header:");
                     Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
@@ -143,12 +141,12 @@ namespace Ferro
             var extensionDict = new Dictionary<byte[], object>();
             var supportedExtensions = new Dictionary<byte[], object>();
             
-            supportedExtensions.Set("ut_metadata", (Int64) 2);
+            supportedExtensions.Set("ut_metadata", 2);
             extensionDict.Set("m", supportedExtensions);
             // metadata_size is unnecessary if we are requesting. If we're providing metadata, we should add this. 
-            // extensionDict.Set("metadata_size", (Int64) 0);
-            extensionDict.Set("p", (Int64) myPort);
-            extensionDict.Set("v", "Ferro 0.1.0".ToASCII());
+            // extensionDict.Set("metadata_size", 0);
+            extensionDict.Set("p", myPort);
+            extensionDict.Set("v", "Ferro 0.1.0");
 
             return Bencoding.Encode(extensionDict);
         }

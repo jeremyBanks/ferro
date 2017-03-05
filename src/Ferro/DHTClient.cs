@@ -73,16 +73,16 @@ namespace Ferro {
                     try {
                         var response = await socket.ReceiveAsync();
 
-                        var value = (Dictionary<byte[], object>) Bencoding.Decode(response.Data);
+                        var value = Bencoding.DecodeDict(response.Data);
 
-                        var type = ((byte[]) value.Get("y")).FromASCII();
+                        var type = value.GetString("y");
 
                         switch (type) {
                             case "r": {
                                 Console.WriteLine($"Got response message from {response.Source}.");
 
                                 var key = new DHTQueryKey {
-                                    Token = (byte[]) value.Get("t"),
+                                    Token = value.GetBytes("t"),
                                     EP = response.Source
                                 };
 
@@ -105,7 +105,7 @@ namespace Ferro {
                                 Console.WriteLine($"Got error mesage from {response.Source}.");
 
                                 var key = new DHTQueryKey {
-                                    Token = (byte[]) value.Get("t"),
+                                    Token = value.GetBytes("t"),
                                     EP = response.Source
                                 };
 
@@ -115,7 +115,7 @@ namespace Ferro {
                                     var responseSource = pendingQueries[key];
                                     pendingQueries.Remove(key);
 
-                                    var errors = (List<object>) value.Get("e");
+                                    var errors = value.GetList("e");
                                     var code = (Int64) errors[0];
                                     var message = ((byte[]) errors[1]).FromASCII();
                                     
@@ -162,7 +162,7 @@ namespace Ferro {
 
             var results = await result.Task;
 
-            var nodeId = (byte[]) results.Data["r".ToASCII()]["id".ToASCII()];
+            var nodeId = results.Data.GetDict("r").GetBytes("id");
 
             knownGoodNodes.Add(ep);
 
@@ -187,7 +187,7 @@ namespace Ferro {
 
                 var results = await result.Task;
 
-                var nodesData = (byte[]) results.Data["r".ToASCII()]["nodes".ToASCII()];
+                var nodesData = results.Data.GetDict("r").GetBytes("nodes");
 
                 // We need to parse `nodesData` as NODES and ping them.
 
@@ -198,36 +198,36 @@ namespace Ferro {
         }
 
         void sendPing(IPEndPoint destination, byte[] token) {
-            var ping = Bencoding.Encode(new Dictionary<byte[], object>{
-                ["t".ToASCII()] = token,
-                    // unique identifier for this request/response
-                ["y".ToASCII()] = "q".ToASCII(), // type is query
-                ["q".ToASCII()] = "ping".ToASCII(), // query name is ping
-                ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
-                    ["id".ToASCII()] = NodeId // only ping argument is own id
-                },
-                ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
-            });
-            Console.WriteLine($"Sending ping to {destination}.");
+            var dict = Bencoding.Dict();
+            dict.Set("t", token);
+            dict.Set("y", "q");
+            dict.Set("q", "ping");
+            dict.Set("ro", 1);
+            var args = Bencoding.Dict();
+            args.Set("id", NodeId);
+            dict.Set("a", args);
 
-            socket.SendTo(ping, destination);
+            var encoded = Bencoding.Encode(dict);
+            Console.WriteLine($"Sending ping to {destination}.");
+            socket.SendTo(encoded, destination);
         }
 
         void sendGetPeers(IPEndPoint destination, byte[] token, byte[] infohash) {
-            var ping = Bencoding.Encode(new Dictionary<byte[], object>{
-                ["t".ToASCII()] = token,
-                    // unique identifier for this request/response
-                ["y".ToASCII()] = "q".ToASCII(), // type is query
-                ["q".ToASCII()] = "get_peers".ToASCII(), // query name is get_peers
-                ["a".ToASCII()] = new Dictionary<byte[], object>{ // query arguments is a dict
-                    ["id".ToASCII()] = NodeId, // own id
-                    ["info_hash".ToASCII()] = infohash // own id
-                },
-                ["ro".ToASCII()] = (Int64) 1 // indicates we're only a client, not an equal serving node
-            });
-            Console.WriteLine($"Sending get_peers to {destination}.");
 
-            socket.SendTo(ping, destination);
+            var dict = Bencoding.Dict();
+            dict.Set("t", token);
+            dict.Set("y", "q");
+            dict.Set("q", "get_peers");
+            dict.Set("ro", 1);
+            var args = Bencoding.Dict();
+            args.Set("id", NodeId);
+            args.Set("info_hash", infohash);
+            dict.Set("a", args);
+
+            var encoded = Bencoding.Encode(dict);
+
+            Console.WriteLine($"Sending get_peers to {destination}.");
+            socket.SendTo(encoded, destination);
         }
 
         void sendFindNode() {
