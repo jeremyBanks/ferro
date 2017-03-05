@@ -10,7 +10,7 @@ It's written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chri
 
 ### Using `dotnet` in the shell (maybe with Visual Studio Code)
 
-`make peer` and `make stop-peer` will start and stop our test rTorrent/ruTorrent Docker image using data from `./test-peer-data/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, run `make stop-peer` and then replace the contents of `./test-peer-data/` with those of `./test-peer-state/`.
+`make peer` and `make stop-peer` will start and stop our test rTorrent/ruTorrent Docker image using data from `./test-peer-data/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, you need to `make stop-peer && rm -rf ./test-peer-data && mv ./test-peer-state ./test-peer-data`.
 
 `make run` runs our main program (which doesn't do very much yet).
 
