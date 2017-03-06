@@ -4,7 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Ferro
+using Ferro.Common;
+
+namespace Ferro.PeerProtocol
 {
     public class PeerConnection
     {

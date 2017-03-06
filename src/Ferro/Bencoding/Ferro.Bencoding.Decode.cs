@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using Ferro.Common;
+
 namespace Ferro  {
     public static partial class Bencoding {
         public static object Decode(byte[] bytes) {
