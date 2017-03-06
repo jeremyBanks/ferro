@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Linq;
 
+using Ferro.Common;
+
 namespace Ferro
 {
     public class MetadataExchange

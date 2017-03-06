@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+using Ferro.Common;
+
 namespace Ferro  {
     public static partial class Bencoding {
         public static byte[] Encode(object value) {

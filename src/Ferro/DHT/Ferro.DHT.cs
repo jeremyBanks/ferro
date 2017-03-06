@@ -4,9 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Ferro {
+using Ferro.Common;
+
+namespace Ferro.DHT {
     // Identifier for a DHT query that can be used as a dictionary key.
-    class DHTQueryKey {
+    class QueryKey {
         public IPEndPoint EP; // the ip and port of the dht node
         public byte[] Token; // the unique opaque token we sent with the query
 
@@ -19,10 +21,10 @@ namespace Ferro {
         }
 
         public override bool Equals(object obj) {
-            if (!(obj != null && obj is DHTQueryKey)) {
+            if (!(obj != null && obj is QueryKey)) {
                 return false;
             }
-            var other = obj as DHTQueryKey;
+            var other = obj as QueryKey;
             return
                 EP.Address.Equals(other.EP.Address) && 
                 EP.Port.Equals(other.EP.Port) &&
@@ -34,17 +36,13 @@ namespace Ferro {
         }
     }
 
-    class DHTMessage {
-        public Dictionary<byte[], dynamic> Data;
-    }
-
-    class DHTNode {
+    class Node {
         public IPEndPoint EP;
         public byte[] Id;
     }
 
     // A client (not server) for the mainline BitTorrent DHT.
-    public class DHTClient : IDisposable
+    public class Client : IDisposable
     {
         private byte[] nodeId;
         private IPEndPoint localEP;
@@ -69,20 +67,20 @@ namespace Ferro {
         private HashSet<IPEndPoint> possibleNodes;
 
         // Nodes we've successfully pinged
-        private Dictionary<IPEndPoint, DHTNode> knownNodes;
+        private Dictionary<IPEndPoint, Node> knownNodes;
 
         byte[] lastToken = new byte[0];
 
-        private Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>> pendingQueries;
+        private Dictionary<QueryKey, TaskCompletionSource<Dictionary<byte[], object>>> pendingQueries;
 
-        public DHTClient() {
+        public Client() {
             connectedSource = new TaskCompletionSource<bool>();
             Connected = connectedSource.Task;
 
             nodeId = new byte[20].FillRandom();
             possibleNodes = new HashSet<IPEndPoint>();
-            knownNodes = new Dictionary<IPEndPoint, DHTNode>();
-            pendingQueries = new Dictionary<DHTQueryKey, TaskCompletionSource<DHTMessage>>();
+            knownNodes = new Dictionary<IPEndPoint, Node>();
+            pendingQueries = new Dictionary<QueryKey, TaskCompletionSource<Dictionary<byte[], object>>>();
             localEP = new IPEndPoint(IPAddress.Any, 6881);
 
             startedSource = new TaskCompletionSource<bool>();
@@ -166,7 +164,7 @@ namespace Ferro {
 
             switch (type) {
                 case "r": {
-                    var key = new DHTQueryKey {
+                    var key = new QueryKey {
                         Token = value.GetBytes("t"),
                         EP = message.Source
                     };
@@ -175,7 +173,7 @@ namespace Ferro {
                         var responseSource = pendingQueries[key];
                         pendingQueries.Remove(key);
 
-                        responseSource.TrySetResult(new DHTMessage { Data = value });
+                        responseSource.TrySetResult(value);
                     } else {
                         Console.WriteLine("Got unexpected response message.");
                     }
@@ -186,7 +184,7 @@ namespace Ferro {
                 case "e": {
                     Console.WriteLine($"Got error mesage from {message.Source}.");
 
-                    var key = new DHTQueryKey {
+                    var key = new QueryKey {
                         Token = value.GetBytes("t"),
                         EP = message.Source
                     };
@@ -251,8 +249,8 @@ namespace Ferro {
 
             var token = (lastToken = IncrementToken(lastToken));
 
-            var result = new TaskCompletionSource<DHTMessage>();
-            var key = new DHTQueryKey { Token = token, EP = ep };
+            var result = new TaskCompletionSource<Dictionary<byte[], object>>();
+            var key = new QueryKey { Token = token, EP = ep };
             pendingQueries.Add(key, result);
             Task.Run(async () => {
                 await Task.Delay(5000);
@@ -264,9 +262,9 @@ namespace Ferro {
 
             var results = await result.Task;
 
-            var nodeId = results.Data.GetDict("r").GetBytes("id");
+            var nodeId = results.GetDict("r").GetBytes("id");
 
-            knownNodes[ep] = new DHTNode() {
+            knownNodes[ep] = new Node() {
                 EP = ep,
                 Id = nodeId
             };
@@ -274,7 +272,7 @@ namespace Ferro {
             return nodeId;
         }
 
-        private List<DHTNode> getKnownNodesByCloseness(byte[] target) {
+        private List<Node> getKnownNodesByCloseness(byte[] target) {
             var nodes = knownNodes.Values.ToList();
             var comparer = new XorDistanceComparer(target);
             nodes.Sort((a, b) => comparer.Compare(a.Id, b.Id));
@@ -289,7 +287,7 @@ namespace Ferro {
             while (true) {
                 var nodes = getKnownNodesByCloseness(infohash);
 
-                DHTNode closestNode = null;
+                Node closestNode = null;
 
                 foreach (var node in nodes) {
                     if (visitedNodeAddresses.Contains(node.EP.Address.GetAddressBytes().Decode32BitInteger())) {
@@ -313,8 +311,8 @@ namespace Ferro {
 
                 var token = (lastToken = IncrementToken(lastToken));
 
-                var result = new TaskCompletionSource<DHTMessage>();
-                var key = new DHTQueryKey { Token = token, EP = closestNode.EP };
+                var result = new TaskCompletionSource<Dictionary<byte[], object>>();
+                var key = new QueryKey { Token = token, EP = closestNode.EP };
                 pendingQueries.Add(key, result);
                 Task.Run(async () => {
                     await Task.Delay(5000);
@@ -324,7 +322,7 @@ namespace Ferro {
                 Console.WriteLine($"Sending get_peers {key}...");
                 sendGetPeers(closestNode.EP, token, infohash);
 
-                DHTMessage results = null;
+                Dictionary<byte[], object> results = null;
                 try {
                     results = await result.Task;
                 } catch (Exception ex) {
@@ -332,7 +330,7 @@ namespace Ferro {
                     continue;
                 }
 
-                var response = results.Data.GetDict("r");
+                var response = results.GetDict("r");
 
                 if (response.ContainsKey("nodes")) {
                     var compactNodes = response.GetBytes("nodes");
@@ -419,7 +417,7 @@ namespace Ferro {
             }
         }
 
-        ~DHTClient() {
+        ~Client() {
             Dispose(false);
         }
 

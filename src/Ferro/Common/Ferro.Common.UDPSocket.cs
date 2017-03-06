@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace Ferro
+namespace Ferro.Common
 {
     // Dumb async wrapper over the UDP Socket interface.
     class UDPSocket : IDisposable {

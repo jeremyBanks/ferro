@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 
+using Ferro.Common;
+
 namespace Ferro
 {
     public class DataHandler
