@@ -6,6 +6,21 @@ Ferro is a BitTorrent client and library.
 
 It's written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
 
+## Components
+
+- [`Ferro.CLInterface`](src/Ferro/Ferro.CLInterface.cs)  
+  The basic command-line user interface we're initially experimenting with.
+- [`Ferro.BitTorrent.Client`](src/Ferro/BitTorrent/Ferro.BitTorrent.Client.cs)  
+  The high-level programming interface for using BitTorrent, encapsulating all of the details.
+- [`Ferro.Common`](src/Ferro/Common)  
+  Utilities and simple data types that shared used by everthing else.
+- [`Ferro.PeerProtocol`](src/Ferro/PeerProtocol)  
+  Implemenetation of BitTorrent's TCP peer protocol.
+- [`Ferro.DHT`](src/Ferro/DHT)  
+  Client/read-only implementation BitTorrent's BEP-5 UDP Distributed Hash Table protocol.
+- [`Ferro.Tests`](test/Ferro.Tests)  
+  Our tests.
+
 ## Development Tips
 
 ### Using `dotnet` in the shell (maybe with Visual Studio Code)
