@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -73,6 +74,9 @@ namespace Ferro.DHT {
 
         private Dictionary<QueryKey, TaskCompletionSource<Dictionary<byte[], object>>> pendingQueries;
 
+        // Handle on a file that we're loading and saving our DHT peers to/from.
+        private FileStream dhtCache;
+
         public Client() {
             connectedSource = new TaskCompletionSource<bool>();
             Connected = connectedSource.Task;
@@ -89,7 +93,6 @@ namespace Ferro.DHT {
             MessageEventLoop = Task.Run(new Action(messageEventLoop));
             ConnectionHealthLoop = Task.Run(new Action(connectionHealthLoop));
 
-
             Task.Run(async () => {
                 try {
                     await MessageEventLoop;
@@ -102,6 +105,25 @@ namespace Ferro.DHT {
                     throw ex;
                 }
             });
+
+            dhtCache = File.Open(
+                Directory.GetCurrentDirectory() + "/../../our-state/dht-cache",
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite);
+            var count = 0;
+            while (true) {
+                try {
+                    var compactEP = dhtCache.ReadBytes(6);
+                    var ep = decodeCompactEP(compactEP);
+                    AddNode(ep);
+                    count++;
+                } catch (Exception ex) {
+                    Console.WriteLine(ex);
+                    break;
+                }
+            }
+
+            Console.WriteLine($"Added {count} potential DHT endpoints from cache.");
         }
 
         public void AddNode(IPEndPoint ep) {
@@ -112,28 +134,32 @@ namespace Ferro.DHT {
             while (!canceled) {
                 Console.WriteLine($"DHT: {knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
 
+                saveDHT();
+
                 if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
                     await Task.Delay(2500);
                     continue;
-                } 
-
-                if (possibleNodes.Count > 0) {
-                    var ep = possibleNodes.PopRandom();
-                    Console.WriteLine($"Pinging possible node {ep} to check validity.");
-                    Ping(ep).DoNotAwait();
-
-                    await Task.Delay(1500);
-                    continue;
                 }
 
-                if (knownNodes.Count > 0 && knownNodes.Count < 16) {
-                    var id = new byte[20].FillRandom();
-                    Console.WriteLine(
-                        $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
-                    GetPeers(id).DoNotAwait();
+                if (knownNodes.Count < 64) {
+                    if (possibleNodes.Count > 0 && knownNodes.Count < 8) {
+                        var ep = possibleNodes.PopRandom();
+                        Console.WriteLine($"Pinging possible node {ep} to check validity.");
+                        Ping(ep).DoNotAwait();
 
-                    await Task.Delay(1000);
-                    continue;
+                        await Task.Delay(1500);
+                        continue;
+                    }
+
+                    if (knownNodes.Count > 0) {
+                        var id = new byte[20].FillRandom();
+                        GetPeers(id).DoNotAwait();
+                        Console.WriteLine(
+                            $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
+
+                        await Task.Delay(1000);
+                        continue;
+                    }
                 }
 
                 connectedSource.TrySetResult(true);
@@ -257,7 +283,6 @@ namespace Ferro.DHT {
                 result.TrySetException(new Exception("request timed out"));
             }).DoNotAwait();
 
-            Console.WriteLine($"Sending ping {key}...");
             sendPing(ep, token);
 
             var results = await result.Task;
@@ -335,14 +360,12 @@ namespace Ferro.DHT {
                 if (response.ContainsKey("nodes")) {
                     var compactNodes = response.GetBytes("nodes");
                     
-                    Console.WriteLine("Got closer nodes.");
+                    Console.WriteLine($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
 
                     var nodeCount = compactNodes.Length % 26;
                     for (var i = 0; i < compactNodes.Length; i += 26) {
                         // we disregard the node ID here, since we'll ping all of them and get it then
-                        var ep = new IPEndPoint(
-                            new IPAddress(compactNodes.Slice(i + 20, i + 24)),
-                            compactNodes.Slice(i + 24, i + 26).Decode16BitInteger());
+                        var ep = decodeCompactEP(compactNodes.Slice(i + 20, i + 26));
                         Ping(ep).DoNotAwait();
                     }
 
@@ -351,15 +374,13 @@ namespace Ferro.DHT {
                 } else {
                     var compactPeers = response.GetList("values");
 
-                    Console.WriteLine("Got peers!?");
+                    Console.WriteLine("Got peers!");
 
                     var peers = new List<IPEndPoint> {};
 
                     foreach (var compactPeer_ in compactPeers) {
                         var compactPeer = (byte[]) compactPeer_;
-                        peers.Add(new IPEndPoint(
-                            new IPAddress(compactPeer.Slice(0, 4)),
-                            compactPeer.Slice(4, 6).Decode16BitInteger()));
+                        peers.Add(decodeCompactEP(compactPeer));
                     }
 
                     return peers;
@@ -367,6 +388,19 @@ namespace Ferro.DHT {
             }
             
             throw new Exception("this code path should not be possible");
+        }
+
+        IPEndPoint decodeCompactEP(byte[] bytes) {
+            return new IPEndPoint(
+                new IPAddress(bytes.Slice(0, 4)),
+                bytes.Slice(4, 6).Decode16BitInteger());
+        }
+
+        byte[] encodeCompactEP(IPEndPoint ep) {
+            return ep.Address.GetAddressBytes().Concat(new byte[2] {
+                (byte) (0xFF & (ep.Port >> (1 * 8))),
+                (byte) (0xFF & (ep.Port >> (0 * 8)))
+            }).ToArray();
         }
 
         void sendPing(IPEndPoint destination, byte[] token) {
@@ -399,8 +433,22 @@ namespace Ferro.DHT {
             socket.SendTo(encoded, destination);
         }
 
-        void sendFindNode() {
-            throw new Exception("NOT IMPLEMENTED");
+        void saveDHT() {
+            if (dhtCache != null) {
+                dhtCache.Seek(0, SeekOrigin.Begin);
+                dhtCache.SetLength(0);
+                var count = 0;
+                foreach (var node in knownNodes.Values.ToList()) {
+                    dhtCache.WriteBytes(encodeCompactEP(node.EP));
+                    count++;
+                }
+                foreach (var potentialEP in possibleNodes.ToList()) {
+                    dhtCache.WriteBytes(encodeCompactEP(potentialEP));
+                    count++;
+                }
+                dhtCache.Flush();
+                Console.WriteLine($"Saved {count} DHT node endpoints to cache.");
+            }
         }
 
         #region IDisposable Support
@@ -410,8 +458,13 @@ namespace Ferro.DHT {
         {
             if (!disposedValue)
             {
+                if (disposing) {
+                    saveDHT();
+                }
+
                 canceled = true;
                 socket?.Dispose();
+                dhtCache?.Dispose();
 
                 disposedValue = true;
             }

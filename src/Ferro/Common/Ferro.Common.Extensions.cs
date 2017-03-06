@@ -25,6 +25,10 @@ namespace Ferro.Common {
             }
             return buffer;
         }
+
+        public static void WriteBytes(this Stream stream, byte[] bytes) {
+            stream.Write(bytes, 0, bytes.Length);
+        }
     }
 
     

@@ -18,7 +18,7 @@ namespace Ferro
             metainfo.Set("info", info);
             var torrentFileData = Bencoding.Encode(metainfo);
 
-            string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "file-store", "metadata", name.FromUTF8() + ".torrent" };
+            string[] pathStrings = { Directory.GetCurrentDirectory(), "..", "..", "our-state", "metadata", name.FromUTF8() + ".torrent" };
             var path = Path.Combine(pathStrings);
 
             // if the file already exists, completely overwrite it.

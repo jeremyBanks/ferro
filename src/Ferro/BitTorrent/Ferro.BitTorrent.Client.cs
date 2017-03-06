@@ -26,7 +26,7 @@ namespace Ferro.BitTorrent
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
 
             Console.WriteLine(
-                $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got some response!");
+                $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
             foreach (var ep in ubuntuPeers) {
                 Console.WriteLine($"Attempting to connect to peer at {ep}.");
