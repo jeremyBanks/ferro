@@ -122,7 +122,7 @@ namespace Ferro {
                 if (possibleNodes.Count > 0) {
                     var ep = possibleNodes.Pop();
                     Console.WriteLine($"Pinging possible node {ep} to check validity.");
-                    Ping(ep);
+                    Ping(ep).DoNotAwait();
 
                     await Task.Delay(1500);
                     continue;
@@ -132,7 +132,7 @@ namespace Ferro {
                     var id = new byte[20].FillRandom();
                     Console.WriteLine(
                         $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
-                    GetPeers(id);
+                    GetPeers(id).DoNotAwait();
 
                     await Task.Delay(1000);
                     continue;
@@ -257,7 +257,7 @@ namespace Ferro {
             Task.Run(async () => {
                 await Task.Delay(5000);
                 result.TrySetException(new Exception("request timed out"));
-            });
+            }).DoNotAwait();
 
             Console.WriteLine($"Sending ping {key}...");
             sendPing(ep, token);
@@ -319,7 +319,7 @@ namespace Ferro {
                 Task.Run(async () => {
                     await Task.Delay(5000);
                     result.TrySetException(new Exception("get_peers timed out"));
-                });
+                }).DoNotAwait();
 
                 Console.WriteLine($"Sending get_peers {key}...");
                 sendGetPeers(closestNode.EP, token, infohash);
@@ -345,7 +345,7 @@ namespace Ferro {
                         var ep = new IPEndPoint(
                             new IPAddress(compactNodes.Slice(i + 20, i + 24)),
                             compactNodes.Slice(i + 24, i + 26).Decode16BitInteger());
-                        Ping(ep);
+                        Ping(ep).DoNotAwait();
                     }
 
                     await Task.Delay(2000);

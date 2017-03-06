@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Ferro {
     public static class CoreExtensions {
@@ -223,6 +224,9 @@ namespace Ferro {
         public static void Set(this Dictionary<byte[], object> bDict, string key, object value) {
             bDict[key.ToASCII()] = value;
         }
+
+        // http://stackoverflow.com/a/29319061/1114
+        public static void DoNotAwait(this Task task) { }
     }
     
 }
