@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Ferro.Common {
-    public static class CoreExtensions {
+    public static class StreamExtensions {
         public static void Write(this Stream stream, byte[] bytes) {
             stream.Write(bytes, 0, bytes.Length);
         }
@@ -25,14 +25,21 @@ namespace Ferro.Common {
             }
             return buffer;
         }
+    }
+
+    
+    public static class HashSetExtensions {
+        private static Random random = new Random();
 
         // May not be thread-safe?
-        public static T Pop<T>(this HashSet<T> hashSet) {
-            var value = hashSet.First();
+        public static T PopRandom<T>(this HashSet<T> hashSet) {
+            var value = hashSet.ElementAt(random.Next(hashSet.Count));
             hashSet.Remove(value);
             return value;
         }
+    }
 
+    public static class ByteArrayExtensions {
         // Returns a copy of the array from start index (inclusive) to end index (exclusive).
         // Negative indicies are treated as offsets from the end of the string.
         // This should match the behaviour of the JavaScript Array..slice() method.
@@ -192,7 +199,9 @@ namespace Ferro.Common {
         public static Dictionary<byte[], object> GetDict(this Dictionary<byte[], object> bDict, string key) {
             return (Dictionary<byte[], object>) bDict[key.ToASCII()];
         }
+    }
 
+    public static class BencodedDictExtensions {
         public static Int64 GetInt(this Dictionary<byte[], object> bDict, string key) {
             return (Int64) bDict[key.ToASCII()];
         }
@@ -224,9 +233,10 @@ namespace Ferro.Common {
         public static void Set(this Dictionary<byte[], object> bDict, string key, object value) {
             bDict[key.ToASCII()] = value;
         }
+    }
 
+    public static class TaskExtensions {
         // http://stackoverflow.com/a/29319061/1114
         public static void DoNotAwait(this Task task) { }
     }
-    
 }

@@ -16,12 +16,11 @@ namespace Ferro {
                 return 1;
             }
 
-            using (var client = new Ferro.Client.Client()) {
+            using (var client = new Ferro.BitTorrent.Client()) {
                 client.Example(testAddress).Wait();
-
-                return 0;
             }
-            
+
+            return 0;
         }
     }
 }

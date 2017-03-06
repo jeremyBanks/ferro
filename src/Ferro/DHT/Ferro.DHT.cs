@@ -118,7 +118,7 @@ namespace Ferro.DHT {
                 } 
 
                 if (possibleNodes.Count > 0) {
-                    var ep = possibleNodes.Pop();
+                    var ep = possibleNodes.PopRandom();
                     Console.WriteLine($"Pinging possible node {ep} to check validity.");
                     Ping(ep).DoNotAwait();
 
