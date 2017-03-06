@@ -32,7 +32,7 @@ namespace Ferro
 
             // Request the first piece.
             var initialRequest = ConstructRequestMessage(ourExtCode, 0);
-            Console.WriteLine("Sending request for first metadata piece: " + initialRequest.ToHuman());
+            Console.WriteLine("PEER/META: Sending request for first metadata piece: " + initialRequest.ToHuman());
             stream.Write(initialRequest);
 
             while (true) {
@@ -42,22 +42,22 @@ namespace Ferro
                     var theirPrefix = stream.ReadBytes(4);
                     theirLength = theirPrefix.Decode32BitInteger();
                     if (theirLength == 0) {
-                        Console.WriteLine("Got keepalive. Let's send our own!");
+                        Console.WriteLine("PEER/META: Got keepalive. Let's send our own!");
                         stream.Write(new byte[4]);
                     }
                 }
 
-                Console.WriteLine($"Got message with length {theirLength}.");
+                Console.WriteLine($"PEER/META: Got message with length {theirLength}.");
                 var peerResponse = stream.ReadBytes(theirLength);
                 var responseTypeId = peerResponse[0];
                 switch (responseTypeId)
                 {  
                     case 20:
-                        Console.WriteLine("It's an extension message! Hurrah!");
+                        Console.WriteLine("PEER/META: It's an extension message! Hurrah!");
                         var extensionId = peerResponse[1];
 
                         if (extensionId == theirExtCode) {
-                            Console.WriteLine("It's a metadata exchange message!");
+                            Console.WriteLine("PEER/META: It's a metadata exchange message!");
                             var data = peerResponse.Slice(2);
                             Int64 dictSize;
                             var dict = Bencoding.DecodeFirstDict(data, out dictSize);
@@ -68,8 +68,8 @@ namespace Ferro
                                 throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
                             }
 
-                            Console.WriteLine($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
-                            Console.WriteLine("storing...");
+                            Console.WriteLine($"PEER/META: Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
+                            Console.WriteLine("PEER/META: storing...");
                             metadataPieces[currentPiece] = postDict;
                             currentPiece++;
                             
@@ -87,20 +87,20 @@ namespace Ferro
                                 var hash = combinedPieces.Sha1();
                                 if (Enumerable.SequenceEqual(hash, infoHash))
                                 {
-                                    Console.WriteLine("metadata verified!");
+                                    Console.WriteLine("PEER/META: metadata verified!");
                                     DataHandler.SaveMetadata(combinedPieces);
-                                    Console.WriteLine("metadata saved.");
+                                    Console.WriteLine("PEER/META: metadata saved.");
                                 }
                                 else
                                 {
-                                    Console.WriteLine("metadata verification failed!");
+                                    Console.WriteLine("PEER/META: metadata verification failed!");
                                 }
                                 
                                 return;
                             }
 
                             var request = ConstructRequestMessage(ourExtCode, currentPiece);
-                            Console.WriteLine("Requesting the next piece of metadata...");
+                            Console.WriteLine("PEER/META: Requesting the next piece of metadata...");
                             stream.Write(request);
 
                         } else {
@@ -110,23 +110,23 @@ namespace Ferro
                     break;
 
                     case 0:
-                        Console.WriteLine("It's a choke message! :(");
+                        Console.WriteLine("PEER/META: It's a choke message! :(");
                     break;
 
                     case 1:
-                        Console.WriteLine("It's an unchoke message! :D");
+                        Console.WriteLine("PEER/META: It's an unchoke message! :D");
                     break;
 
                     case 2:
-                        Console.WriteLine("It's an interested message! <3");
+                        Console.WriteLine("PEER/META: It's an interested message! <3");
                     break;
 
                     case 4:
-                        Console.WriteLine("It's a not interested message! </3");
+                        Console.WriteLine("PEER/META: It's a not interested message! </3");
                     break;
 
                     default:
-                        Console.WriteLine($"Unexpected message type {responseTypeId}; aborting.");
+                        Console.WriteLine($"PEER/META: Unexpected message type {responseTypeId}; ignoring.");
                     break;
                 }
             }

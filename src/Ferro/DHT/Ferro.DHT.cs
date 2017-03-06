@@ -123,7 +123,7 @@ namespace Ferro.DHT {
                 }
             }
 
-            Console.WriteLine($"Added {count} potential DHT endpoints from cache.");
+            Console.WriteLine($"DHT: Added {count} potential DHT endpoints from cache.");
         }
 
         public void AddNode(IPEndPoint ep) {
@@ -144,7 +144,7 @@ namespace Ferro.DHT {
                 if (knownNodes.Count < 64) {
                     if (possibleNodes.Count > 0 && knownNodes.Count < 8) {
                         var ep = possibleNodes.PopRandom();
-                        Console.WriteLine($"Pinging possible node {ep} to check validity.");
+                        Console.WriteLine($"DHT: Pinging possible node {ep} to check validity.");
                         Ping(ep).DoNotAwait();
 
                         await Task.Delay(1500);
@@ -164,7 +164,6 @@ namespace Ferro.DHT {
 
                 connectedSource.TrySetResult(true);
 
-                Console.WriteLine("Our connection is good!");
                 await Task.Delay(5000);
             }
         }
@@ -177,7 +176,7 @@ namespace Ferro.DHT {
                     try {
                         handleMessage(await socket.ReceiveAsync());
                     } catch (Exception ex) {
-                        Console.WriteLine("Exception! " + ex);  
+                        Console.WriteLine("DHT: Exception! " + ex);  
                     }
                 }
             }
@@ -201,21 +200,21 @@ namespace Ferro.DHT {
 
                         responseSource.TrySetResult(value);
                     } else {
-                        Console.WriteLine("Got unexpected response message.");
+                        Console.WriteLine("DHT: Got unexpected response message.");
                     }
 
                     break;
                 }
 
                 case "e": {
-                    Console.WriteLine($"Got error mesage from {message.Source}.");
+                    Console.WriteLine($"DHT: Got error mesage from {message.Source}.");
 
                     var key = new QueryKey {
                         Token = value.GetBytes("t"),
                         EP = message.Source
                     };
 
-                    Console.WriteLine("For query key: " + key);
+                    Console.WriteLine("DHT: For query key: " + key);
 
                     if (pendingQueries.ContainsKey(key)) {
                         var responseSource = pendingQueries[key];
@@ -226,23 +225,23 @@ namespace Ferro.DHT {
                         var errorMessage = ((byte[]) errors[1]).FromASCII();
                         
                         var exception = new Exception($"{code} {errorMessage}");
-                        Console.WriteLine("Rejecting pending task.");
+                        Console.WriteLine("DHT: Rejecting pending task.");
                         responseSource.TrySetException(new Exception[] { exception });
                     } else {
-                        Console.WriteLine("But I wasn't expecting that!");
+                        Console.WriteLine("DHT: But I wasn't expecting that!");
                     }
 
                     break;
                 }
 
                 case "q": {
-                    Console.WriteLine($"Ignored query mesage from {message.Source}:\n{Bencoding.ToHuman(message.Data)}");
+                    Console.WriteLine($"DHT: Ignored query mesage from {message.Source}.");
                     // do nothing because we're read-only
                     break;
                 }
 
                 default: {
-                    Console.WriteLine($"Got unknown mesage from {message.Source}:\n{Bencoding.ToHuman(message.Data)}");
+                    Console.WriteLine($"DHT: Got unknown mesage from {message.Source}.");
                     // maybe we could send an error?
                     break;
                 }
@@ -325,7 +324,7 @@ namespace Ferro.DHT {
                 }
 
                 if (closestNode == null) {
-                    Console.WriteLine($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
+                    Console.WriteLine($"DHT: Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
                     await Task.Delay(5000);
                     continue;
                 }
@@ -344,14 +343,14 @@ namespace Ferro.DHT {
                     result.TrySetException(new Exception("get_peers timed out"));
                 }).DoNotAwait();
 
-                Console.WriteLine($"Sending get_peers {key}...");
+                Console.WriteLine($"DHT: Sending get_peers {key}...");
                 sendGetPeers(closestNode.EP, token, infohash);
 
                 Dictionary<byte[], object> results = null;
                 try {
                     results = await result.Task;
                 } catch (Exception ex) {
-                    Console.WriteLine("Query failed: " + ex);
+                    Console.WriteLine("DHT: Query failed: " + ex);
                     continue;
                 }
 
@@ -360,7 +359,7 @@ namespace Ferro.DHT {
                 if (response.ContainsKey("nodes")) {
                     var compactNodes = response.GetBytes("nodes");
                     
-                    Console.WriteLine($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
+                    Console.WriteLine($"DHT: Got {compactNodes.Length / 26} closer nodes, pinging them all.");
 
                     var nodeCount = compactNodes.Length % 26;
                     for (var i = 0; i < compactNodes.Length; i += 26) {
@@ -374,7 +373,7 @@ namespace Ferro.DHT {
                 } else {
                     var compactPeers = response.GetList("values");
 
-                    Console.WriteLine("Got peers!");
+                    Console.WriteLine("DHT: Got peers!");
 
                     var peers = new List<IPEndPoint> {};
 
@@ -447,7 +446,7 @@ namespace Ferro.DHT {
                     count++;
                 }
                 dhtCache.Flush();
-                Console.WriteLine($"Saved {count} DHT node endpoints to cache.");
+                Console.WriteLine($"DHT: Saved {count} DHT node endpoints to cache.");
             }
         }
 

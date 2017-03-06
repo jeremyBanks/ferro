@@ -36,7 +36,7 @@ namespace Ferro.Common
             
             Action onReceived = () => {
                 if (responseHandling.SocketError != SocketError.Success) {
-                    Console.WriteLine($"Got socket error when trying to read packet: {responseHandling.SocketError}");
+                    Console.WriteLine($"UDP: Got socket error when trying to read packet: {responseHandling.SocketError}");
                     Task.Run(async () => {
                         // try again, really hackily
                         taskSource.TrySetResult(await ReceiveAsync());

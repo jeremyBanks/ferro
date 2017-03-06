@@ -26,23 +26,24 @@ namespace Ferro.BitTorrent
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
 
             Console.WriteLine(
-                $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
+                $"CLIENT: Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
             foreach (var ep in ubuntuPeers) {
-                Console.WriteLine($"Attempting to connect to peer at {ep}.");
+                Console.WriteLine($"CLIENT: Attempting to connect to peer at {ep}.");
 
                 try {
                     var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
                     connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
                     break;
                 } catch (Exception ex) {
-                    Console.WriteLine("BUT IT FAILED? Let's try next. " + ex);
+                    Console.WriteLine("CLIENT: It failed: " + ex);
                     await Task.Delay(1000);
+                    Console.WriteLine("CLIENT: Do I have another peer to try?");
                     continue;
                 }
             }
 
-            Console.WriteLine("Done.");
+            Console.WriteLine("CLIENT: Done.");
         }
 
         #region IDisposable Support
