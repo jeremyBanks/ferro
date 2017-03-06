@@ -38,10 +38,16 @@ namespace Ferro
                     $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got some response!");
 
                 foreach (var ep in ubuntuPeers) {
-                    Console.WriteLine("Attempting to connect to peer at ${ep}.");
+                    Console.WriteLine($"Attempting to connect to peer at {ep}.");
 
-                    var connection = new PeerConnection(IPAddress.Any);
-                    connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
+                    try {
+                        var connection = new PeerConnection(IPAddress.Any);
+                        connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
+                    } catch (Exception ex) {
+                        Console.WriteLine("BUT IT FAILED? Let's try next. " + ex);
+                        await Task.Delay(1000);
+                        continue;
+                    }
 
                     break;
                 }

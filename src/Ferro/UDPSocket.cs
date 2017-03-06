@@ -36,7 +36,11 @@ namespace Ferro
             
             Action onReceived = () => {
                 if (responseHandling.SocketError != SocketError.Success) {
-                    throw new Exception($"Got socket error {responseHandling.SocketError}");
+                    Console.WriteLine($"Got socket error when trying to read packet: {responseHandling.SocketError}");
+                    Task.Run(async () => {
+                        // try again, really hackily
+                        taskSource.TrySetResult(await ReceiveAsync());
+                    });
                 }
 
                 var data = new byte[responseHandling.BytesTransferred];

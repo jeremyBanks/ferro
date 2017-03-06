@@ -107,13 +107,12 @@ namespace Ferro {
         }
 
         public void AddNode(IPEndPoint ep) {
-            Console.WriteLine($"DHT: Node added: {ep}");
             possibleNodes.Add(ep);
         }
 
         private async void connectionHealthLoop() {
             while (!canceled) {
-                Console.WriteLine($"DHT: {knownNodes.Count} good nodes, {possibleNodes.Count} potential");
+                Console.WriteLine($"DHT: {knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
 
                 if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
                     await Task.Delay(2500);
@@ -167,23 +166,18 @@ namespace Ferro {
 
             switch (type) {
                 case "r": {
-                    Console.WriteLine($"Got response message from {message.Source}.");
-
                     var key = new DHTQueryKey {
                         Token = value.GetBytes("t"),
                         EP = message.Source
                     };
 
-                    Console.WriteLine("For query key: " + key);
-
                     if (pendingQueries.ContainsKey(key)) {
                         var responseSource = pendingQueries[key];
                         pendingQueries.Remove(key);
 
-                        responseSource.SetResult(new DHTMessage { Data = value });
-                        Console.WriteLine("Resolved pending task.");
+                        responseSource.TrySetResult(new DHTMessage { Data = value });
                     } else {
-                        Console.WriteLine("But I wasn't expecting that!");
+                        Console.WriteLine("Got unexpected response message.");
                     }
 
                     break;
@@ -209,7 +203,7 @@ namespace Ferro {
                         
                         var exception = new Exception($"{code} {errorMessage}");
                         Console.WriteLine("Rejecting pending task.");
-                        responseSource.SetException(new Exception[] { exception });
+                        responseSource.TrySetException(new Exception[] { exception });
                     } else {
                         Console.WriteLine("But I wasn't expecting that!");
                     }
@@ -260,6 +254,10 @@ namespace Ferro {
             var result = new TaskCompletionSource<DHTMessage>();
             var key = new DHTQueryKey { Token = token, EP = ep };
             pendingQueries.Add(key, result);
+            Task.Run(async () => {
+                await Task.Delay(5000);
+                result.TrySetException(new Exception("request timed out"));
+            });
 
             Console.WriteLine($"Sending ping {key}...");
             sendPing(ep, token);
@@ -284,32 +282,33 @@ namespace Ferro {
         }
 
         public async Task<List<IPEndPoint>> GetPeers(byte[] infohash) {
-            var visitedNodeAddresses = new HashSet<IPAddress>();
+            var visitedNodeAddresses = new HashSet<Int32>();
 
             var queries = 0;
 
             while (true) {
-                if (queries++ > 32) {
-                    throw new Exception("query count sanity limit exceeded");
-                }
-
                 var nodes = getKnownNodesByCloseness(infohash);
 
                 DHTNode closestNode = null;
 
                 foreach (var node in nodes) {
-                    if (visitedNodeAddresses.Contains(node.EP.Address)) {
+                    if (visitedNodeAddresses.Contains(node.EP.Address.GetAddressBytes().Decode32BitInteger())) {
                         continue;
                     } else {
-                        visitedNodeAddresses.Add(node.EP.Address);
+                        visitedNodeAddresses.Add(node.EP.Address.GetAddressBytes().Decode32BitInteger());
                         closestNode = node;
+                        break;
                     }
                 }
 
                 if (closestNode == null) {
-                    Console.WriteLine($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT.");
+                    Console.WriteLine($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
                     await Task.Delay(5000);
                     continue;
+                }
+
+                if (queries++ > 32) {
+                    throw new Exception("query count sanity limit exceeded");
                 }
 
                 var token = (lastToken = IncrementToken(lastToken));
@@ -317,40 +316,52 @@ namespace Ferro {
                 var result = new TaskCompletionSource<DHTMessage>();
                 var key = new DHTQueryKey { Token = token, EP = closestNode.EP };
                 pendingQueries.Add(key, result);
+                Task.Run(async () => {
+                    await Task.Delay(5000);
+                    result.TrySetException(new Exception("get_peers timed out"));
+                });
 
                 Console.WriteLine($"Sending get_peers {key}...");
                 sendGetPeers(closestNode.EP, token, infohash);
 
-                var results = await result.Task;
+                DHTMessage results = null;
+                try {
+                    results = await result.Task;
+                } catch (Exception ex) {
+                    Console.WriteLine("Query failed: " + ex);
+                    continue;
+                }
 
                 var response = results.Data.GetDict("r");
 
                 if (response.ContainsKey("nodes")) {
                     var compactNodes = response.GetBytes("nodes");
                     
-                    Console.WriteLine("Got closer nodes: " + compactNodes.ToHuman());
+                    Console.WriteLine("Got closer nodes.");
 
                     var nodeCount = compactNodes.Length % 26;
                     for (var i = 0; i < compactNodes.Length; i += 26) {
                         // we disregard the node ID here, since we'll ping all of them and get it then
-                        AddNode(new IPEndPoint(
+                        var ep = new IPEndPoint(
                             new IPAddress(compactNodes.Slice(i + 20, i + 24)),
-                            compactNodes.Slice(i + 22, i + 26).Decode16BitInteger()));
+                            compactNodes.Slice(i + 24, i + 26).Decode16BitInteger());
+                        Ping(ep);
                     }
 
+                    await Task.Delay(2000);
                     continue;
                 } else {
-                    var compactPeers = response.GetBytes("peers");
+                    var compactPeers = response.GetList("values");
 
-                    Console.WriteLine("Got peers: " + compactPeers.ToHuman());
+                    Console.WriteLine("Got peers!?");
 
                     var peers = new List<IPEndPoint> {};
 
-                    var nodeCount = compactPeers.Length % 6;
-                    for (var i = 0; i < compactPeers.Length; i += 6) {
+                    foreach (var compactPeer_ in compactPeers) {
+                        var compactPeer = (byte[]) compactPeer_;
                         peers.Add(new IPEndPoint(
-                            new IPAddress(compactPeers.Slice(i + 0, i + 4)),
-                            compactPeers.Slice(i + 2, i + 6).Decode16BitInteger()));
+                            new IPAddress(compactPeer.Slice(0, 4)),
+                            compactPeer.Slice(4, 6).Decode16BitInteger()));
                     }
 
                     return peers;
@@ -371,7 +382,6 @@ namespace Ferro {
             dict.Set("a", args);
 
             var encoded = Bencoding.Encode(dict);
-            Console.WriteLine($"Sending ping to {destination}.");
             socket.SendTo(encoded, destination);
         }
 
@@ -388,7 +398,6 @@ namespace Ferro {
 
             var encoded = Bencoding.Encode(dict);
 
-            Console.WriteLine($"Sending get_peers to {destination}.");
             socket.SendTo(encoded, destination);
         }
 

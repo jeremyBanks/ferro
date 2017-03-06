@@ -169,12 +169,12 @@ namespace Ferro {
 
         public static Int32 Decode16BitInteger(this byte[] bytes)
         {
-            if (bytes.Length != 4) {
-                throw new Exception($"bytes must have length 4, is {bytes.Length}");
+            if (bytes.Length != 2) {
+                throw new Exception($"bytes must have length 2, is {bytes.Length}");
             }
             return (
-                (bytes[0] << (8 * 1)) | 
-                (bytes[1] << (8 * 0)));
+                (((Int32) bytes[0]) << (8 * 1)) | 
+                (((Int32) bytes[1]) << (8 * 0)));
         }
 
         public static byte[] EncodeBytes(this Int16 number) {
