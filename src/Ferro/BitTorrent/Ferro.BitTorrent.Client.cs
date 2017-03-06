@@ -34,16 +34,15 @@ namespace Ferro.BitTorrent
                 try {
                     var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
                     connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
+                    break;
                 } catch (Exception ex) {
                     Console.WriteLine("BUT IT FAILED? Let's try next. " + ex);
                     await Task.Delay(1000);
                     continue;
                 }
-
-                break;
             }
 
-            Console.WriteLine(ubuntuPeers);
+            Console.WriteLine("Done.");
         }
 
         #region IDisposable Support
