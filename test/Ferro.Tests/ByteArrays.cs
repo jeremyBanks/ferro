@@ -1,5 +1,6 @@
 using Xunit;
 
+using Ferro.Common;
 
 namespace Ferro.UnitTests
 {
