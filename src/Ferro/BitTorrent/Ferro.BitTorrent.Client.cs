@@ -30,7 +30,6 @@ namespace Ferro.BitTorrent
             dht.AddNode(bootstrapNode);
 
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
-            using (Logger.BeginScope($"{nameof(Client)}"))
             {
                 Logger.LogInformation(
                     $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");

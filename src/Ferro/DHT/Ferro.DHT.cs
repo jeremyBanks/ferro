@@ -139,18 +139,22 @@ namespace Ferro.DHT {
         }
 
         private async void connectionHealthLoop() {
-            while (!canceled) {
+            while (!canceled)
+            {
                 Logger.LogInformation($"{knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
 
                 // saveDHT();
 
-                if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
+                if (possibleNodes.Count == 0 && knownNodes.Count == 0)
+                {
                     await Task.Delay(2500);
                     continue;
                 }
 
-                if (knownNodes.Count < 64) {
-                    if (possibleNodes.Count > 0 && knownNodes.Count < 8) {
+                if (knownNodes.Count < 64)
+                {
+                    if (possibleNodes.Count > 0 && knownNodes.Count < 8)
+                    {
                         var ep = possibleNodes.PopRandom();
                         Logger.LogInformation($"Pinging possible node {ep} to check validity.");
                         Ping(ep).DoNotAwait();
@@ -159,7 +163,8 @@ namespace Ferro.DHT {
                         continue;
                     }
 
-                    if (knownNodes.Count > 0) {
+                    if (knownNodes.Count > 0)
+                    {
                         var id = new byte[20].FillRandom();
                         GetPeers(id).DoNotAwait();
                         Logger.LogInformation(
@@ -184,7 +189,10 @@ namespace Ferro.DHT {
                     try {
                         handleMessage(await socket.ReceiveAsync());
                     } catch (Exception ex) {
-                        Logger.LogError("Exception! " + ex);  
+                        using (Logger.BeginScope($"=> {nameof(messageEventLoop)}"))
+                        {
+                            Logger.LogError("Exception! " + ex);
+                        }
                     }
                 }
             }
@@ -194,65 +202,77 @@ namespace Ferro.DHT {
             var value = Bencoding.DecodeDict(message.Data);
 
             var type = value.GetString("y");
+            switch (type)
+            {
+                case "r":
+                    {
+                        var key = new QueryKey
+                        {
+                            Token = value.GetBytes("t"),
+                            EP = message.Source
+                        };
 
-            switch (type) {
-                case "r": {
-                    var key = new QueryKey {
-                        Token = value.GetBytes("t"),
-                        EP = message.Source
-                    };
+                        if (pendingQueries.ContainsKey(key))
+                        {
+                            var responseSource = pendingQueries[key];
+                            pendingQueries.Remove(key);
 
-                    if (pendingQueries.ContainsKey(key)) {
-                        var responseSource = pendingQueries[key];
-                        pendingQueries.Remove(key);
+                            responseSource.TrySetResult(value);
+                        }
+                        else
+                        {
+                            Logger.LogWarning("DHT: Got unexpected response message.");
+                        }
 
-                        responseSource.TrySetResult(value);
-                    } else {
-                        Logger.LogWarning("DHT: Got unexpected response message.");
+                        break;
                     }
 
-                    break;
-                }
+                case "e":
+                    {
+                        Logger.LogWarning($"Got error mesage from {message.Source}.");
 
-                case "e": {
-                    Logger.LogWarning($"Got error mesage from {message.Source}.");
+                        var key = new QueryKey
+                        {
+                            Token = value.GetBytes("t"),
+                            EP = message.Source
+                        };
 
-                    var key = new QueryKey {
-                        Token = value.GetBytes("t"),
-                        EP = message.Source
-                    };
+                        Logger.LogInformation("For query key: " + key);
 
-                    Logger.LogInformation("For query key: " + key);
+                        if (pendingQueries.ContainsKey(key))
+                        {
+                            var responseSource = pendingQueries[key];
+                            pendingQueries.Remove(key);
 
-                    if (pendingQueries.ContainsKey(key)) {
-                        var responseSource = pendingQueries[key];
-                        pendingQueries.Remove(key);
+                            var errors = value.GetList("e");
+                            var code = (Int64)errors[0];
+                            var errorMessage = ((byte[])errors[1]).FromASCII();
 
-                        var errors = value.GetList("e");
-                        var code = (Int64) errors[0];
-                        var errorMessage = ((byte[]) errors[1]).FromASCII();
-                        
-                        var exception = new Exception($"{code} {errorMessage}");
-                        Logger.LogWarning("Rejecting pending task.");
-                        responseSource.TrySetException(new Exception[] { exception });
-                    } else {
-                        Logger.LogInformation("But I wasn't expecting that!");
+                            var exception = new Exception($"{code} {errorMessage}");
+                            Logger.LogWarning("Rejecting pending task.");
+                            responseSource.TrySetException(new Exception[] { exception });
+                        }
+                        else
+                        {
+                            Logger.LogInformation("But I wasn't expecting that!");
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
+                case "q":
+                    {
+                        Logger.LogInformation($"Ignored query mesage from {message.Source}.");
+                        // do nothing because we're read-only
+                        break;
+                    }
 
-                case "q": {
-                    Logger.LogInformation($"Ignored query mesage from {message.Source}.");
-                    // do nothing because we're read-only
-                    break;
-                }
-
-                default: {
-                    Logger.LogInformation($"Got unknown mesage from {message.Source}.");
-                    // maybe we could send an error?
-                    break;
-                }
+                default:
+                    {
+                        Logger.LogInformation($"Got unknown mesage from {message.Source}.");
+                        // maybe we could send an error?
+                        break;
+                    }
             }
         }
 
@@ -315,85 +335,101 @@ namespace Ferro.DHT {
             var visitedNodeAddresses = new HashSet<Int32>();
 
             var queries = 0;
-
-            while (true) {
-                var nodes = getKnownNodesByCloseness(infohash);
-
-                Node closestNode = null;
-
-                foreach (var node in nodes) {
-                    if (visitedNodeAddresses.Contains(node.EP.Address.GetAddressBytes().Decode32BitInteger())) {
-                        continue;
-                    } else {
-                        visitedNodeAddresses.Add(node.EP.Address.GetAddressBytes().Decode32BitInteger());
-                        closestNode = node;
-                        break;
-                    }
-                }
-
-                if (closestNode == null) {
-                    Logger.LogInformation($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
-                    await Task.Delay(5000);
-                    continue;
-                }
-
-                if (queries++ > 32) {
-                    throw new Exception("query count sanity limit exceeded");
-                }
-
-                var token = (lastToken = IncrementToken(lastToken));
-
-                var result = new TaskCompletionSource<Dictionary<byte[], object>>();
-                var key = new QueryKey { Token = token, EP = closestNode.EP };
-                pendingQueries.Add(key, result);
-                Task.Run(async () => {
-                    await Task.Delay(5000);
-                    result.TrySetException(new Exception("get_peers timed out"));
-                }).DoNotAwait();
-
-                Logger.LogInformation($"Sending get_peers {key}...");
-                sendGetPeers(closestNode.EP, token, infohash);
-
-                Dictionary<byte[], object> results = null;
-                try {
-                    results = await result.Task;
-                } catch (Exception ex) {
-                    Logger.LogError("Query failed: " + ex);
-                    continue;
-                }
-
-                var response = results.GetDict("r");
-
-                if (response.ContainsKey("nodes")) {
-                    var compactNodes = response.GetBytes("nodes");
-                    
-                    Logger.LogInformation($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
-
-                    var nodeCount = compactNodes.Length % 26;
-                    for (var i = 0; i < compactNodes.Length; i += 26) {
-                        // we disregard the node ID here, since we'll ping all of them and get it then
-                        var ep = decodeCompactEP(compactNodes.Slice(i + 20, i + 26));
-                        Ping(ep).DoNotAwait();
-                    }
-
-                    await Task.Delay(2000);
-                    continue;
-                } else {
-                    var compactPeers = response.GetList("values");
-
-                    Logger.LogInformation("DHT: Got peers!");
-
-                    var peers = new List<IPEndPoint> {};
-
-                    foreach (var compactPeer_ in compactPeers) {
-                        var compactPeer = (byte[]) compactPeer_;
-                        peers.Add(decodeCompactEP(compactPeer));
-                    }
-
-                    return peers;
-                }
-            }
             
+                while (true)
+                {
+                    var nodes = getKnownNodesByCloseness(infohash);
+
+                    Node closestNode = null;
+
+                    foreach (var node in nodes)
+                    {
+                        if (visitedNodeAddresses.Contains(node.EP.Address.GetAddressBytes().Decode32BitInteger()))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            visitedNodeAddresses.Add(node.EP.Address.GetAddressBytes().Decode32BitInteger());
+                            closestNode = node;
+                            break;
+                        }
+                    }
+
+                    if (closestNode == null)
+                    {
+                        Logger.LogInformation($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
+                        await Task.Delay(5000);
+                        continue;
+                    }
+
+                    if (queries++ > 32)
+                    {
+                        throw new Exception("query count sanity limit exceeded");
+                    }
+
+                    var token = (lastToken = IncrementToken(lastToken));
+
+                    var result = new TaskCompletionSource<Dictionary<byte[], object>>();
+                    var key = new QueryKey { Token = token, EP = closestNode.EP };
+                    pendingQueries.Add(key, result);
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(5000);
+                        result.TrySetException(new Exception("get_peers timed out"));
+                    }).DoNotAwait();
+
+                    Logger.LogInformation($"Sending get_peers {key}...");
+                    sendGetPeers(closestNode.EP, token, infohash);
+
+                    Dictionary<byte[], object> results = null;
+                    try
+                    {
+                        results = await result.Task;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError("Query failed: " + ex);
+                        continue;
+                    }
+
+                    var response = results.GetDict("r");
+
+                    if (response.ContainsKey("nodes"))
+                    {
+                        var compactNodes = response.GetBytes("nodes");
+
+                        Logger.LogInformation($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
+
+                        var nodeCount = compactNodes.Length % 26;
+                        for (var i = 0; i < compactNodes.Length; i += 26)
+                        {
+                            // we disregard the node ID here, since we'll ping all of them and get it then
+                            var ep = decodeCompactEP(compactNodes.Slice(i + 20, i + 26));
+                            Ping(ep).DoNotAwait();
+                        }
+
+                        await Task.Delay(2000);
+                        continue;
+                    }
+                    else
+                    {
+                        var compactPeers = response.GetList("values");
+
+                        Logger.LogInformation("DHT: Got peers!");
+
+                        var peers = new List<IPEndPoint> { };
+
+                        foreach (var compactPeer_ in compactPeers)
+                        {
+                            var compactPeer = (byte[])compactPeer_;
+                            peers.Add(decodeCompactEP(compactPeer));
+                        }
+
+                        return peers;
+                    }
+                }
+
             throw new Exception("this code path should not be possible");
         }
 
@@ -441,20 +477,26 @@ namespace Ferro.DHT {
         }
 
         void saveDHT() {
-            if (dhtCache != null) {
-                dhtCache.Seek(0, SeekOrigin.Begin);
-                dhtCache.SetLength(0);
-                var count = 0;
-                foreach (var node in knownNodes.Values.ToList()) {
-                    dhtCache.WriteBytes(encodeCompactEP(node.EP));
-                    count++;
+            using (Logger.BeginScope($"{nameof(saveDHT)}"))
+            {
+                if (dhtCache != null)
+                {
+                    dhtCache.Seek(0, SeekOrigin.Begin);
+                    dhtCache.SetLength(0);
+                    var count = 0;
+                    foreach (var node in knownNodes.Values.ToList())
+                    {
+                        dhtCache.WriteBytes(encodeCompactEP(node.EP));
+                        count++;
+                    }
+                    foreach (var potentialEP in possibleNodes.ToList())
+                    {
+                        dhtCache.WriteBytes(encodeCompactEP(potentialEP));
+                        count++;
+                    }
+                    dhtCache.Flush();
+                    Logger.LogInformation($"Saved {count} DHT node endpoints to cache.");
                 }
-                foreach (var potentialEP in possibleNodes.ToList()) {
-                    dhtCache.WriteBytes(encodeCompactEP(potentialEP));
-                    count++;
-                }
-                dhtCache.Flush();
-                Logger.LogInformation($"Saved {count} DHT node endpoints to cache.");
             }
         }
 
