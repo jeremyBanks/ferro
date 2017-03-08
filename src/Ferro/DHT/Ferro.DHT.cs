@@ -134,7 +134,7 @@ namespace Ferro.DHT {
             while (!canceled) {
                 Console.WriteLine($"DHT: {knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
 
-                saveDHT();
+                // saveDHT();
 
                 if (possibleNodes.Count == 0 && knownNodes.Count == 0) {
                     await Task.Delay(2500);
