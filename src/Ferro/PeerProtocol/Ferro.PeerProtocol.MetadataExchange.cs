@@ -138,7 +138,7 @@ namespace Ferro
                             break;
 
                         default:
-                            Logger.LogInformation($"Unexpected message type {responseTypeId}; ignoring.");
+                            Logger.LogWarning($"Unexpected message type {responseTypeId}; ignoring.");
                             break;
                     }
                 }

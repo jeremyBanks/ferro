@@ -128,10 +128,8 @@ namespace Ferro.DHT {
                     break;
                 }
             }
-            using (Logger.BeginScope($"{nameof(Client)}"))
-            {
-                Logger.LogInformation($"Added {count} potential DHT endpoints from cache.");
-            }
+            
+            Logger.LogInformation($"Added {count} potential DHT endpoints from cache.");
         }
 
         public void AddNode(IPEndPoint ep) {
@@ -189,7 +187,7 @@ namespace Ferro.DHT {
                     try {
                         handleMessage(await socket.ReceiveAsync());
                     } catch (Exception ex) {
-                        using (Logger.BeginScope($"=> {nameof(messageEventLoop)}"))
+                        using (Logger.BeginScope(nameof(messageEventLoop)))
                         {
                             Logger.LogError("Exception! " + ex);
                         }
@@ -221,7 +219,10 @@ namespace Ferro.DHT {
                         }
                         else
                         {
-                            Logger.LogWarning("DHT: Got unexpected response message.");
+                            using (Logger.BeginScope("Response handler"))
+                            {
+                                Logger.LogWarning("Got unexpected response message.");
+                            }
                         }
 
                         break;
@@ -416,7 +417,7 @@ namespace Ferro.DHT {
                     {
                         var compactPeers = response.GetList("values");
 
-                        Logger.LogInformation("DHT: Got peers!");
+                        Logger.LogInformation("Got peers!");
 
                         var peers = new List<IPEndPoint> { };
 
@@ -477,7 +478,7 @@ namespace Ferro.DHT {
         }
 
         void saveDHT() {
-            using (Logger.BeginScope($"{nameof(saveDHT)}"))
+            using (Logger.BeginScope(nameof(saveDHT)))
             {
                 if (dhtCache != null)
                 {
