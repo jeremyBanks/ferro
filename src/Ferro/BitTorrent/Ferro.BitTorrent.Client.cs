@@ -2,9 +2,9 @@
 using System.Net;
 using System.Threading.Tasks;
 
-using Ferro.Common;
-
 using Microsoft.Extensions.Logging;
+
+using Ferro.Common;
 
 namespace Ferro.BitTorrent
 {
