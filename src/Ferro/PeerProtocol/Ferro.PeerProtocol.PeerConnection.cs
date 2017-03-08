@@ -52,12 +52,12 @@ namespace Ferro.PeerProtocol
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
             peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
-            Logger.LogInformation("Sending our handshake to " + peerIP + ":" + peerPort);
+            Logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peerIP + ":" + peerPort);
             using (var stream = connection.GetStream())
             {
                 stream.Write(initialHandshake);
 
-                Logger.LogInformation("Received response from peer.");
+                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Received response from peer.");
                 
                 var theirFixedHeader = stream.ReadBytes(20);
                 if (!theirFixedHeader.SequenceEqual(fixedHeader))
@@ -72,14 +72,14 @@ namespace Ferro.PeerProtocol
                 }
 
                 var theirInfoHash = stream.ReadBytes(20);
-                Logger.LogInformation("Peer's infohash is: " + theirInfoHash.ToHuman());
+                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Peer's infohash is: " + theirInfoHash.ToHuman());
                 if (!theirInfoHash.SequenceEqual(infoHash))
                 {
                     throw new Exception("Peer failed to return a matching infohash; aborting connection.");
                 }
 
                 var theirPeerId = stream.ReadBytes(20);
-                Logger.LogInformation("The peer's ID is " + theirPeerId.ToHuman());
+                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The peer's ID is " + theirPeerId.ToHuman());
 
                 if (extensionsEnabled && theirExtensionsEnabled)
                 {
@@ -87,7 +87,7 @@ namespace Ferro.PeerProtocol
                     var decodedExtensionHeader = Bencoding.DecodeDict(theirExtensionHeader);
                     var theirExtensions = decodedExtensionHeader.GetDict("m");
 
-                    Logger.LogInformation("Peer's extension header:" + Environment.NewLine + Bencoding.ToHuman(theirExtensionHeader));
+                    Logger.LogInformation(LoggingEvents.EXTENSION_HEADER_IN, "Peer's extension header:" + Environment.NewLine + Bencoding.ToHuman(theirExtensionHeader));
 
                     var extensionDict = GenerateExtentionDict();
                     var extensionHeader = new byte[extensionDict.Length + 6];
@@ -98,15 +98,15 @@ namespace Ferro.PeerProtocol
                     extensionDict.CopyTo(extensionHeader, 6);
                     stream.Write(extensionHeader);
 
-                    Logger.LogInformation("Sending our extension header: " + Environment.NewLine + Bencoding.ToHuman(extensionDict));
+                    Logger.LogInformation(LoggingEvents.EXTENSION_HEADER_OUT, "Sending our extension header: " + Environment.NewLine + Bencoding.ToHuman(extensionDict));
 
                     // Send interested message
                     stream.Write(1.EncodeBytes());
                     stream.Write(new byte[1]{2});
-                    Logger.LogInformation("Sent interested message.");
+                    Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "Sent interested message.");
 
                     if (theirExtensions.ContainsKey("ut_metadata")) {
-                        Logger.LogInformation("They also support metadata exchange. Lets try that.");
+                        Logger.LogInformation(LoggingEvents.METADATA_EXCHANGE, "They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte) theirExtensions.Get("ut_metadata");
 
                         var metadata = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));

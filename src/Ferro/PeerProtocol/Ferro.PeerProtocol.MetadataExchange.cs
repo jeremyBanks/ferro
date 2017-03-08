@@ -38,7 +38,7 @@ namespace Ferro
             {
                 // Request the first piece.
                 var initialRequest = ConstructRequestMessage(ourExtCode, 0);
-                Logger.LogInformation("Sending request for first metadata piece: " + initialRequest.ToHuman());
+                Logger.LogInformation(LoggingEvents.METADATA_REQUEST, "Sending request for first metadata piece: " + initialRequest.ToHuman());
                 stream.Write(initialRequest);
 
                 while (true)
@@ -51,23 +51,23 @@ namespace Ferro
                         theirLength = theirPrefix.Decode32BitInteger();
                         if (theirLength == 0)
                         {
-                            Logger.LogInformation("Got keepalive. Let's send our own!");
+                            Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "Got keepalive. Let's send our own!");
                             stream.Write(new byte[4]);
                         }
                     }
 
-                    Logger.LogInformation($"Got message with length {theirLength}.");
+                    Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, $"Got message with length {theirLength}.");
                     var peerResponse = stream.ReadBytes(theirLength);
                     var responseTypeId = peerResponse[0];
                     switch (responseTypeId)
                     {
                         case 20:
-                            Logger.LogInformation("It's an extension message! Hurrah!");
+                            Logger.LogInformation(LoggingEvents.EXTENSION_MESSAGE, "It's an extension message! Hurrah!");
                             var extensionId = peerResponse[1];
 
                             if (extensionId == theirExtCode)
                             {
-                                Logger.LogInformation("It's a metadata exchange message!");
+                                Logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, "It's a metadata exchange message!");
                                 var data = peerResponse.Slice(2);
                                 Int64 dictSize;
                                 var dict = Bencoding.DecodeFirstDict(data, out dictSize);
@@ -78,7 +78,7 @@ namespace Ferro
                                     throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
                                 }
 
-                                Logger.LogInformation($"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data." + 
+                                Logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, $"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data." + 
                                                         Environment.NewLine + "Storing...");
                                 metadataPieces[currentPiece] = postDict;
                                 currentPiece++;
@@ -97,48 +97,48 @@ namespace Ferro
                                     var hash = combinedPieces.Sha1();
                                     if (Enumerable.SequenceEqual(hash, infoHash))
                                     {
-                                        Logger.LogInformation("metadata verified!");
+                                        Logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata verified! saving...");
                                         DataHandler.SaveMetadata(combinedPieces);
-                                        Logger.LogInformation("metadata saved.");
+                                        Logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata saved.");
                                     }
                                     else
                                     {
-                                        Logger.LogWarning("metadata verification failed!");
+                                        Logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!");
                                     }
 
                                     return;
                                 }
 
                                 var request = ConstructRequestMessage(ourExtCode, currentPiece);
-                                Logger.LogInformation("Requesting the next piece of metadata...");
+                                Logger.LogInformation(LoggingEvents.METADATA_REQUEST, "Requesting the next piece of metadata...");
                                 stream.Write(request);
 
                             }
                             else
                             {
-                                Logger.LogWarning($"It's an unexpected message type, ID {extensionId}.");
+                                Logger.LogWarning(LoggingEvents.PEER_UNEXPECTED_RESPONSE, $"It's an unexpected message type, ID {extensionId}.");
                             }
 
                             break;
 
                         case 0:
-                            Logger.LogInformation("It's a choke message! :(");
+                            Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's a choke message! :(");
                             break;
 
                         case 1:
-                            Logger.LogInformation("It's an unchoke message! :D");
+                            Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's an unchoke message! :D");
                             break;
 
                         case 2:
-                            Logger.LogInformation("It's an interested message! <3");
+                            Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's an interested message! <3");
                             break;
 
                         case 4:
-                            Logger.LogInformation("It's a not interested message! </3");
+                            Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's a not interested message! </3");
                             break;
 
                         default:
-                            Logger.LogWarning($"Unexpected message type {responseTypeId}; ignoring.");
+                            Logger.LogWarning(LoggingEvents.PEER_UNEXPECTED_RESPONSE, $"Unexpected message type {responseTypeId}; ignoring.");
                             break;
                     }
                 }

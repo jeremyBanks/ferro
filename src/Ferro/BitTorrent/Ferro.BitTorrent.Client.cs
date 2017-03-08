@@ -35,12 +35,12 @@ namespace Ferro.BitTorrent
 
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
             {
-                Logger.LogInformation(
+                Logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
                     $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
                 foreach (var ep in ubuntuPeers)
                 {
-                    Logger.LogInformation($"Attempting to connect to peer at {ep}.");
+                    Logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
 
                     try
                     {
@@ -50,9 +50,9 @@ namespace Ferro.BitTorrent
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError("It failed: " + ex);
+                        Logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
                         await Task.Delay(1000);
-                        Logger.LogError("Do I have another peer to try?");
+                        Logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
                         continue;
                     }
                 }
