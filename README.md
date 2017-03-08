@@ -1,10 +1,10 @@
 # Ferro
 
-<https://gitlab.com/banks/ferro>
+Ferro is a BitTorrent client written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
 
-Ferro is a BitTorrent client and library.
-
-It's written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
+repo: [gitlab.com/banks/ferro](https://gitlab.com/banks/ferro)  
+mirror: [github.com/jeremyBanks/ferro](https://github.com/jeremyBanks/ferro)  
+site: [banks.gitlab.io/ferro](https://banks.gitlab.io/ferro)  
 
 ## Components
 
