@@ -24,6 +24,8 @@ namespace Ferro.BitTorrent
         }
 
         public async Task Example(IPAddress testAddress) {
+            // Sets logging restrictions -- will only log Information level or higher
+            // Since LoggerFactory is a static property, this persists throughout the application
             ApplicationLogging.LoggerFactory.AddConsole();
 
             var bootstrapNode = new IPEndPoint(testAddress, 9527);

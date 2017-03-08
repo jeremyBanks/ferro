@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
+using Microsoft.Extensions.Logging;
+
 using Ferro.Common;
 
 namespace Ferro.PeerProtocol
@@ -17,6 +19,8 @@ namespace Ferro.PeerProtocol
         private bool extensionsEnabled = false;
         private bool theirExtensionsEnabled = false;
 
+        ILogger Logger { get; } = ApplicationLogging.CreateLogger<PeerConnection>();
+
         public PeerConnection(IPAddress ipAddress)
         {
             myIpAddress = ipAddress;
@@ -25,7 +29,7 @@ namespace Ferro.PeerProtocol
 
         public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
         {
-            Console.WriteLine("PEER: Our peer id: " + peerId.ToHuman());
+            Logger.LogInformation("Our peer id: " + peerId.ToHuman());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte) 19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
@@ -48,12 +52,12 @@ namespace Ferro.PeerProtocol
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
             peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
-            Console.WriteLine("PEER: Sending our handshake to " + peerIP + ":" + peerPort);
+            Logger.LogInformation("Sending our handshake to " + peerIP + ":" + peerPort);
             using (var stream = connection.GetStream())
             {
                 stream.Write(initialHandshake);
 
-                Console.WriteLine("PEER: Received response from peer.");
+                Logger.LogInformation("Received response from peer.");
                 
                 var theirFixedHeader = stream.ReadBytes(20);
                 if (!theirFixedHeader.SequenceEqual(fixedHeader))
@@ -68,25 +72,22 @@ namespace Ferro.PeerProtocol
                 }
 
                 var theirInfoHash = stream.ReadBytes(20);
-                Console.WriteLine("PEER: Peer's infohash is: " + theirInfoHash.ToHuman());
+                Logger.LogInformation("Peer's infohash is: " + theirInfoHash.ToHuman());
                 if (!theirInfoHash.SequenceEqual(infoHash))
                 {
                     throw new Exception("Peer failed to return a matching infohash; aborting connection.");
                 }
 
                 var theirPeerId = stream.ReadBytes(20);
-                Console.WriteLine("PEER: The peer's ID is " + theirPeerId.ToHuman());
+                Logger.LogInformation("The peer's ID is " + theirPeerId.ToHuman());
 
                 if (extensionsEnabled && theirExtensionsEnabled)
                 {
                     var theirExtensionHeader = GetPeerExtensionHeader(stream);
                     var decodedExtensionHeader = Bencoding.DecodeDict(theirExtensionHeader);
                     var theirExtensions = decodedExtensionHeader.GetDict("m");
-                    
-                    Console.WriteLine("PEER: Peer's extension header:");
-                    Console.WriteLine(Bencoding.ToHuman(theirExtensionHeader));
 
-                    Console.WriteLine("PEER: Sending our extension header...");
+                    Logger.LogInformation("Peer's extension header:" + Environment.NewLine + Bencoding.ToHuman(theirExtensionHeader));
 
                     var extensionDict = GenerateExtentionDict();
                     var extensionHeader = new byte[extensionDict.Length + 6];
@@ -97,15 +98,15 @@ namespace Ferro.PeerProtocol
                     extensionDict.CopyTo(extensionHeader, 6);
                     stream.Write(extensionHeader);
 
-                    Console.WriteLine(Bencoding.ToHuman(extensionDict));
+                    Logger.LogInformation("Sending our extension header: " + Environment.NewLine + Bencoding.ToHuman(extensionDict));
 
                     // Send interested message
                     stream.Write(1.EncodeBytes());
                     stream.Write(new byte[1]{2});
-                    Console.WriteLine("PEER: Sent interested message.");
+                    Logger.LogInformation("Sent interested message.");
 
                     if (theirExtensions.ContainsKey("ut_metadata")) {
-                        Console.WriteLine("PEER: They also support metadata exchange. Lets try that.");
+                        Logger.LogInformation("They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte) theirExtensions.Get("ut_metadata");
 
                         var metadata = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));
