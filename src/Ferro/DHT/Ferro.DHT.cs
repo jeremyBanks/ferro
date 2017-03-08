@@ -79,7 +79,7 @@ namespace Ferro.DHT {
         // Handle on a file that we're loading and saving our DHT peers to/from.
         private FileStream dhtCache;
 
-        static ILogger Logger { get; } = ApplicationLogging.CreateLogger<Client>();
+        static ILogger Logger { get; } = GlobalLogger.CreateLogger<Client>();
 
         public Client() {
             connectedSource = new TaskCompletionSource<bool>();

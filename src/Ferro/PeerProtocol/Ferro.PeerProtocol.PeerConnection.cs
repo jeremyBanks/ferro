@@ -19,7 +19,7 @@ namespace Ferro.PeerProtocol
         private bool extensionsEnabled = false;
         private bool theirExtensionsEnabled = false;
 
-        ILogger Logger { get; } = ApplicationLogging.CreateLogger<PeerConnection>();
+        ILogger Logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
 
         public PeerConnection(IPAddress ipAddress)
         {

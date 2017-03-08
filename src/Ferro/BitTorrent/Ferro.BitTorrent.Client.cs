@@ -17,7 +17,7 @@ namespace Ferro.BitTorrent
 
         private DHT.Client dht;
 
-        static ILogger Logger { get; } = ApplicationLogging.CreateLogger<Client>();
+        static ILogger Logger { get; } = GlobalLogger.CreateLogger<Client>();
 
         public Client() {
             dht = new DHT.Client();
@@ -27,7 +27,8 @@ namespace Ferro.BitTorrent
             // Sets logging restrictions -- will only log Information level or higher
             // Since LoggerFactory is a static property, this persists throughout the application
             // To print Debug level logs, change first param to LogLevel.Debug
-            ApplicationLogging.LoggerFactory.AddConsole(LogLevel.Information, true);
+            // See: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging#log-level
+            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
 
             var bootstrapNode = new IPEndPoint(testAddress, 9527);
             dht.AddNode(bootstrapNode);

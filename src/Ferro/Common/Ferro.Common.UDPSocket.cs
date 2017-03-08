@@ -12,7 +12,7 @@ namespace Ferro.Common
         readonly IPEndPoint localEndPoint;
         private Socket dotnetSocket;
 
-        ILogger Logger { get; } = ApplicationLogging.CreateLogger<UDPSocket>();
+        ILogger Logger { get; } = GlobalLogger.CreateLogger<UDPSocket>();
 
         public UDPSocket(IPEndPoint localEndPoint) {
             this.localEndPoint = localEndPoint;

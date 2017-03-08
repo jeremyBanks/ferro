@@ -16,7 +16,7 @@ namespace Ferro
         Int32 currentPiece = 0;
         Int64 totalMetadata;
 
-        ILogger Logger { get; } = ApplicationLogging.CreateLogger<MetadataExchange>();
+        ILogger Logger { get; } = GlobalLogger.CreateLogger<MetadataExchange>();
 
         public MetadataExchange(Int64 metadataSize)
         {
