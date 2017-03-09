@@ -17,7 +17,7 @@ namespace Ferro.BitTorrent
 
         private DHT.Client dht;
 
-        static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
+        private static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
 
         public Client() {
             dht = new DHT.Client();

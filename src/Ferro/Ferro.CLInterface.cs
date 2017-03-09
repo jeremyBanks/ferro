@@ -20,7 +20,7 @@ namespace Ferro {
             // Since LoggerFactory is a static property, this persists throughout the application
             // To print Debug level logs, change first param to LogLevel.Debug
             // See: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging#log-level
-            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
+            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Debug, true);
 
             var testAddress = IPAddress.Loopback;
 
