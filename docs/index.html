@@ -2,10 +2,26 @@
 
 <title>Ferro</title>
 
+<div><div><div><div><div><div><div><div>
+    </div></div></div></div></div></div></div></div>
+
 <style>
+    html, body, div {
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+
     html {
-        min-height: 100%;   
-        background-image: url(./ferro.png);
+        background-image: url(./ferro-b.png);
+        background-position: center;
+    }
+
+    div {
+        height: 100%;
+        background-image: url(./ferro-v.png);
         background-position: center;
         background-size: 64px;
         background-repeat: no-repeat;
@@ -14,6 +30,40 @@
         animation-iteration-count: infinite;
         animation-direction: default;
         animation-timing-function: ease-in-out;
+        animation-delay: -3s;
+    }
+
+    div div {
+        animation-delay: -23s;
+    }
+
+    div div div {
+        animation-delay: -43s;
+    }
+
+    div div div div {
+        animation-direction: reverse;
+        animation-delay: -63s;
+    }
+
+    div div div div div {
+        animation-direction: reverse;
+        animation-delay: -83s;
+    }
+
+    div div div div div div {
+        animation-direction: reverse;
+        animation-delay: -103s;
+    }
+
+    div div div div div div div {
+        animation-direction: reverse;
+        animation-delay: -123s;
+    }
+
+    div div div div div div div div {
+        animation-direction: reverse;
+        animation-delay: -143s;
     }
 
     @keyframes sideways {
