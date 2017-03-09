@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Linq;
 
+using Microsoft.Extensions.Logging;
+
 using Ferro.Common;
 
 namespace Ferro
@@ -13,6 +15,8 @@ namespace Ferro
         byte[][] metadataPieces;
         Int32 currentPiece = 0;
         Int64 totalMetadata;
+
+        ILogger logger { get; } = GlobalLogger.CreateLogger<MetadataExchange>();
 
         public MetadataExchange(Int64 metadataSize)
         {
@@ -30,104 +34,113 @@ namespace Ferro
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            // Request the first piece.
-            var initialRequest = ConstructRequestMessage(ourExtCode, 0);
-            Console.WriteLine("PEER/META: Sending request for first metadata piece: " + initialRequest.ToHuman());
-            stream.Write(initialRequest);
+            using (logger.BeginScope($"Requesting metadata for {infoHash}"))
+            {
+                // Request the first piece.
+                var initialRequest = ConstructRequestMessage(ourExtCode, 0);
+                logger.LogInformation(LoggingEvents.METADATA_REQUEST, "Sending request for first metadata piece: " + initialRequest.ToHuman());
+                stream.Write(initialRequest);
 
-            while (true) {
-                Int32 theirLength = 0;
-                // Read lengths until we get a non-zero (non-keepalive) length.
-                while (theirLength == 0) {
-                    var theirPrefix = stream.ReadBytes(4);
-                    theirLength = theirPrefix.Decode32BitInteger();
-                    if (theirLength == 0) {
-                        Console.WriteLine("PEER/META: Got keepalive. Let's send our own!");
-                        stream.Write(new byte[4]);
-                    }
-                }
-
-                Console.WriteLine($"PEER/META: Got message with length {theirLength}.");
-                var peerResponse = stream.ReadBytes(theirLength);
-                var responseTypeId = peerResponse[0];
-                switch (responseTypeId)
-                {  
-                    case 20:
-                        Console.WriteLine("PEER/META: It's an extension message! Hurrah!");
-                        var extensionId = peerResponse[1];
-
-                        if (extensionId == theirExtCode) {
-                            Console.WriteLine("PEER/META: It's a metadata exchange message!");
-                            var data = peerResponse.Slice(2);
-                            Int64 dictSize;
-                            var dict = Bencoding.DecodeFirstDict(data, out dictSize);
-                            var postDict = data.Slice((Int32) dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
-
-                            if (dict.GetInt("piece") != currentPiece)
-                            {
-                                throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
-                            }
-
-                            Console.WriteLine($"PEER/META: Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.");
-                            Console.WriteLine("PEER/META: storing...");
-                            metadataPieces[currentPiece] = postDict;
-                            currentPiece++;
-                            
-                            if (currentPiece == metadataPieces.Length)
-                            {
-                                // verify metadata
-                                var combinedPieces = new byte[totalMetadata];
-                                var index = 0;
-                                foreach (var piece in metadataPieces)
-                                {
-                                    piece.CopyTo(combinedPieces, index);
-                                    index += piece.Length;
-                                }
-
-                                var hash = combinedPieces.Sha1();
-                                if (Enumerable.SequenceEqual(hash, infoHash))
-                                {
-                                    Console.WriteLine("PEER/META: metadata verified!");
-                                    DataHandler.SaveMetadata(combinedPieces);
-                                    Console.WriteLine("PEER/META: metadata saved.");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("PEER/META: metadata verification failed!");
-                                }
-                                
-                                return;
-                            }
-
-                            var request = ConstructRequestMessage(ourExtCode, currentPiece);
-                            Console.WriteLine("PEER/META: Requesting the next piece of metadata...");
-                            stream.Write(request);
-
-                        } else {
-                            Console.WriteLine($"Warning: it's an unexpected message type, ID {extensionId}.");
+                while (true)
+                {
+                    Int32 theirLength = 0;
+                    // Read lengths until we get a non-zero (non-keepalive) length.
+                    while (theirLength == 0)
+                    {
+                        var theirPrefix = stream.ReadBytes(4);
+                        theirLength = theirPrefix.Decode32BitInteger();
+                        if (theirLength == 0)
+                        {
+                            logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "Got keepalive. Let's send our own!");
+                            stream.Write(new byte[4]);
                         }
+                    }
 
-                    break;
+                    logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, $"Got message with length {theirLength}.");
+                    var peerResponse = stream.ReadBytes(theirLength);
+                    var responseTypeId = peerResponse[0];
+                    switch (responseTypeId)
+                    {
+                        case 20:
+                            logger.LogInformation(LoggingEvents.EXTENSION_MESSAGE, "It's an extension message! Hurrah!");
+                            var extensionId = peerResponse[1];
 
-                    case 0:
-                        Console.WriteLine("PEER/META: It's a choke message! :(");
-                    break;
+                            if (extensionId == theirExtCode)
+                            {
+                                logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, "It's a metadata exchange message!");
+                                var data = peerResponse.Slice(2);
+                                Int64 dictSize;
+                                var dict = Bencoding.DecodeFirstDict(data, out dictSize);
+                                var postDict = data.Slice((Int32)dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 
-                    case 1:
-                        Console.WriteLine("PEER/META: It's an unchoke message! :D");
-                    break;
+                                if (dict.GetInt("piece") != currentPiece)
+                                {
+                                    throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
+                                }
 
-                    case 2:
-                        Console.WriteLine("PEER/META: It's an interested message! <3");
-                    break;
+                                logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, $"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data." + 
+                                                        Environment.NewLine + "Storing...");
+                                metadataPieces[currentPiece] = postDict;
+                                currentPiece++;
 
-                    case 4:
-                        Console.WriteLine("PEER/META: It's a not interested message! </3");
-                    break;
+                                if (currentPiece == metadataPieces.Length)
+                                {
+                                    // verify metadata
+                                    var combinedPieces = new byte[totalMetadata];
+                                    var index = 0;
+                                    foreach (var piece in metadataPieces)
+                                    {
+                                        piece.CopyTo(combinedPieces, index);
+                                        index += piece.Length;
+                                    }
 
-                    default:
-                        Console.WriteLine($"PEER/META: Unexpected message type {responseTypeId}; ignoring.");
-                    break;
+                                    var hash = combinedPieces.Sha1();
+                                    if (Enumerable.SequenceEqual(hash, infoHash))
+                                    {
+                                        logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata verified! saving...");
+                                        DataHandler.SaveMetadata(combinedPieces);
+                                        logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata saved.");
+                                    }
+                                    else
+                                    {
+                                        logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!");
+                                    }
+
+                                    return;
+                                }
+
+                                var request = ConstructRequestMessage(ourExtCode, currentPiece);
+                                logger.LogInformation(LoggingEvents.METADATA_REQUEST, "Requesting the next piece of metadata...");
+                                stream.Write(request);
+
+                            }
+                            else
+                            {
+                                logger.LogWarning(LoggingEvents.PEER_UNEXPECTED_RESPONSE, $"It's an unexpected message type, ID {extensionId}.");
+                            }
+
+                            break;
+
+                        case 0:
+                            logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's a choke message! :(");
+                            break;
+
+                        case 1:
+                            logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's an unchoke message! :D");
+                            break;
+
+                        case 2:
+                            logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's an interested message! <3");
+                            break;
+
+                        case 4:
+                            logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "It's a not interested message! </3");
+                            break;
+
+                        default:
+                            logger.LogWarning(LoggingEvents.PEER_UNEXPECTED_RESPONSE, $"Unexpected message type {responseTypeId}; ignoring.");
+                            break;
+                    }
                 }
             }
         }

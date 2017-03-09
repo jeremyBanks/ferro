@@ -2,6 +2,8 @@
 using System.Net;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+
 using Ferro.Common;
 
 namespace Ferro.BitTorrent
@@ -15,6 +17,8 @@ namespace Ferro.BitTorrent
 
         private DHT.Client dht;
 
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
+
         public Client() {
             dht = new DHT.Client();
         }
@@ -24,26 +28,31 @@ namespace Ferro.BitTorrent
             dht.AddNode(bootstrapNode);
 
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
+            {
+                logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
+                    $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
-            Console.WriteLine(
-                $"CLIENT: Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
+                foreach (var ep in ubuntuPeers)
+                {
+                    logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
 
-            foreach (var ep in ubuntuPeers) {
-                Console.WriteLine($"CLIENT: Attempting to connect to peer at {ep}.");
-
-                try {
-                    var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
-                    connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
-                    break;
-                } catch (Exception ex) {
-                    Console.WriteLine("CLIENT: It failed: " + ex);
-                    await Task.Delay(1000);
-                    Console.WriteLine("CLIENT: Do I have another peer to try?");
-                    continue;
+                    try
+                    {
+                        var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
+                        connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                        await Task.Delay(1000);
+                        logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
+                        continue;
+                    }
                 }
-            }
 
-            Console.WriteLine("CLIENT: Done.");
+                logger.LogInformation("Done.");
+            }
         }
 
         #region IDisposable Support

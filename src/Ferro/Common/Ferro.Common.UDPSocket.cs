@@ -3,12 +3,16 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+
 namespace Ferro.Common
 {
     // Dumb async wrapper over the UDP Socket interface.
     class UDPSocket : IDisposable {
         readonly IPEndPoint localEndPoint;
         private Socket dotnetSocket;
+
+        ILogger logger { get; } = GlobalLogger.CreateLogger<UDPSocket>();
 
         public UDPSocket(IPEndPoint localEndPoint) {
             this.localEndPoint = localEndPoint;
@@ -36,7 +40,7 @@ namespace Ferro.Common
             
             Action onReceived = () => {
                 if (responseHandling.SocketError != SocketError.Success) {
-                    Console.WriteLine($"UDP: Got socket error when trying to read packet: {responseHandling.SocketError}");
+                    logger.LogWarning($"UDP: Got socket error when trying to read packet: {responseHandling.SocketError}");
                     Task.Run(async () => {
                         // try again, really hackily
                         taskSource.TrySetResult(await ReceiveAsync());
