@@ -2,9 +2,6 @@
 
 <title>Ferro</title>
 
-<div><div><div><div><div><div><div><div>
-    </div></div></div></div></div></div></div></div>
-
 <style>
     html, body, div {
         margin: 0;
@@ -89,4 +86,44 @@
             background-position-y: 90%;
         }
     }
+
+    main {
+        font-family: sans-serif;
+        position: absolute;
+        overflow: auto;
+        left: 64px;
+        top: 64px;
+        width: 20em;
+        border: 6px double #444;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 1em;
+    }
+
+    main h1, main h2, main p {
+        margin: 0;
+    }
+
+    main * + p {
+        margin-top: 1em;
+    }
+
+    a {
+        color: rgb(150, 200, 255);
+    }    
 </style>
+
+<div><div><div><div><div><div><div><div>
+    <main>
+        <h1>Ferro</h1>
+
+        <p>
+            A work in progress.
+        </p>
+
+        <p>
+            Find the code <a href="https://gitlab.com/banks/ferro">on GitLab</a>.
+        </p>
+    </main>
+
+    </div></div></div></div></div></div></div></div>
