@@ -35,7 +35,10 @@ docs: [banks.gitlab.io/ferro/](https://banks.gitlab.io/ferro/)
 
 ### Using Visual Studio
 
-Ask Chris? ¯\\\_(ツ)\_/¯
+Since this assumes Windows, you won't be able to use `make` by default. I suggest using [Docker Toolbox](https://docs.docker.com/toolbox/overview/) to get a Docker
+instance running. In the Docker Command Prompt, copy and paste the commands in the Makefile under `peer:`. This should get you set up with our test rTorrent/ruTorrent Docker
+image, using data from `.\test-peer-data\`. Once this is set up, I recommend [Kitematic](https://docs.docker.com/kitematic/userguide/), a nice GUI that will
+help you manage your Docker image.
 
 ## BitTorrent References
 
