@@ -6,7 +6,8 @@ build-and-test:
   - dotnet restore test/Ferro.Tests/
   - dotnet build src/Ferro/
   - dotnet build test/Ferro.Tests/
-  - cd test/Ferro.Tests/ && dotnet test
+  - (cd test/Ferro.Tests/ && dotnet test)
+  - (cd src/Ferro && dotnet run -- --help)
 
 pages:
   image: alpine:latest
