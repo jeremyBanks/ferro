@@ -10,7 +10,7 @@ namespace Ferro.Common
 
     // exposes a set of protocol codes that we can pass to the Logger
     // for display.
-    public struct LoggingEvents
+    public class LoggingEvents
     {
         // DHT PROTOCOL
         public const int DHT_PROTOCOL_MSG   = 1000;
