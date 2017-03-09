@@ -23,9 +23,11 @@ namespace Ferro.BitTorrent
             dht = new DHT.Client();
         }
 
-        public async Task Example(IPAddress testAddress) {
-            var bootstrapNode = new IPEndPoint(testAddress, 9527);
-            dht.AddNode(bootstrapNode);
+        public async Task Example(IPAddress[] bootstrapAddresses) {
+            foreach (var address in bootstrapAddresses) {
+                var bootstrapNode = new IPEndPoint(address, 9527);
+                dht.AddNode(bootstrapNode);
+            }
 
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
             {

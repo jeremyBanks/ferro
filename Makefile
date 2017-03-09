@@ -4,7 +4,7 @@ __default:
 	make deps;
 	make build;
 	make test;
-	make run;
+	make run-help;
 	make stop-peer;
 
 .PHONY: __default deps build test run peer stop-peer
@@ -21,6 +21,12 @@ test:
 
 run:
 	cd ./src/Ferro/ && dotnet run 127.0.0.1;
+
+run-verbose:
+	cd ./src/Ferro/ && dotnet run 127.0.0.1 -v;
+
+run-help:
+	cd ./src/Ferro/ && dotnet run --help;
 
 peer:
 	rm -rf ./test-peer-state/;

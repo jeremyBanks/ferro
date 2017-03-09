@@ -1,9 +1,10 @@
 using System;
 using System.Net;
 
-using Microsoft.Extensions.Logging;
-
 using Ferro.Common;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.CommandLineUtils;
+using System.Linq;
 
 namespace Ferro {
 
@@ -16,19 +17,41 @@ namespace Ferro {
          
         public static int Main(string[] args)
         {
-            // Sets logging restrictions -- will only log Information level or higher
-            // Since LoggerFactory is a static property, this persists throughout the application
-            // To print Debug level logs, change first param to LogLevel.Debug
-            // See: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging#log-level
-            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Debug, true);
+            writeHeader();
 
-            var testAddress = IPAddress.Loopback;
+            var cli = new CommandLineApplication();
+            var verboseOption = cli.Option(
+                "-v | --verbose",
+                "Enables verbose logging",
+                CommandOptionType.NoValue
+            );
+            var bootstrapAddressArgument = cli.Argument(
+                "[bootstrap_addresses...]",
+                "Optional IP addresses of DHT nodes for bootstrapping.");
+            var helpOption = cli.HelpOption("-? | -h | --help");
 
-            if (args.Length != 1) {
-                Console.WriteLine("usage: ferro BOOTSTRAP_PEER_IP_ADDRESS");
-                return 1;
-            }
+            cli.OnExecute(() =>
+            {
+                var verbose = verboseOption.HasValue();
 
+                GlobalLogger.LoggerFactory.AddConsole(
+                    verbose ? LogLevel.Debug : LogLevel.Information, true);
+
+                using (var client = new Ferro.BitTorrent.Client()) {
+                    var bootstrapAddresses =
+                        bootstrapAddressArgument.Values.Select(
+                            s => IPAddress.Parse(s)
+                        ).ToArray();
+                    client.Example(bootstrapAddresses).Wait();
+                }   
+
+                return 0;
+            });
+
+            return cli.Execute(args);
+        }
+
+        static void writeHeader() {
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.Error.WriteLine($"Ferro BitTorrent CLIent {version}");
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -37,16 +60,7 @@ namespace Ferro {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Error.WriteLine(
                 "WARNING: This software is still in an experimental state. It may misbehave towards other peers on the network or your own system. Please limit your use.");
-            Console.Error.WriteLine("");
             Console.ResetColor();
-
-            testAddress = IPAddress.Parse(args[0]);
-
-            using (var client = new Ferro.BitTorrent.Client()) {
-                client.Example(testAddress).Wait();
-            }
-
-            return 0;
         }
     }
 }
