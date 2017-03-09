@@ -17,30 +17,24 @@ namespace Ferro.BitTorrent
 
         private DHT.Client dht;
 
-        static ILogger Logger { get; } = GlobalLogger.CreateLogger<Client>();
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
 
         public Client() {
             dht = new DHT.Client();
         }
 
         public async Task Example(IPAddress testAddress) {
-            // Sets logging restrictions -- will only log Information level or higher
-            // Since LoggerFactory is a static property, this persists throughout the application
-            // To print Debug level logs, change first param to LogLevel.Debug
-            // See: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging#log-level
-            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
-
             var bootstrapNode = new IPEndPoint(testAddress, 9527);
             dht.AddNode(bootstrapNode);
 
             var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
             {
-                Logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
+                logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
                     $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
                 foreach (var ep in ubuntuPeers)
                 {
-                    Logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
+                    logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
 
                     try
                     {
@@ -50,14 +44,14 @@ namespace Ferro.BitTorrent
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                        logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
                         await Task.Delay(1000);
-                        Logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
+                        logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
                         continue;
                     }
                 }
 
-                Logger.LogInformation("Done.");
+                logger.LogInformation("Done.");
             }
         }
 

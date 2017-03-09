@@ -12,7 +12,7 @@ namespace Ferro.Common
         readonly IPEndPoint localEndPoint;
         private Socket dotnetSocket;
 
-        ILogger Logger { get; } = GlobalLogger.CreateLogger<UDPSocket>();
+        ILogger logger { get; } = GlobalLogger.CreateLogger<UDPSocket>();
 
         public UDPSocket(IPEndPoint localEndPoint) {
             this.localEndPoint = localEndPoint;
@@ -40,7 +40,7 @@ namespace Ferro.Common
             
             Action onReceived = () => {
                 if (responseHandling.SocketError != SocketError.Success) {
-                    Logger.LogWarning($"UDP: Got socket error when trying to read packet: {responseHandling.SocketError}");
+                    logger.LogWarning($"UDP: Got socket error when trying to read packet: {responseHandling.SocketError}");
                     Task.Run(async () => {
                         // try again, really hackily
                         taskSource.TrySetResult(await ReceiveAsync());

@@ -79,7 +79,7 @@ namespace Ferro.DHT {
         // Handle on a file that we're loading and saving our DHT peers to/from.
         private FileStream dhtCache;
 
-        static ILogger Logger { get; } = GlobalLogger.CreateLogger<Client>();
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
 
         public Client() {
             connectedSource = new TaskCompletionSource<bool>();
@@ -122,14 +122,14 @@ namespace Ferro.DHT {
                     AddNode(ep);
                     count++;
                 } catch (Exception ex) {
-                    using (Logger.BeginScope($"{nameof(Client)}")) {
-                        Logger.LogError($"{ex}");
+                    using (logger.BeginScope($"{nameof(Client)}")) {
+                        logger.LogError($"{ex}");
                     }
                     break;
                 }
             }
             
-            Logger.LogInformation($"Added {count} potential DHT endpoints from cache.");
+            logger.LogInformation($"Added {count} potential DHT endpoints from cache.");
         }
 
         public void AddNode(IPEndPoint ep) {
@@ -139,7 +139,7 @@ namespace Ferro.DHT {
         private async void connectionHealthLoop() {
             while (!canceled)
             {
-                Logger.LogInformation($"{knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
+                logger.LogInformation($"{knownNodes.Count} good nodes, {possibleNodes.Count} potential nodes, {pendingQueries.Count} outstanding queries");
 
                 // saveDHT();
 
@@ -154,7 +154,7 @@ namespace Ferro.DHT {
                     if (possibleNodes.Count > 0 && knownNodes.Count < 8)
                     {
                         var ep = possibleNodes.PopRandom();
-                        Logger.LogInformation($"Pinging possible node {ep} to check validity.");
+                        logger.LogInformation($"Pinging possible node {ep} to check validity.");
                         Ping(ep).DoNotAwait();
 
                         await Task.Delay(1500);
@@ -165,7 +165,7 @@ namespace Ferro.DHT {
                     {
                         var id = new byte[20].FillRandom();
                         GetPeers(id).DoNotAwait();
-                        Logger.LogInformation(
+                        logger.LogInformation(
                             $"Searching for peers with random {id.ToHuman()} to improve DHT connection.");
 
                         await Task.Delay(1000);
@@ -187,9 +187,9 @@ namespace Ferro.DHT {
                     try {
                         handleMessage(await socket.ReceiveAsync());
                     } catch (Exception ex) {
-                        using (Logger.BeginScope(nameof(messageEventLoop)))
+                        using (logger.BeginScope(nameof(messageEventLoop)))
                         {
-                            Logger.LogError("Exception! " + ex);
+                            logger.LogError("Exception! " + ex);
                         }
                     }
                 }
@@ -219,9 +219,9 @@ namespace Ferro.DHT {
                         }
                         else
                         {
-                            using (Logger.BeginScope("Response handler"))
+                            using (logger.BeginScope("Response handler"))
                             {
-                                Logger.LogWarning("Got unexpected response message.");
+                                logger.LogWarning("Got unexpected response message.");
                             }
                         }
 
@@ -230,7 +230,7 @@ namespace Ferro.DHT {
 
                 case "e":
                     {
-                        Logger.LogWarning($"Got error mesage from {message.Source}.");
+                        logger.LogWarning($"Got error mesage from {message.Source}.");
 
                         var key = new QueryKey
                         {
@@ -238,7 +238,7 @@ namespace Ferro.DHT {
                             EP = message.Source
                         };
 
-                        Logger.LogInformation("For query key: " + key);
+                        logger.LogInformation("For query key: " + key);
 
                         if (pendingQueries.ContainsKey(key))
                         {
@@ -250,12 +250,12 @@ namespace Ferro.DHT {
                             var errorMessage = ((byte[])errors[1]).FromASCII();
 
                             var exception = new Exception($"{code} {errorMessage}");
-                            Logger.LogWarning("Rejecting pending task.");
+                            logger.LogWarning("Rejecting pending task.");
                             responseSource.TrySetException(new Exception[] { exception });
                         }
                         else
                         {
-                            Logger.LogInformation("But I wasn't expecting that!");
+                            logger.LogInformation("But I wasn't expecting that!");
                         }
 
                         break;
@@ -263,14 +263,14 @@ namespace Ferro.DHT {
 
                 case "q":
                     {
-                        Logger.LogInformation($"Ignored query mesage from {message.Source}.");
+                        logger.LogInformation($"Ignored query mesage from {message.Source}.");
                         // do nothing because we're read-only
                         break;
                     }
 
                 default:
                     {
-                        Logger.LogInformation($"Got unknown mesage from {message.Source}.");
+                        logger.LogInformation($"Got unknown mesage from {message.Source}.");
                         // maybe we could send an error?
                         break;
                     }
@@ -359,7 +359,7 @@ namespace Ferro.DHT {
 
                     if (closestNode == null)
                     {
-                        Logger.LogInformation($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
+                        logger.LogInformation($"Need new nodes to continue querying {infohash.ToHuman()} in the DHT (already visited {visitedNodeAddresses.Count}).");
                         await Task.Delay(5000);
                         continue;
                     }
@@ -380,7 +380,7 @@ namespace Ferro.DHT {
                         result.TrySetException(new Exception("get_peers timed out"));
                     }).DoNotAwait();
 
-                    Logger.LogInformation($"Sending get_peers {key}...");
+                    logger.LogInformation($"Sending get_peers {key}...");
                     sendGetPeers(closestNode.EP, token, infohash);
 
                     Dictionary<byte[], object> results = null;
@@ -390,7 +390,7 @@ namespace Ferro.DHT {
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError("Query failed: " + ex);
+                        logger.LogError("Query failed: " + ex);
                         continue;
                     }
 
@@ -400,7 +400,7 @@ namespace Ferro.DHT {
                     {
                         var compactNodes = response.GetBytes("nodes");
 
-                        Logger.LogInformation($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
+                        logger.LogInformation($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
 
                         var nodeCount = compactNodes.Length % 26;
                         for (var i = 0; i < compactNodes.Length; i += 26)
@@ -417,7 +417,7 @@ namespace Ferro.DHT {
                     {
                         var compactPeers = response.GetList("values");
 
-                        Logger.LogInformation("Got peers!");
+                        logger.LogInformation("Got peers!");
 
                         var peers = new List<IPEndPoint> { };
 
@@ -478,7 +478,7 @@ namespace Ferro.DHT {
         }
 
         void saveDHT() {
-            using (Logger.BeginScope(nameof(saveDHT)))
+            using (logger.BeginScope(nameof(saveDHT)))
             {
                 if (dhtCache != null)
                 {
@@ -496,7 +496,7 @@ namespace Ferro.DHT {
                         count++;
                     }
                     dhtCache.Flush();
-                    Logger.LogInformation($"Saved {count} DHT node endpoints to cache.");
+                    logger.LogInformation($"Saved {count} DHT node endpoints to cache.");
                 }
             }
         }

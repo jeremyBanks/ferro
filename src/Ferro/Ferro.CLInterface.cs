@@ -1,6 +1,10 @@
 using System;
 using System.Net;
 
+using Microsoft.Extensions.Logging;
+
+using Ferro.Common;
+
 namespace Ferro {
 
     class CLInterface {
@@ -8,8 +12,16 @@ namespace Ferro {
         // tagged as -dev of the next reease.
         public static readonly string version = "v0.1-dev";
 
+        ILogger logger { get; } = GlobalLogger.CreateLogger<CLInterface>();
+         
         public static int Main(string[] args)
         {
+            // Sets logging restrictions -- will only log Information level or higher
+            // Since LoggerFactory is a static property, this persists throughout the application
+            // To print Debug level logs, change first param to LogLevel.Debug
+            // See: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging#log-level
+            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
+
             var testAddress = IPAddress.Loopback;
 
             if (args.Length != 1) {
