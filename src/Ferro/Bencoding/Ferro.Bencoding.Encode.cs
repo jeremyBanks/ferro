@@ -15,19 +15,22 @@ namespace Ferro  {
         }
 
         public static void Encode(Stream stream, object value) {
-            if (value is Int64) {
-                Encode(stream, (Int64) value);
-            } else if (value is byte[]) {
-                Encode(stream, (byte[]) value);
-            } else if (value is List<object>) {
-                Encode(stream, (List<object>) value);
-            } else if (value is Dictionary<byte[], object>) {
-                Encode(stream, (Dictionary<byte[], object>) value);
-            } else if (value is Int64) {
-                Encode(stream, (Int64) value);
-            } else {
-                throw new EncodingException(
-                    $"Cannot encode value of type {value.GetType()}.");
+            switch (value) {
+                case Int64 x:
+                    Encode(stream, x);
+                    break;
+                case byte[] x:
+                    Encode(stream, x);
+                    break;
+                case List<object> x:
+                    Encode(stream, x);
+                    break;
+                case Dictionary<byte[], object> x:
+                    Encode(stream, x);
+                    break;
+                default:
+                    throw new EncodingException(
+                        $"Cannot encode value of unexpected type {value.GetType()}.");
             }
         }
 

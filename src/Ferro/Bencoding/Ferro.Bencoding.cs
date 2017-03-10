@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
+using Ferro.Common;
+
 namespace Ferro  {
     partial class Bencoding {
         public static Dictionary<byte[], object> Dict() {
@@ -35,11 +37,11 @@ namespace Ferro  {
                 var d = (Dictionary<byte[], object>) value;
                 result.Append("{\n");
 
-                foreach (var item in d) {
+                foreach (var (k, v) in d) {
                     for (var i = 0; i < indentLevel + indent; i++) result.Append(" ");
-                    toHuman(item.Key, result, indentLevel + indent, indent);
+                    toHuman(k, result, indentLevel + indent, indent);
                     result.Append(": ");
-                    toHuman(item.Value, result, indentLevel + indent, indent);
+                    toHuman(v, result, indentLevel + indent, indent);
                     result.Append('\n');
                 }
 
