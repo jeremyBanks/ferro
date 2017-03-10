@@ -243,4 +243,11 @@ namespace Ferro.Common {
         // http://stackoverflow.com/a/29319061/1114
         public static void DoNotAwait(this Task task) { }
     }
+
+    public static class KeyValuePairExtensions {
+        public static void Deconstruct<T, U>(this KeyValuePair<T, U> pair, out T key, out U value) {
+            key = pair.Key;
+            value = pair.Value;
+        }
+    }
 }

@@ -69,8 +69,7 @@ namespace Ferro
                             {
                                 logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, "It's a metadata exchange message!");
                                 var data = peerResponse.Slice(2);
-                                Int64 dictSize;
-                                var dict = Bencoding.DecodeFirstDict(data, out dictSize);
+                                var dict = Bencoding.DecodeFirstDict(data, out Int64 dictSize);
                                 var postDict = data.Slice((Int32)dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 
                                 if (dict.GetInt("piece") != currentPiece)
