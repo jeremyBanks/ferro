@@ -4,7 +4,6 @@ using System.Net;
 using Ferro.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.CommandLineUtils;
-using System.Linq;
 
 namespace Ferro {
 
@@ -17,35 +16,65 @@ namespace Ferro {
          
         public static int Main(string[] args)
         {
-            writeHeader();
+            var cli = new CommandLineApplication {
+                Name = "ferro",
+                FullName = "Ferro"
+            };
 
-            var cli = new CommandLineApplication();
-            var verboseOption = cli.Option(
-                "-v | --verbose",
-                "Enables verbose logging",
-                CommandOptionType.NoValue
-            );
-            var bootstrapAddressArgument = cli.Argument(
-                "[bootstrap_addresses...]",
-                "Optional IP addresses of DHT nodes for bootstrapping.");
-            var helpOption = cli.HelpOption("-? | -h | --help");
+            cli.HelpOption("-h | --help | -?");
+            cli.VersionOption("--version", version);
 
             cli.OnExecute(() =>
             {
-                var verbose = verboseOption.HasValue();
-
-                GlobalLogger.LoggerFactory.AddConsole(
-                    verbose ? LogLevel.Debug : LogLevel.Information, true);
-
-                using (var client = new Ferro.BitTorrent.Client()) {
-                    var bootstrapAddresses =
-                        bootstrapAddressArgument.Values.Select(
-                            s => IPAddress.Parse(s)
-                        ).ToArray();
-                    client.Example(bootstrapAddresses).Wait();
-                }   
-
+                cli.ShowRootCommandFullNameAndVersion();
+                cli.ShowHelp();
                 return 0;
+            });
+
+            cli.Command("get-meta", sub => {
+                sub.Description = "Fetches the metadata for the specified torrent, saving it as a .torrent file.";
+                sub.HelpOption("-h | --help | -?");
+
+                var verboseOption = sub.Option(
+                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
+
+                var infohashArgument = sub.Argument(
+                    "infohash",
+                    "The infohash of the torrent to fetch.");
+
+                sub.OnExecute(() => {
+                    GlobalLogger.LoggerFactory.AddConsole(
+                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+
+                    using (var client = new Ferro.BitTorrent.Client()) {
+                        client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                    }
+
+                    return 0; 
+                });
+            });
+
+            cli.Command("connect", sub => {
+                sub.Description = "Refreshes the DHT connection as neccessary.";
+                sub.HelpOption("-h | --help | -?");
+
+                var verboseOption = sub.Option(
+                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
+
+                var bootstrapArguments = sub.Argument(
+                    "bootstrap",
+                    "The address:port pairs for any bootstrap nodes to use if neccessary.");
+
+                sub.OnExecute(() => {
+                    GlobalLogger.LoggerFactory.AddConsole(
+                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+
+                    using (var client = new Ferro.BitTorrent.Client()) {
+                        client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                    }
+
+                    return 0; 
+                });
             });
 
             return cli.Execute(args);

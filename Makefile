@@ -1,11 +1,9 @@
 __default:
-	make stop-peer || true;
-	make peer;
-	make deps;
-	make build;
-	make test;
-	make run-help;
-	make stop-peer;
+	test-peer/stop || true;
+	test-peer/start;
+	./test;
+	./ferro --help;
+	test-peer/stop;
 
 .PHONY: __default deps build test run peer stop-peer
 
@@ -20,28 +18,11 @@ test:
 	cd ./test/Ferro.Tests/ && dotnet test;
 
 run:
-	cd ./src/Ferro/ && dotnet run 127.0.0.1;
+	cd ./src/Ferro/ && dotnet run -- connect 127.0.0.1:9527;
+	cd ./src/Ferro/ && dotnet run -- get-meta;
 
 run-verbose:
-	cd ./src/Ferro/ && dotnet run 127.0.0.1 -v;
+	cd ./src/Ferro/ && dotnet run -- 127.0.0.1 -v;
 
 run-help:
-	cd ./src/Ferro/ && dotnet run --help;
-
-peer:
-	rm -rf ./test-peer-state/;
-	cp -R ./test-peer-data/ ./test-peer-state/;
-	docker pull registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
-	docker run -d \
-		-p 8042:80 -p 45566:45566 -p 9527:9527/udp \
-		--dns 8.8.8.8 \
-		-v $(PWD)/test-peer-state:/rtorrent  \
-		-e UPLOAD_RATE=1024 \
-		registry.gitlab.com/banks/ferro:docktorrent;
-	docker ps;
-	# Peer now running at: localhost:45566
-	# You may control it at: http://localhost:8042
-	# You can terminate it gracefully with `make stop-peer`
-
-stop-peer:
-	docker stop -t 120 "$$(docker ps -q --filter ancestor=registry.gitlab.com/banks/ferro:docktorrent)";
+	cd ./src/Ferro/ && dotnet run -- --help;
