@@ -69,8 +69,14 @@ namespace Ferro.UnitTests
             var expectedDigest = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".FromHex();
             var verifier = new BytesVerifier(expectedDigest, 5, 3);
 
-            verifier.ProvidePiece(0, "hel".ToASCII());
             verifier.ProvidePiece(1, "l!".ToASCII());
+
+            // Each piece can only be provided once, even it would fix it.
+            Assert.Throws<BytesVerifierStateException>(() => {
+                verifier.ProvidePiece(1, "l!".ToASCII());
+            });
+
+            verifier.ProvidePiece(0, "hel".ToASCII());
 
             await Assert.ThrowsAsync<BytesVerificationException>(async () => {
                 var resultValue = await verifier.Result;
