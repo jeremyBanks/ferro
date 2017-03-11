@@ -27,7 +27,7 @@ namespace Ferro.PeerProtocol
             "-FR0001-".ToASCII().CopyTo(peerId, 0);
         }
 
-        public void InitiateHandshake(IPAddress peerIP, Int32 peerPort, byte[] infoHash)
+        public void InitiateHandshake(IPEndPoint peer, byte[] infoHash)
         {
             logger.LogInformation("Our peer id: " + peerId.ToHuman());
             var fixedHeader = new byte[20];
@@ -39,7 +39,7 @@ namespace Ferro.PeerProtocol
             extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
-            connection.ConnectAsync(peerIP, peerPort).Wait();
+            connection.ConnectAsync(peer.Address, peer.Port).Wait();
 
             if (!connection.Connected)
             {
@@ -52,7 +52,7 @@ namespace Ferro.PeerProtocol
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
             peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
-            logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peerIP + ":" + peerPort);
+            logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peer.Address + ":" + peer.Port);
             using (var stream = connection.GetStream())
             {
                 stream.Write(initialHandshake);

@@ -23,7 +23,7 @@ namespace Ferro.BitTorrent
             dht = new DHT.Client();
         }
 
-        public async Task Example(IPAddress[] bootstrapAddresses, IPAddress peerIP)
+        public async Task Example(IPAddress[] bootstrapAddresses, IPEndPoint peer)
         {
             //foreach (var address in bootstrapAddresses) {
             //    var bootstrapNode = new IPEndPoint(address, 9527);
@@ -60,7 +60,7 @@ namespace Ferro.BitTorrent
             try
             {
                 var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
-                connection.InitiateHandshake(peerIP, 8999, ubuntuUnknownInfohash);
+                connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
             }
             catch (Exception ex)
             {

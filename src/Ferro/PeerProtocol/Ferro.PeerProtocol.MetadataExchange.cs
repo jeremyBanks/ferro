@@ -34,7 +34,7 @@ namespace Ferro
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            using (logger.BeginScope($"Requesting metadata for {infoHash}"))
+            using (logger.BeginScope($"Requesting metadata for infohash {infoHash.FromASCII()}"))
             {
                 // Request the first piece.
                 var initialRequest = ConstructRequestMessage(ourExtCode, 0);

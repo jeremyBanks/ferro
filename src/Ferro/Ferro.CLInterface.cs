@@ -17,8 +17,9 @@ namespace Ferro {
          
         public static int Main(string[] args)
         {
-            // for testing functionality with a single controlled peer client -- pass target IP as arg
-            var peerIP = IPAddress.Parse(args[0]);
+            IPAddress peerIP;
+            IPEndPoint peerEndpoint;
+
             writeHeader();
 
             var cli = new CommandLineApplication();
@@ -44,13 +45,22 @@ namespace Ferro {
                         bootstrapAddressArgument.Values.Select(
                             s => IPAddress.Parse(s)
                         ).ToArray();
-                    client.Example(bootstrapAddresses).Wait();
+
+                    if (args.Length == 2)
+                    {
+                        // for testing functionality with a single controlled peer client -- pass target IP and port as args
+                        peerIP = IPAddress.Parse(args[0]);
+                        peerEndpoint = new IPEndPoint(peerIP, Int32.Parse(args[1]));
+                        client.Example(bootstrapAddresses, peerEndpoint).Wait();
+                    }
                 }   
 
                 return 0;
             });
 
-            return cli.Execute(args);
+            string[] moreArgs = new string[args.Length - 2];
+            Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
+            return cli.Execute(moreArgs);
         }
 
         static void writeHeader() {
