@@ -33,8 +33,16 @@ namespace Ferro.UnitTests
 
         [Fact]
         public async void TestTwoUnevenPiecesValid() {
-            var expectedDigest = "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3".FromHex();
+            var expectedDigest = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".FromHex();
             var verifier = new BytesVerifier(expectedDigest, 5, 3);
+
+            // Piece indicies need to be in range.
+            Assert.Throws<ArgumentOutOfRangeException>(() => {
+                verifier.ProvidePiece(-1, "hel".ToASCII());
+            });
+            Assert.Throws<ArgumentOutOfRangeException>(() => {
+                verifier.ProvidePiece(2, "hel".ToASCII());
+            });
 
             // Pieces need to be of the expected size.
             Assert.Throws<ArgumentException>(() => {
@@ -54,6 +62,19 @@ namespace Ferro.UnitTests
 
             var resultValue = await verifier.Result;
             Assert.Equal("hello".ToASCII(), resultValue);
+        }
+
+        [Fact]
+        public async void TestTwoUnevenPiecesInvalid() {
+            var expectedDigest = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".FromHex();
+            var verifier = new BytesVerifier(expectedDigest, 5, 3);
+
+            verifier.ProvidePiece(0, "hel".ToASCII());
+            verifier.ProvidePiece(1, "l!".ToASCII());
+
+            await Assert.ThrowsAsync<BytesVerificationException>(async () => {
+                var resultValue = await verifier.Result;
+            });
         }
     }
 }
