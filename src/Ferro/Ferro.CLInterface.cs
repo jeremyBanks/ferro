@@ -17,6 +17,8 @@ namespace Ferro {
          
         public static int Main(string[] args)
         {
+            // for testing functionality with a single controlled peer client -- pass target IP as arg
+            var peerIP = IPAddress.Parse(args[0]);
             writeHeader();
 
             var cli = new CommandLineApplication();
