@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
 using Ferro.Common;
+using Ferro.Serialization;
 
 namespace Ferro.PeerProtocol
 {

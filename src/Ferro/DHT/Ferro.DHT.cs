@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using Ferro.Common;
+using Ferro.Serialization;
 
 namespace Ferro.DHT {
     // Identifier for a DHT query that can be used as a dictionary key.

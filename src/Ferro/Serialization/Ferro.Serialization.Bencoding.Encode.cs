@@ -5,7 +5,7 @@ using System.Linq;
 
 using Ferro.Common;
 
-namespace Ferro  {
+namespace Ferro.Serialization  {
     public static partial class Bencoding {
         public static byte[] Encode(object value) {
             using (var stream = new MemoryStream()) {

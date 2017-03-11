@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using Xunit;
 
 using Ferro.Common;
+using Ferro.Serialization;
 
 namespace Ferro.UnitTests
 {
     // Plug in your exception classes (for invalid values) here.
-    using serializationException = Ferro.Bencoding.EncodingException;
-    using deserializationException = Ferro.Bencoding.DecodingException;
+    using serializationException = Bencoding.EncodingException;
+    using deserializationException = Bencoding.DecodingException;
 
     public class BencodingTests
     {
