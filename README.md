@@ -14,6 +14,8 @@ docs: [ditto.gitlab.io/ditto/](https://ditto.gitlab.io/ditto/)
   The high-level programming interface for using BitTorrent, encapsulating all of the details.
 - [`Ditto.Common`](src/Ditto/Common)  
   Utilities and simple data types that shared used by everthing else.
+- [`Ditto.Serialization`](src/Ditto/Serialization)  
+  Serialization and supporting utilities for working with bencoded data.
 - [`Ditto.PeerProtocol`](src/Ditto/PeerProtocol)  
   Implemenetation of BitTorrent's TCP peer protocol.
 - [`Ditto.DHT`](src/Ditto/DHT)  
