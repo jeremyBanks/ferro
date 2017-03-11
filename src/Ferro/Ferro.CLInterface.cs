@@ -26,7 +26,6 @@ namespace Ferro {
 
             cli.OnExecute(() =>
             {
-                cli.ShowRootCommandFullNameAndVersion();
                 cli.ShowHelp();
                 return 0;
             });

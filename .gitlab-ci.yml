@@ -2,17 +2,14 @@ image: microsoft/dotnet:1.1-sdk
 
 build-and-test:
   script:
-  - dotnet restore src/Ferro/
-  - dotnet restore test/Ferro.Tests/
-  - dotnet build src/Ferro/
-  - dotnet build test/Ferro.Tests/
-  - (cd test/Ferro.Tests/ && dotnet test)
-  - (cd src/Ferro && dotnet run -- --help)
+  - ./install
+  - test/all
+  - ./ferro --help
 
 pages:
   image: alpine:latest
   script:
-  - cp -R ./docs/ ./public/
+  - cp -R docs/ public/
   artifacts:
     paths: [public]
   only: [master]
