@@ -11,30 +11,28 @@ namespace Ferro
 {
     public class MetadataExchange
     {
-        // This is where we will store pieces of metadata.
-        byte[][] metadataPieces;
-        Int32 currentPiece = 0;
-        Int64 totalMetadata;
+        Int64 metadataLength;
 
         ILogger logger { get; } = GlobalLogger.CreateLogger<MetadataExchange>();
 
-        public MetadataExchange(Int64 metadataSize)
+        public MetadataExchange(Int64 metadataLength)
         {
-            var numberOfPieces = metadataSize > 16384 ? (int)Math.Ceiling(metadataSize / 16384.0) : 1; // Each piece up to last is 16384 bytes -> 16kb
-            metadataPieces = new byte[numberOfPieces][];
-            totalMetadata = metadataSize;
+            this.metadataLength = metadataLength;
         }
 
         // ourExtCode refers to the value we have associated with ut_metadata
         // theirExtCode refers to the value they have associated with ut_metadata
-        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode, byte[] infoHash)
+        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode, byte[] infohash)
         {
             if (!connection.Connected)
             {
                 throw new Exception("Disconnected from peer after handshake.");
             }
 
-            using (logger.BeginScope($"Requesting metadata for {infoHash}"))
+            var currentPiece = 0;
+            var infoVerifier = new BytesVerifier(infohash, (Int32) metadataLength, 16384);
+
+            using (logger.BeginScope($"Metadata request for {infohash.ToHex()} from {connection.Client.RemoteEndPoint}"))
             {
                 // Request the first piece.
                 var initialRequest = ConstructRequestMessage(ourExtCode, 0);
@@ -77,41 +75,32 @@ namespace Ferro
                                     throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
                                 }
 
-                                logger.LogInformation(LoggingEvents.METADATA_RESPONSE_INCOMING, $"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data." + 
-                                                        Environment.NewLine + "Storing...");
-                                metadataPieces[currentPiece] = postDict;
+                                logger.LogInformation(
+                                    LoggingEvents.METADATA_RESPONSE_INCOMING,
+                                    $"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.\nStoring...");
+
+                                infoVerifier.ProvidePiece(currentPiece, postDict);
                                 currentPiece++;
 
-                                if (currentPiece == metadataPieces.Length)
+                                if (currentPiece == infoVerifier.PieceCount)
                                 {
-                                    // verify metadata
-                                    var combinedPieces = new byte[totalMetadata];
-                                    var index = 0;
-                                    foreach (var piece in metadataPieces)
-                                    {
-                                        piece.CopyTo(combinedPieces, index);
-                                        index += piece.Length;
+                                    byte[] combinedPieces;
+                                    try {
+                                        combinedPieces = infoVerifier.Result.Result;
+                                    } catch (BytesVerificationException ex) {
+                                        logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!", ex);
+                                        return;
                                     }
 
-                                    var hash = combinedPieces.Sha1();
-                                    if (Enumerable.SequenceEqual(hash, infoHash))
-                                    {
-                                        logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata verified! saving...");
-                                        DataHandler.SaveMetadata(combinedPieces);
-                                        logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata saved.");
-                                    }
-                                    else
-                                    {
-                                        logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!");
-                                    }
-
+                                    logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata verified! saving...");
+                                    DataHandler.SaveMetadata(combinedPieces);
+                                    logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata saved.");
                                     return;
                                 }
 
                                 var request = ConstructRequestMessage(ourExtCode, currentPiece);
                                 logger.LogInformation(LoggingEvents.METADATA_REQUEST, "Requesting the next piece of metadata...");
                                 stream.Write(request);
-
                             }
                             else
                             {
