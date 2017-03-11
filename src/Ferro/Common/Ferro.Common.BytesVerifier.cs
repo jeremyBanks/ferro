@@ -9,7 +9,7 @@ namespace Ferro.Common {
     // represent a data piece or info dictionary from a torrent, as being
     // provided by another peer. (This is not meant to handle data from
     // multiple untrusted sources, only one.)
-    class BytesVerifier {
+    public class BytesVerifier {
         // The SHA-1 hash digest again which the data will be verified.
         readonly byte[] Sha1Digest;
 
@@ -20,7 +20,7 @@ namespace Ferro.Common {
         readonly Int32 PieceLength;
         public Int32 FullPieceCount => Length / PieceLength;
         public Int32 ExtraPieceLength => Length % PieceLength;
-        public Int32 PieceCount => FullPieceCount + ExtraPieceLength > 0 ? 1 : 0;
+        public Int32 PieceCount => FullPieceCount + (ExtraPieceLength > 0 ? 1 : 0);
 
         // The number of pieces that have not been provided.
         protected Int32 piecesOutstanding;
@@ -49,6 +49,10 @@ namespace Ferro.Common {
 
             pieces = new byte[PieceCount][];
             piecesOutstanding = PieceCount;
+
+            if (Length == 0) {
+                finalizeResult();
+            }
         }
 
         // Provides the contents of a given piece.
@@ -81,37 +85,45 @@ namespace Ferro.Common {
             piecesOutstanding -= 1;
 
             if (piecesOutstanding == 0) {
-                var resultValue = new byte[Length];
+                finalizeResult();
+            }
+        }
 
-                for (Int32 i = 0; i < PieceCount; i++) {
-                    Buffer.BlockCopy(
-                        pieces[i],
-                        0,
-                        resultValue,
-                        PieceLength * i,
-                        pieces[i].Length);
-                }
+        private void finalizeResult() {
+            if (pieces == null) {
+                throw new BytesVerifierStateException("Already finalized!");
+            }
 
-                pieces = null;
+            var resultValue = new byte[Length];
 
-                byte[] actualDigest;
-                using (var sha1 = SHA1.Create()) {
-                    actualDigest = sha1.ComputeHash(resultValue);
-                }
+            for (Int32 i = 0; i < PieceCount; i++) {
+                Buffer.BlockCopy(
+                    pieces[i],
+                    0,
+                    resultValue,
+                    PieceLength * i,
+                    pieces[i].Length);
+            }
 
-                if (Sha1Digest.SequenceEqual(actualDigest)) {
-                    resultSource.SetResult(resultValue);
-                } else {
-                    resultSource.SetException(new BytesVerificationException(
-                        $"Verification failed: expected {Sha1Digest.ToHex()}, got {resultValue.ToHex()}."));
-                }
+            pieces = null;
+
+            byte[] actualDigest;
+            using (var sha1 = SHA1.Create()) {
+                actualDigest = sha1.ComputeHash(resultValue);
+            }
+
+            if (Sha1Digest.SequenceEqual(actualDigest)) {
+                resultSource.SetResult(resultValue);
+            } else {
+                resultSource.SetException(new BytesVerificationException(
+                    $"Verification failed: expected {Sha1Digest.ToHex()}, got {actualDigest.ToHex()}."));
             }
         }
     }
 
-    class BytesVerifierStateException : Exception {
+    public class BytesVerifierStateException : Exception {
         public BytesVerifierStateException(string message) : base(message) {} }
 
-    class BytesVerificationException : Exception {
+    public class BytesVerificationException : Exception {
         public BytesVerificationException(string message) : base(message) {} }
 }
