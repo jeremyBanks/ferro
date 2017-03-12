@@ -11,7 +11,6 @@ namespace Ferro
 {
     public class MetadataExchange
     {
-        // This is where we will store pieces of metadata.
         byte[][] metadataPieces;
         Int32 currentPiece = 0;
         Int64 totalMetadata;
