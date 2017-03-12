@@ -14,10 +14,15 @@ namespace Ferro.UnitTests
             var resultValue = await verified.Result;
 
             Assert.Equal(new byte[0], resultValue);
+            Assert.Equal(new byte[0], verified.GetData());
 
             // No possible indices are valid.
             Assert.Throws<ArgumentOutOfRangeException>(() => {
                 verified.ProvidePiece(0, new byte[0]);
+            });
+            Assert.Throws<ArgumentOutOfRangeException>(() => {
+                verified.ProvidePiece(0, new byte[0]);
+            Assert.Equal("".ToASCII(), verified.GetPiece(0));
             });
         }
 
@@ -91,6 +96,10 @@ namespace Ferro.UnitTests
 
             var resultValue = await verified.Result;
             Assert.Equal("hello".ToASCII(), resultValue);
+
+            Assert.Equal("hel".ToASCII(), verified.GetPiece(0));
+            Assert.Equal("lo".ToASCII(), verified.GetPiece(1));
+            Assert.Equal("hello".ToASCII(), verified.GetData());
         }
 
         [Fact]
