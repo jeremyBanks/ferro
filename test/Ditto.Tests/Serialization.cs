@@ -11,7 +11,7 @@ namespace Ditto.UnitTests
     {
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(byte[] bytes) {
-            var value = Bencoding.Decode(bytes);
+            var value = Bencoding.DecodeDynamic(bytes);
             var reserialized = Bencoding.Encode(value);
             Assert.Equal(bytes, reserialized);
         }
@@ -29,7 +29,7 @@ namespace Ditto.UnitTests
         public void PositiveIntegerFromBytes() 
         {
             var bytes = "i13e".ToASCII();
-            var result = Bencoding.Decode(bytes);
+            var result = Bencoding.DecodeDynamic(bytes);
             Assert.Equal((Int64) 13, result);
             AssertRoundTrip(bytes);
         }
@@ -38,7 +38,7 @@ namespace Ditto.UnitTests
         public void NegativeIntegerFromBytes()
         {
             var bytes = "i-3153e".ToASCII();
-            var result = Bencoding.Decode(bytes);
+            var result = Bencoding.DecodeDynamic(bytes);
             Assert.Equal((Int64) (-3153), result);
             AssertRoundTrip(bytes);
         }
@@ -56,7 +56,7 @@ namespace Ditto.UnitTests
         public void ZeroIntegerFromBytes()
         {
             var value = "i0e".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Int64), result.GetType());
             var typedResult = (Int64) result;
             Assert.Equal(0, typedResult);
@@ -67,7 +67,7 @@ namespace Ditto.UnitTests
         public void LargePositiveIntegerFromBytes()
         {
             var value = "i42897244160e".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Int64), result.GetType());
             var typedResult = (Int64) result;
             Assert.Equal(42897244160, typedResult);
@@ -78,42 +78,42 @@ namespace Ditto.UnitTests
         public void InvalidLeadingZerosPositiveIntegerFromBytes()
         {
             var value = "i05e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidMultipleMinusInIntegerFromBytes()
         {
             var value = "i--33e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidNonInitialMinusInIntegerFromBytes()
         {
             var value = "i3-3e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidLeadingZeroesNegativeIntegerFromBytes()
         {
             var value = "i-03e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidNegativeZeroIntegerFromBytes()
         {
             var value = "i-0e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidEmptyIntegerFromBytes()
         {
             var value = "ie".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
@@ -126,21 +126,21 @@ namespace Ditto.UnitTests
                 "123456789012345678901234567890123456789012345678901234567890" +
                 "123456789012345678901234567890123456789012345678901234567890" +
                 "e").ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidLeadingCharacterFromBytes()
         {
             var value = "z0e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void StringFromBytes()
         {
             var value = "5:hello".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(byte[]), result.GetType());
             var typedResult = (byte[]) result;
             Assert.Equal("hello".ToASCII(), typedResult);
@@ -160,52 +160,52 @@ namespace Ditto.UnitTests
         public void InvalidJamesBond()
         {
             var value = "007".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidDigitsThenLetters()
         {
             var value = "22twentytwo".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidSpaceousStringStart()
         {
             var value = "22  :idontknowaoutyou".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidAyeAyeAyeAyeAye() {
             var value = "iiiiiiiiii13e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidPositivelyPositiveInteger() {
             var value = "i+1e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidSpaceousStartInteger() {
             var value = "i 1e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidSpaceousEndInteger() {
             var value = "i1 e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void EmptyStringFromValue()
         {
             var value = "0:".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(byte[]), result.GetType());
             var typedResult = (byte[]) result;
             Assert.Equal(new byte[]{}, typedResult);
@@ -216,21 +216,21 @@ namespace Ditto.UnitTests
         public void InvalidLeadingZeroesStringLengthFromBytes()
         {
             var value = "05:hello".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidNegativeStringLengthFromBytes()
         {
             var value = "-5:hello".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidStringLongerThanDataFromBytes()
         {
             var value = "50:hello".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
@@ -238,14 +238,14 @@ namespace Ditto.UnitTests
         {
             var value =
                 "987654332198765433219876543321987654332198765433219876543321:hello".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void EmptyListFromBytes()
         {
             var value = "le".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(List<object>), result.GetType());
             var typedResult = (List<object>) result;
             Assert.Equal(0, typedResult.Count);
@@ -256,7 +256,7 @@ namespace Ditto.UnitTests
         public void IntegerListFromBytes()
         {
             var value = "li1ei2ei3ee".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(List<object>), result.GetType());
             AssertRoundTrip(value);
         }
@@ -274,7 +274,7 @@ namespace Ditto.UnitTests
         public void EmptyDictionaryFromBytes()
         {
             var value = "de".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             var typedResult = (Dictionary<byte[], object>) result;
             Assert.Equal(0, typedResult.Count);
@@ -285,7 +285,7 @@ namespace Ditto.UnitTests
         public void IntegerDictionaryFromValue()
         {
             var value = "d1:1i2e1:3i4ee".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             var typedResult = (Dictionary<byte[], object>) result;
             Assert.Equal((Int64) 2, typedResult.Count);
@@ -321,7 +321,7 @@ namespace Ditto.UnitTests
         public void NestedListDictionaryFromValue()
         {
             var value = "d1:1li2ee1:3li4eee".ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             AssertRoundTrip(value);
         }
@@ -348,21 +348,21 @@ namespace Ditto.UnitTests
         public void InvalidMisorderedKeysDictionaryFromBytes()
         {
             var value = "d1:1i2e1:3e".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void InvalidDuplicateKeysDictionaryFromBytes()
         {
             var value = "d1:3i4e1:1i2ee".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
         public void DictionaryFromMisorderedDictionaryFromValue()
         {
             var value = "d1:1i2e1:1i2ee".ToASCII();
-            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.Decode(value));
+            Assert.Throws<Bencoding.DecodingException>(() => Bencoding.DecodeDynamic(value));
         }
 
         [Fact]
@@ -395,7 +395,7 @@ namespace Ditto.UnitTests
                 "4:infod6:lengthi7e4:name7:example12:piece lengthi7e6:pieces20:0I0')s000000v0-0o0?0" + 
                 "4:salt3:200e8:url-listl57:https://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/" + 
                 "56:http://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee").ToASCII();
-            var result = Bencoding.Decode(value);
+            var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             AssertRoundTrip(value);
         }

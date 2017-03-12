@@ -6,9 +6,42 @@ using Ditto.Common;
 
 namespace Ditto.Serialization  {
     public static partial class Bencoding {
-        public static object Decode(byte[] bytes) {
+        public static T Decode<T>(byte[] bytes) {
+            return bToType<T>(decode(bytes));
+        }
+        public static T DecodeFirst<T>(byte[] bytes, out Int64 count) {
+            return bToType<T>(decodeFirst(bytes, out count));
+        }
+        public static T Decode<T>(Stream stream) {
+            return bToType<T>(decode(stream));
+        }
+
+        public static dynamic DecodeDynamic(byte[] bytes) {
+            return decode(bytes);
+        }
+
+        public static dynamic DecodeFirstDynamic(byte[] bytes, out Int64 count) {
+            return decodeFirst(bytes, out count);
+        }
+        public static dynamic DecodeDynamic(Stream stream) {
+            return decode(stream);
+        }
+
+        public static Dictionary<byte[], object> DecodeDict(byte[] bytes) {
+            return (Dictionary<byte[], object>) decode(bytes);
+        }
+
+        public static Dictionary<byte[], object> DecodeFirstDict(byte[] bytes,  out Int64 count) {
+            return (Dictionary<byte[], object>) decodeFirst(bytes, out count);
+        }
+
+        public static object DecodeDict(Stream stream, bool nullForCollectionEnd = false) {
+            return (Dictionary<byte[], object>) decode(stream, nullForCollectionEnd: nullForCollectionEnd);
+        }
+
+        private static object decode(byte[] bytes) {
             using (var stream = new MemoryStream(bytes)) {
-                var value = Decode(stream);
+                var value = decode(stream);
                 if (stream.Position < stream.Length) {
                     throw new DecodingException("Unexpected data after input.");
                 }
@@ -16,15 +49,15 @@ namespace Ditto.Serialization  {
             }
         }
 
-        public static object DecodeFirst(byte[] bytes, out Int64 count) {
+        private static object decodeFirst(byte[] bytes, out Int64 count) {
             using (var stream = new MemoryStream(bytes)) {
-                var value = Decode(stream);
+                var value = decode(stream);
                 count = stream.Position;
                 return value;
             }
         }
 
-        public static object Decode(Stream stream, bool nullForCollectionEnd = false) {
+        private static object decode(Stream stream, bool nullForCollectionEnd = false) {
             var firstOrNothing = stream.ReadByte();
             if (firstOrNothing == -1) {
                 throw new DecodingException("Unexpected end of stream while expecting next value.");
@@ -159,7 +192,7 @@ namespace Ditto.Serialization  {
                 case (byte) 'l':
                     var list = new List<object> {};
                     while (true) {
-                        var next = Decode(stream, nullForCollectionEnd: true);
+                        var next = decode(stream, nullForCollectionEnd: true);
                         if (next == null) {
                             break; // valid end of list
                         }
@@ -173,7 +206,7 @@ namespace Ditto.Serialization  {
                     byte[] previousKey = null;
 
                     while (true) {
-                        var key = Decode(stream, nullForCollectionEnd: true);
+                        var key = decode(stream, nullForCollectionEnd: true);
                         if (key == null) {
                             break; // valid end of dictionary
                         } else if (!(key is byte[])) {
@@ -188,7 +221,7 @@ namespace Ditto.Serialization  {
                             }
                         }
                         previousKey = typedKey;
-                        var value = Decode(stream);
+                        var value = decode(stream);
                         dictionary.Add(typedKey, value);
 
                     }
@@ -206,18 +239,6 @@ namespace Ditto.Serialization  {
                     throw new DecodingException(
                         $"Unexpected initial byte in value: {first} '{char.ConvertFromUtf32(first)}'.");
             }
-        }
-
-        public static Dictionary<byte[], object> DecodeDict(byte[] bytes) {
-            return (Dictionary<byte[], object>) Decode(bytes);
-        }
-
-        public static Dictionary<byte[], object> DecodeFirstDict(byte[] bytes,  out Int64 count) {
-            return (Dictionary<byte[], object>) DecodeFirst(bytes, out count);
-        }
-
-        public static object DecodeDict(Stream stream, bool nullForCollectionEnd = false) {
-            return (Dictionary<byte[], object>) Decode(stream, nullForCollectionEnd: nullForCollectionEnd);
         }
 
         public class DecodingException : Exception {

@@ -14,7 +14,7 @@ namespace Ditto.Serialization  {
 
         // Creates a human-readable formatting of the bencoded data.
         public static string ToHuman(byte[] data) {
-            var value = Bencoding.Decode(data);
+            var value = Bencoding.decode(data);
             var result = new StringBuilder();
             toHuman(value, result, 0, 2);
             return result.ToString();
