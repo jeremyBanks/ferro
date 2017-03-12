@@ -1,0 +1,16 @@
+#!/bin/bash -eu
+cd "$(dirname "${BASH_SOURCE[0]}")";
+
+rm -rf ./active-state/;
+cp -R ./state/ ./active-state/;
+docker pull registry.gitlab.com/banks/ferro:docktorrent || docker login registry.gitlab.com;
+docker run -d \
+	-p 8042:80 -p 45566:45566 -p 9527:9527/udp \
+	--dns 8.8.8.8 \
+	-v $(PWD)/state:/rtorrent  \
+	-e UPLOAD_RATE=1024 \
+	registry.gitlab.com/banks/ferro:docktorrent;
+docker ps;
+echo "Peer now running at: localhost:45566"
+echo "You may control it at: http://localhost:8042"
+echo "You can terminate it gracefully with test-peer/stop"
