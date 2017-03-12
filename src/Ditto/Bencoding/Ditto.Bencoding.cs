@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro  {
+namespace Ditto  {
     partial class Bencoding {
         public static Dictionary<byte[], object> Dict() {
             return new Dictionary<byte[], object>(ByteArrayComparer.Instance);

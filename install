@@ -1,5 +1,5 @@
 #!/bin/bash -eu
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
-(cd src/Ferro/ && dotnet restore);
-(cd test/Ferro.Tests/ && dotnet restore);
+(cd src/Ditto/ && dotnet restore);
+(cd test/Ditto.Tests/ && dotnet restore);

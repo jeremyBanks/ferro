@@ -1,8 +1,8 @@
 using Xunit;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro.UnitTests
+namespace Ditto.UnitTests
 {
     public class ByteArrayTests
     {

@@ -1,11 +1,11 @@
 using System;
 using System.Net;
 
-using Ferro.Common;
+using Ditto.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.CommandLineUtils;
 
-namespace Ferro {
+namespace Ditto {
 
     class CLInterface {
         // Releases should have a specific version, non-releases should be
@@ -17,8 +17,8 @@ namespace Ferro {
         public static int Main(string[] args)
         {
             var cli = new CommandLineApplication {
-                Name = "ferro",
-                FullName = "Ferro"
+                Name = "ditto",
+                FullName = "Ditto"
             };
 
             cli.HelpOption("-h | --help | -?");
@@ -45,7 +45,7 @@ namespace Ferro {
                     GlobalLogger.LoggerFactory.AddConsole(
                         verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
 
-                    using (var client = new Ferro.BitTorrent.Client()) {
+                    using (var client = new Ditto.BitTorrent.Client()) {
                         client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
                     }
 
@@ -68,7 +68,7 @@ namespace Ferro {
                     GlobalLogger.LoggerFactory.AddConsole(
                         verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
 
-                    using (var client = new Ferro.BitTorrent.Client()) {
+                    using (var client = new Ditto.BitTorrent.Client()) {
                         client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
                     }
 
@@ -81,9 +81,9 @@ namespace Ferro {
 
         static void writeHeader() {
             Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.Error.WriteLine($"Ferro BitTorrent CLIent {version}");
+            Console.Error.WriteLine($"Ditto BitTorrent CLIent {version}");
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Error.WriteLine("https://banks.gitlab.io/ferro/");
+            Console.Error.WriteLine("https://banks.gitlab.io/ditto/");
             Console.Error.WriteLine("");
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Error.WriteLine(

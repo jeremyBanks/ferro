@@ -4,7 +4,7 @@ build-and-test:
   script:
   - ./install
   - test/all
-  - ./ferro --help
+  - ./ditto --help
 
 pages:
   image: alpine:latest

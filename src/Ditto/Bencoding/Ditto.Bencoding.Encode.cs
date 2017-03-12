@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro  {
+namespace Ditto  {
     public static partial class Bencoding {
         public static byte[] Encode(object value) {
             using (var stream = new MemoryStream()) {

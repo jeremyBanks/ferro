@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Ferro.Common
+namespace Ditto.Common
 {
     public class GlobalLogger
     {

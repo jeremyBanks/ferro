@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using Xunit;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro.UnitTests
+namespace Ditto.UnitTests
 {
     // Plug in your exception classes (for invalid values) here.
-    using serializationException = Ferro.Bencoding.EncodingException;
-    using deserializationException = Ferro.Bencoding.DecodingException;
+    using serializationException = Ditto.Bencoding.EncodingException;
+    using deserializationException = Ditto.Bencoding.DecodingException;
 
     public class BencodingTests
     {

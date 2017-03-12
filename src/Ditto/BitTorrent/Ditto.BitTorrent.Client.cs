@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro.BitTorrent
+namespace Ditto.BitTorrent
 {
     class Client : IDisposable {
         // Torrents we expect to be loaded into our test peer.
@@ -40,7 +40,7 @@ namespace Ferro.BitTorrent
 
                     try
                     {
-                        var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
+                        var connection = new Ditto.PeerProtocol.PeerConnection(IPAddress.Any);
                         connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
                         break;
                     }

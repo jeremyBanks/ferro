@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
-cd ./Ferro.Tests/;
+cd ./Ditto.Tests/;
 dotnet restore -v quiet;
 dotnet test -- "$@";

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro.DHT {
+namespace Ditto.DHT {
     // Identifier for a DHT query that can be used as a dictionary key.
     class QueryKey {
         public IPEndPoint EP; // the ip and port of the dht node

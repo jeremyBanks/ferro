@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Ferro": {
+    "Ditto": {
       "commandName": "Project",
       "commandLineArgs": "192.168.99.100"
     }

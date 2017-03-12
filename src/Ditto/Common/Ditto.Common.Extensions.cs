@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ferro.Common {
+namespace Ditto.Common {
     public static class StreamExtensions {
         public static void Write(this Stream stream, byte[] bytes) {
             stream.Write(bytes, 0, bytes.Length);
