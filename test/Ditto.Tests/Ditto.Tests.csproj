@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
     <DebugType>portable</DebugType>
-    <AssemblyName>Ferro.Tests</AssemblyName>
-    <PackageId>Ferro.Tests</PackageId>
+    <AssemblyName>Ditto.Tests</AssemblyName>
+    <PackageId>Ditto.Tests</PackageId>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <PackageTargetFallback>$(PackageTargetFallback);dotnet5.4;portable-net451+win8</PackageTargetFallback>
     <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Ferro/Ferro.csproj" />
+    <ProjectReference Include="../../src/Ditto/Ditto.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />

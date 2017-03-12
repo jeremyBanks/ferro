@@ -1,9 +1,9 @@
 using Xunit;
 
-using Ferro.Common;
+using Ditto.Common;
 using System;
 
-namespace Ferro.UnitTests
+namespace Ditto.UnitTests
 {
     public class VerifiedBytesTests
     {

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Ferro.UnitTests
+namespace Ditto.UnitTests
 {
     public class DHTTests
     {

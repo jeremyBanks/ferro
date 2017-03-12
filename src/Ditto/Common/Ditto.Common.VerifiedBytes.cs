@@ -3,7 +3,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace Ferro.Common {
+namespace Ditto.Common {
     public static class CommonPieceSizes {
         public static Int32 BEP9_METADATA = 16384;
         public static Int32 BEP9_SUBPIECE = 16384;

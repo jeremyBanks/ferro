@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
-namespace Ferro.Common
+namespace Ditto.Common
 {
     // Dumb async wrapper over the UDP Socket interface.
     class UDPSocket : IDisposable {

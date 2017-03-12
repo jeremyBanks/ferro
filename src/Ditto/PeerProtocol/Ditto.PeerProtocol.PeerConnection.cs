@@ -6,9 +6,9 @@ using System.Net.Sockets;
 
 using Microsoft.Extensions.Logging;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro.PeerProtocol
+namespace Ditto.PeerProtocol
 {
     public class PeerConnection
     {
@@ -149,7 +149,7 @@ namespace Ferro.PeerProtocol
             // metadata_size is unnecessary if we are requesting. If we're providing metadata, we should add this. 
             // extensionDict.Set("metadata_size", 0);
             extensionDict.Set("p", myPort);
-            extensionDict.Set("v", "Ferro 0.1.0");
+            extensionDict.Set("v", "Ditto 0.1.0");
 
             return Bencoding.Encode(extensionDict);
         }

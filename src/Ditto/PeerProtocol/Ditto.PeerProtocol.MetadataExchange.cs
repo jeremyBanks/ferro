@@ -4,9 +4,9 @@ using System.Net.Sockets;
 
 using Microsoft.Extensions.Logging;
 
-using Ferro.Common;
+using Ditto.Common;
 
-namespace Ferro
+namespace Ditto
 {
     public class MetadataExchange
     {
