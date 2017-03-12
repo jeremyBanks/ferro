@@ -42,7 +42,10 @@ namespace Ferro.Common {
         protected TaskCompletionSource<byte[]> resultSource = new TaskCompletionSource<byte[]>();
         public Task<byte[]> Result => resultSource.Task;
 
-        public VerifiedBytes(byte[] digest, Int32 length, Int32 pieceLength) {
+        public VerifiedBytes(byte[] digest, Int32 length, Int32? pieceLength) {
+            if (pieceLength == null) {
+                pieceLength = length;
+            }
             if (length < 0 || pieceLength < 0) {
                 throw new ArgumentOutOfRangeException("Lengths must be non-negative.");
             }
@@ -52,7 +55,7 @@ namespace Ferro.Common {
 
             Digest = digest;
             Length = length;
-            PieceLength = pieceLength;
+            PieceLength = (Int32) pieceLength;
 
             pieces = new byte[PieceCount][];
             piecesOutstanding = PieceCount;
@@ -63,14 +66,17 @@ namespace Ferro.Common {
         }
 
         // Alternate constructor for known data with a known hash.
-        public static VerifiedBytes From(byte[] data, byte[] digest, Int32 pieceLength) {
+        public static VerifiedBytes From(byte[] data, byte[] digest, Int32? pieceLength) {
+            if (pieceLength == null) {
+                pieceLength = data.Length;
+            }
             var that = new VerifiedBytes(digest, data.Length, pieceLength);
             that.ProvideData(data);
             return that;
         } 
 
         // Alternate constructor for known data without a known hash.
-        public static VerifiedBytes FromUnverified(byte[] data, Int32 pieceLength) {
+        public static VerifiedBytes FromUnverified(byte[] data, Int32? pieceLength) {
             byte[] digest;
             using (var sha1 = SHA1.Create()) {
                 digest = sha1.ComputeHash(data);
