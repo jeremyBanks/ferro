@@ -25,7 +25,7 @@ namespace Ferro.BitTorrent
 
         public async Task Example(IPAddress[] bootstrapAddresses, IPEndPoint peer=null)
         {
-            if (peer != null)
+            if (peer == null)
             {
                 foreach (var address in bootstrapAddresses)
                 {
