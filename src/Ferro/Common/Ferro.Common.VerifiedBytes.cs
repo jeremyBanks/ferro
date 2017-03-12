@@ -9,7 +9,7 @@ namespace Ferro.Common {
     // represent a data piece or info dictionary from a torrent, as being
     // provided by another peer. (This is not meant to handle data from
     // multiple untrusted sources, only one.)
-    public class BytesVerifier {
+    public class VerifiedBytes {
         // The SHA-1 hash digest again which the data will be verified.
         readonly byte[] Sha1Digest;
 
@@ -35,7 +35,7 @@ namespace Ferro.Common {
         protected TaskCompletionSource<byte[]> resultSource = new TaskCompletionSource<byte[]>();
         public Task<byte[]> Result => resultSource.Task;
 
-        public BytesVerifier(byte[] sha1Digest, Int32 length, Int32 pieceLength) {
+        public VerifiedBytes(byte[] sha1Digest, Int32 length, Int32 pieceLength) {
             if (length < 0 || pieceLength < 0) {
                 throw new ArgumentOutOfRangeException("Lengths must be non-negative.");
             }
@@ -75,10 +75,10 @@ namespace Ferro.Common {
 
             // Verify that the piece and index are actually valid given the current state.
             if (pieces == null) {
-                throw new BytesVerifierStateException("All pieces have already been provided.");
+                throw new VerifiedBytesStateException("All pieces have already been provided.");
             }
             if (pieces[index] != null) {
-                throw new BytesVerifierStateException($"Piece {index} has already been provided.");
+                throw new VerifiedBytesStateException($"Piece {index} has already been provided.");
             }
 
             pieces[index] = piece;
@@ -91,7 +91,7 @@ namespace Ferro.Common {
 
         private void finalizeResult() {
             if (pieces == null) {
-                throw new BytesVerifierStateException("Already finalized!");
+                throw new VerifiedBytesStateException("Already finalized!");
             }
 
             var resultValue = new byte[Length];
@@ -121,8 +121,8 @@ namespace Ferro.Common {
         }
     }
 
-    public class BytesVerifierStateException : Exception {
-        public BytesVerifierStateException(string message) : base(message) {} }
+    public class VerifiedBytesStateException : Exception {
+        public VerifiedBytesStateException(string message) : base(message) {} }
 
     public class BytesVerificationException : Exception {
         public BytesVerificationException(string message) : base(message) {} }

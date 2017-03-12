@@ -5,12 +5,12 @@ using System;
 
 namespace Ferro.UnitTests
 {
-    public class BytesVerifierTests
+    public class VerifiedBytesTests
     {
         [Fact]
         public async void TestZeroLengthValid() {
             var expectedDigest = "da39a3ee5e6b4b0d3255bfef95601890afd80709".FromHex();
-            var verifier = new BytesVerifier(expectedDigest, 0, 1024);
+            var verifier = new VerifiedBytes(expectedDigest, 0, 1024);
             var resultValue = await verifier.Result;
 
             Assert.Equal(new byte[0], resultValue);
@@ -24,7 +24,7 @@ namespace Ferro.UnitTests
         [Fact]
         public async void TestZeroLengthInvalid() {
             var expectedDigest = "0000000000000000000000000000000000000000".FromHex();
-            var verifier = new BytesVerifier(expectedDigest, 0, 1024);
+            var verifier = new VerifiedBytes(expectedDigest, 0, 1024);
 
             await Assert.ThrowsAsync<BytesVerificationException>(async () => {
                 var resultValue = await verifier.Result;
@@ -34,7 +34,7 @@ namespace Ferro.UnitTests
         [Fact]
         public async void TestTwoUnevenPiecesValid() {
             var expectedDigest = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".FromHex();
-            var verifier = new BytesVerifier(expectedDigest, 5, 3);
+            var verifier = new VerifiedBytes(expectedDigest, 5, 3);
 
             // Piece indicies need to be in range.
             Assert.Throws<ArgumentOutOfRangeException>(() => {
@@ -56,7 +56,7 @@ namespace Ferro.UnitTests
             verifier.ProvidePiece(0, "hel".ToASCII());
 
             // Each piece can only be provided once.
-            Assert.Throws<BytesVerifierStateException>(() => {
+            Assert.Throws<VerifiedBytesStateException>(() => {
                 verifier.ProvidePiece(0, "hel".ToASCII());
             });
 
@@ -67,12 +67,12 @@ namespace Ferro.UnitTests
         [Fact]
         public async void TestTwoUnevenPiecesInvalid() {
             var expectedDigest = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".FromHex();
-            var verifier = new BytesVerifier(expectedDigest, 5, 3);
+            var verifier = new VerifiedBytes(expectedDigest, 5, 3);
 
             verifier.ProvidePiece(1, "l!".ToASCII());
 
             // Each piece can only be provided once, even it would fix it.
-            Assert.Throws<BytesVerifierStateException>(() => {
+            Assert.Throws<VerifiedBytesStateException>(() => {
                 verifier.ProvidePiece(1, "l!".ToASCII());
             });
 

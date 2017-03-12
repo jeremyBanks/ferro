@@ -30,7 +30,7 @@ namespace Ferro
             }
 
             var currentPiece = 0;
-            var infoVerifier = new BytesVerifier(infohash, (Int32) metadataLength, 16384);
+            var infoVerifier = new VerifiedBytes(infohash, (Int32) metadataLength, 16384);
 
             using (logger.BeginScope($"Metadata request for {infohash.ToHex()} from {connection.Client.RemoteEndPoint}"))
             {
