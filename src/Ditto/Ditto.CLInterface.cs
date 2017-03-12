@@ -12,7 +12,7 @@ namespace Ditto {
         // tagged as -dev of the next reease.
         public static readonly string version = "v0.1-dev";
 
-        ILogger logger { get; } = GlobalLogger.CreateLogger<CLInterface>();
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<CLInterface>();
          
         public static int Main(string[] args)
         {
@@ -26,6 +26,10 @@ namespace Ditto {
 
             cli.OnExecute(() =>
             {
+                GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
+
+                logger.LogWarning("This software is still in an experimental state. It may misbehave towards other peers on the network or your own system. Please limit your use.");
+
                 cli.ShowHelp();
                 return 0;
             });
@@ -77,18 +81,6 @@ namespace Ditto {
             });
 
             return cli.Execute(args);
-        }
-
-        static void writeHeader() {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.Error.WriteLine($"Ditto BitTorrent CLIent {version}");
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Error.WriteLine("https://banks.gitlab.io/ditto/");
-            Console.Error.WriteLine("");
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Error.WriteLine(
-                "WARNING: This software is still in an experimental state. It may misbehave towards other peers on the network or your own system. Please limit your use.");
-            Console.ResetColor();
         }
     }
 }
