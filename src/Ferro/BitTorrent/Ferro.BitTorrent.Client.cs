@@ -25,7 +25,7 @@ namespace Ferro.BitTorrent
 
         public async Task Example(IPAddress[] bootstrapAddresses, IPEndPoint peer=null)
         {
-            if (peer.)
+            if (peer != null)
             {
                 foreach (var address in bootstrapAddresses)
                 {
@@ -60,15 +60,17 @@ namespace Ferro.BitTorrent
                     logger.LogInformation("Done.");
                 }
             }
-
-            try
+            else
             {
-                var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
-                connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                try
+                {
+                    var connection = new Ferro.PeerProtocol.PeerConnection(IPAddress.Any);
+                    connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                }
             }
         }
 
