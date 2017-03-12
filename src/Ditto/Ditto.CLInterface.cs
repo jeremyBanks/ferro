@@ -4,6 +4,7 @@ using System.Net;
 using Ditto.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.CommandLineUtils;
+using Ditto.Serialization;
 
 namespace Ditto {
 
@@ -76,7 +77,32 @@ namespace Ditto {
                 });
             });
 
+            cli.Command("scratch", sub => {
+                sub.Description = "Temporary test command";
+                sub.HelpOption("-h | --help | -?");
+
+                var verboseOption = sub.Option(
+                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
+
+                sub.OnExecute(() => {
+                    GlobalLogger.LoggerFactory.AddConsole(
+                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+
+                    var value = Bencoding.Decode<ScratchTarget>("d5:hello5:worlde".ToASCII());
+
+                    Console.WriteLine(value);
+
+                    return 0;
+                });
+            });
+
             return cli.Execute(args);
+        }
+
+
+        class ScratchTarget {
+            [Bencodable("name")]
+            string name;
         }
 
         static void writeHeader() {

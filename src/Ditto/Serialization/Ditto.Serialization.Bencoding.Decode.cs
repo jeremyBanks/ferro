@@ -6,13 +6,13 @@ using Ditto.Common;
 
 namespace Ditto.Serialization  {
     public static partial class Bencoding {
-        public static T Decode<T>(byte[] bytes) {
+        public static T Decode<T>(byte[] bytes) where T : new() {
             return bToType<T>(decode(bytes));
         }
-        public static T DecodeFirst<T>(byte[] bytes, out Int64 count) {
+        public static T DecodeFirst<T>(byte[] bytes, out Int64 count) where T : new() {
             return bToType<T>(decodeFirst(bytes, out count));
         }
-        public static T Decode<T>(Stream stream) {
+        public static T Decode<T>(Stream stream) where T : new() {
             return bToType<T>(decode(stream));
         }
 
