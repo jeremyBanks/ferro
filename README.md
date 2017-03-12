@@ -4,7 +4,8 @@ Ditto is (going to be) a BitTorrent client written in C# with .NET Core by [Jere
 
 repo: [gitlab.com/ditto/ditto](https://gitlab.com/ditto/ditto) [<img src="https://gitlab.com/ditto/ditto/badges/master/build.svg" height="12">](https://gitlab.com/ditto/ditto/pipelines)  
 mirror: [github.com/ottid/ditto](https://github.com/ottid/ditto)  
-docs: [ditto.gitlab.io/ditto/](https://ditto.gitlab.io/ditto/)  
+mirror: [bitbucket.org/ottid/ditto](https://bitbucket.org/ottid/ditto)  
+website: [ditto.to](https://ditto.to)  
 
 ## Components
 
