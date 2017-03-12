@@ -88,7 +88,7 @@ namespace Ditto {
                     GlobalLogger.LoggerFactory.AddConsole(
                         verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
 
-                    var value = Bencoding.Decode<ScratchTarget>("d5:hello5:worlde".ToASCII());
+                    var value = Bencoding.Decode<ScratchTarget>("d4:name5:worlde".ToASCII());
 
                     Console.WriteLine(value);
 
@@ -97,12 +97,6 @@ namespace Ditto {
             });
 
             return cli.Execute(args);
-        }
-
-
-        class ScratchTarget {
-            [Bencodable("name")]
-            string name;
         }
 
         static void writeHeader() {
@@ -115,6 +109,15 @@ namespace Ditto {
             Console.Error.WriteLine(
                 "WARNING: This software is still in an experimental state. It may misbehave towards other peers on the network or your own system. Please limit your use.");
             Console.ResetColor();
+        }
+    }
+
+    public class ScratchTarget {
+        [Bencodable("name")]
+        public string internalName { get; set; } = "unknown";
+
+        override public string ToString() {
+            return $"ScratchTarget {{ internalName = {internalName} }}";
         }
     }
 }
