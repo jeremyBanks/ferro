@@ -75,7 +75,7 @@ namespace Ditto.DHT {
 
         byte[] lastToken = new byte[0];
 
-        private Dictionary<QueryKey, TaskCompletionSource<Dictionary<byte[], object>>> pendingQueries;
+        private Dictionary<QueryKey, TaskCompletionSource<DHTMessage>> pendingQueries;
 
         // Handle on a file that we're loading and saving our DHT peers to/from.
         private FileStream dhtCache;
@@ -89,7 +89,7 @@ namespace Ditto.DHT {
             nodeId = new byte[20].FillRandom();
             possibleNodes = new HashSet<IPEndPoint>();
             knownNodes = new Dictionary<IPEndPoint, Node>();
-            pendingQueries = new Dictionary<QueryKey, TaskCompletionSource<Dictionary<byte[], object>>>();
+            pendingQueries = new Dictionary<QueryKey, TaskCompletionSource<DHTMessage>>();
             localEP = new IPEndPoint(IPAddress.Any, 6881);
 
             startedSource = new TaskCompletionSource<bool>();
@@ -192,17 +192,45 @@ namespace Ditto.DHT {
             }
         }
 
-        private void handleMessage(UDPSocket.ReceivedPacket message) {
-            var value = Bencoding.DecodeDict(message.Data);
+        // A structure that can contain any supported DHT message.
+        // Fields that are not relevant to a message type will be null/default.
+        class DHTMessage {
+            [Bencodable("y")]
+            public string Type;
 
-            var type = value.GetString("y");
-            switch (type)
+            [Bencodable("t")]
+            public byte[] Token;
+
+            [Bencodable("e")]
+            public IList<object> Error;
+            public Int32 ErrorCode => (Int32) Error[0];
+            public string ErrorMessage => ((byte[]) Error[1]).FromUTF8();
+
+            [Bencodable("r")]
+            public DHTResponse Response;
+
+            public class DHTResponse {
+                [Bencodable("id")]
+                public byte[] Id;
+
+                [Bencodable("nodes")]
+                public byte[] Nodes;
+
+                [Bencodable("values")]
+                public IList<byte[]> Values;
+            }
+        }
+
+        private void handleMessage(UDPSocket.ReceivedPacket message) {
+            var value = Bencoding.Decode<DHTMessage>(message.Data);
+
+            switch (value.Type)
             {
                 case "r":
                     {
                         var key = new QueryKey
                         {
-                            Token = value.GetBytes("t"),
+                            Token = value.Token,
                             EP = message.Source
                         };
 
@@ -225,7 +253,7 @@ namespace Ditto.DHT {
                     {
                         var key = new QueryKey
                         {
-                            Token = value.GetBytes("t"),
+                            Token = value.Token,
                             EP = message.Source
                         };
 
@@ -236,11 +264,7 @@ namespace Ditto.DHT {
                             var responseSource = pendingQueries[key];
                             pendingQueries.Remove(key);
 
-                            var errors = value.GetList("e");
-                            var code = (Int64)errors[0];
-                            var errorMessage = ((byte[])errors[1]).FromASCII();
-
-                            var exception = new Exception($"{code} {errorMessage}");
+                            var exception = new Exception($"{value.ErrorCode} {value.ErrorMessage}");
                             responseSource.TrySetException(new Exception[] { exception });
                         }
                         else
@@ -293,7 +317,7 @@ namespace Ditto.DHT {
 
             var token = (lastToken = IncrementToken(lastToken));
 
-            var result = new TaskCompletionSource<Dictionary<byte[], object>>();
+            var result = new TaskCompletionSource<DHTMessage>();
             var key = new QueryKey { Token = token, EP = ep };
             pendingQueries.Add(key, result);
             Task.Run(async () => {
@@ -305,7 +329,7 @@ namespace Ditto.DHT {
 
             var results = await result.Task;
 
-            var nodeId = results.GetDict("r").GetBytes("id");
+            var nodeId = results.Response.Id;
 
             knownNodes[ep] = new Node() {
                 EP = ep,
@@ -361,7 +385,7 @@ namespace Ditto.DHT {
 
                     var token = (lastToken = IncrementToken(lastToken));
 
-                    var result = new TaskCompletionSource<Dictionary<byte[], object>>();
+                    var result = new TaskCompletionSource<DHTMessage>();
                     var key = new QueryKey { Token = token, EP = closestNode.EP };
                     pendingQueries.Add(key, result);
                     Task.Run(async () =>
@@ -373,7 +397,7 @@ namespace Ditto.DHT {
                     logger.LogInformation($"Sending get_peers for {key}...");
                     sendGetPeers(closestNode.EP, token, infohash);
 
-                    Dictionary<byte[], object> results = null;
+                    DHTMessage results = null;
                     try
                     {
                         results = await result.Task;
@@ -384,11 +408,11 @@ namespace Ditto.DHT {
                         continue;
                     }
 
-                    var response = results.GetDict("r");
+                    var response = results.Response;
 
-                    if (response.ContainsKey("nodes"))
+                    if (response.Nodes != null)
                     {
-                        var compactNodes = response.GetBytes("nodes");
+                        var compactNodes = response.Nodes;
 
                         logger.LogInformation($"Got {compactNodes.Length / 26} closer nodes, pinging them all.");
 
@@ -405,15 +429,14 @@ namespace Ditto.DHT {
                     }
                     else
                     {
-                        var compactPeers = response.GetList("values");
+                        var compactPeers = response.Values;
 
                         logger.LogInformation("Got peers!");
 
                         var peers = new List<IPEndPoint> { };
 
-                        foreach (var compactPeer_ in compactPeers)
+                        foreach (var compactPeer in compactPeers)
                         {
-                            var compactPeer = (byte[])compactPeer_;
                             peers.Add(decodeCompactEP(compactPeer));
                         }
 
