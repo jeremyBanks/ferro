@@ -8,12 +8,14 @@ namespace Ditto.Serialization  {
     // Utilities for mapping between bencoding structures and other data types.
     public static partial class Bencoding {
         public static T bToType<T>(object bData) where T : new() {
-            var props = typeof(T).GetProperties(
+            var targetType = typeof(T);
+
+            var props = targetType.GetProperties(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            var fields = typeof(T).GetFields(
+            var fields = targetType.GetFields(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             
-            Console.WriteLine($"I see {fields.Length} fields and {props.Length} props for {typeof(T)}.");
+            Console.WriteLine($"I see {fields.Length} fields and {props.Length} props for {targetType}.");
 
             // NOTE: This logic is not yet considering list or dict types, just classes.
             var bDict = (Dictionary<byte[], object>) bData;
