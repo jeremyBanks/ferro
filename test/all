@@ -1,0 +1,6 @@
+#!/bin/bash -eu
+cd "$(dirname "${BASH_SOURCE[0]}")";
+
+cd ./Ferro.Tests/;
+dotnet restore -v quiet;
+dotnet test -- "$@";

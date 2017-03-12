@@ -5,7 +5,6 @@ Ferro is (going to be) a BitTorrent client written in C# with .NET Core by [Jere
 repo: [gitlab.com/banks/ferro](https://gitlab.com/banks/ferro) [<img src="https://gitlab.com/banks/ferro/badges/master/build.svg" height="12">](https://gitlab.com/banks/ferro/pipelines)  
 mirror: [github.com/jeremyBanks/ferro](https://github.com/jeremyBanks/ferro)  
 mirror: [bitbucket.org/jeremyBanks/ferro](https://bitbucket.org/jeremyBanks/ferro)  
-mirror: [jeremy.gitly.io/ferro](https://jeremy.gitly.io/ferro)  
 docs: [banks.gitlab.io/ferro/](https://banks.gitlab.io/ferro/)  
 
 ## Components
@@ -27,18 +26,17 @@ docs: [banks.gitlab.io/ferro/](https://banks.gitlab.io/ferro/)
 
 ### Using `dotnet` in the shell (maybe with Visual Studio Code)
 
-`make peer` and `make stop-peer` will start and stop our test rTorrent/ruTorrent Docker image using data from `./test-peer-data/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, you need to `make stop-peer && rm -rf ./test-peer-data && mv ./test-peer-state ./test-peer-data`.
+`./install` will install our dependencies (locally).
 
-`make run` runs our main program (which doesn't do very much yet).
+`./ferro` will build and run our main command-line application. Run it to see a description of available subcommands.
 
-`make test` runs what few unit tests we have.
+`test/all` runs whatever tests we have.
+
+`test-peer/start` and `test-peer/stop` will start and stop our test rTorrent Docker image using data from `./test-peer/state/`. Our example/test programs may require this peer or use it for bootstrapping. You can control it directly through the web interface at <http://localhost:8042>. If you want to commit updated data/state, you need to `test-peer/stop && rm -rf ./test-peer/state/ && mv ./test-peer/active-state/ ./test-peer/state/`.
 
 ### Using Visual Studio
 
-Since this assumes Windows, you won't be able to use `make` by default. I suggest using [Docker Toolbox](https://docs.docker.com/toolbox/overview/) to get a Docker
-instance running. In the Docker Command Prompt, copy and paste the commands in the Makefile under `peer:`. This should get you set up with our test rTorrent/ruTorrent Docker
-image, using data from `.\test-peer-data\`. Once this is set up, I recommend [Kitematic](https://docs.docker.com/kitematic/userguide/), a nice GUI that will
-let you start and stop the Docker image, manage ports, etc.
+Since this assumes Windows, you won't be able to use the above commands by default. I suggest using [Docker Toolbox](https://docs.docker.com/toolbox/overview/) to get a Docker instance running. In the Docker Command Prompt, copy and paste the commands from `.\test-peer\start`. This should get you set up with our test rTorrent/ruTorrent Docker image, using data from `.\test-peer\data\`. Once this is set up, I recommend [Kitematic](https://docs.docker.com/kitematic/userguide/), a nice GUI that will let you start and stop the Docker image, manage ports, etc.
 
 Beyond that, you'll want to set up your Docker instance's IP Address as a command line argument in Visual Studio. Once you do that, you can run it like normal or with the debugger without ill effect.
 
