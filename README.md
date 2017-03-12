@@ -1,25 +1,24 @@
-# Ferro
+# Ditto
 
-Ferro is (going to be) a BitTorrent client written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
+Ditto is (going to be) a BitTorrent client written in C# with .NET Core by [Jeremy Banks](https://jeremy.ca) and [Chris Ronning](https://chrisronning.com) (see [LICENSE](./LICENSE)).
 
-repo: [gitlab.com/banks/ferro](https://gitlab.com/banks/ferro) [<img src="https://gitlab.com/banks/ferro/badges/master/build.svg" height="12">](https://gitlab.com/banks/ferro/pipelines)  
-mirror: [github.com/jeremyBanks/ferro](https://github.com/jeremyBanks/ferro)  
-mirror: [bitbucket.org/jeremyBanks/ferro](https://bitbucket.org/jeremyBanks/ferro)  
-docs: [banks.gitlab.io/ferro/](https://banks.gitlab.io/ferro/)  
+repo: [gitlab.com/ditto/ditto](https://gitlab.com/ditto/ditto) [<img src="https://gitlab.com/ditto/ditto/badges/master/build.svg" height="12">](https://gitlab.com/ditto/ditto/pipelines)  
+mirror: [github.com/ottid/ditto](https://github.com/ottid/ditto)  
+docs: [ditto.gitlab.io/ditto/](https://ditto.gitlab.io/ditto/)  
 
 ## Components
 
-- [`Ferro.CLInterface`](src/Ferro/Ferro.CLInterface.cs)  
+- [`Ditto.CLInterface`](src/Ditto/Ditto.CLInterface.cs)  
   The basic command-line user interface we're initially experimenting with.
-- [`Ferro.BitTorrent.Client`](src/Ferro/BitTorrent/Ferro.BitTorrent.Client.cs)  
+- [`Ditto.BitTorrent.Client`](src/Ditto/BitTorrent/Ditto.BitTorrent.Client.cs)  
   The high-level programming interface for using BitTorrent, encapsulating all of the details.
-- [`Ferro.Common`](src/Ferro/Common)  
+- [`Ditto.Common`](src/Ditto/Common)  
   Utilities and simple data types that shared used by everthing else.
-- [`Ferro.PeerProtocol`](src/Ferro/PeerProtocol)  
+- [`Ditto.PeerProtocol`](src/Ditto/PeerProtocol)  
   Implemenetation of BitTorrent's TCP peer protocol.
-- [`Ferro.DHT`](src/Ferro/DHT)  
+- [`Ditto.DHT`](src/Ditto/DHT)  
   Client/read-only implementation BitTorrent's BEP-5 UDP Distributed Hash Table protocol.
-- [`Ferro.Tests`](test/Ferro.Tests)  
+- [`Ditto.Tests`](test/Ditto.Tests)  
   Our tests.
 
 ## Development Tips
@@ -28,7 +27,7 @@ docs: [banks.gitlab.io/ferro/](https://banks.gitlab.io/ferro/)
 
 `./install` will install our dependencies (locally).
 
-`./ferro` will build and run our main command-line application. Run it to see a description of available subcommands.
+`./ditto` will build and run our main command-line application. Run it to see a description of available subcommands.
 
 `test/all` runs whatever tests we have.
 
