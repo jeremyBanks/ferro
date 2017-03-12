@@ -6,7 +6,7 @@ using System.Linq;
 using Ditto.Common;
 
 namespace Ditto.Serialization  {
-    public static partial class Bencoding {
+    public partial class Bencoding {
         public static byte[] Encode(object value) {
             using (var stream = new MemoryStream()) {
                 Encode(stream, value);

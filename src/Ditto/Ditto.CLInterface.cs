@@ -81,12 +81,9 @@ namespace Ditto {
                 sub.Description = "Temporary test command";
                 sub.HelpOption("-h | --help | -?");
 
-                var verboseOption = sub.Option(
-                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
 
                 sub.OnExecute(() => {
-                    GlobalLogger.LoggerFactory.AddConsole(
-                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+                    GlobalLogger.LoggerFactory.AddConsole(LogLevel.Debug);
 
                     var value = Bencoding.Decode<ScratchTarget>("d4:name5:worlde".ToASCII());
 

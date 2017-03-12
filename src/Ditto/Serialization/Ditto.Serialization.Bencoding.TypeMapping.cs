@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Ditto.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Ditto.Serialization  {
     // Utilities for mapping between bencoding structures and other data types.
-    public static partial class Bencoding {
+    public partial class Bencoding {
         public static T bToType<T>(object bData) where T : new() {
             var targetType = typeof(T);
 
@@ -15,7 +16,8 @@ namespace Ditto.Serialization  {
             var fields = targetType.GetFields(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             
-            Console.WriteLine($"I see {fields.Length} fields and {props.Length} props for {targetType}.");
+            logger.BeginScope($"mapping to {targetType}");
+            logger.LogDebug($"found {fields.Length} fields and {props.Length}");
 
             // NOTE: This logic is not yet considering list or dict types, just classes.
             var bDict = (Dictionary<byte[], object>) bData;
@@ -25,17 +27,20 @@ namespace Ditto.Serialization  {
             var result = new T();
 
             foreach (var field in fields) {
-                Console.WriteLine("see field:" + field.Name);
                 var bAttrs = field.GetCustomAttributes(typeof(BencodableAttribute)).ToList();
                 if (bAttrs.Count == 1) {
                     var attr = (BencodableAttribute) bAttrs[0];
                     var key = attr.Key;
-                    Console.WriteLine("MAPPABLE!!! " + key);
+                    logger.LogDebug($"found mappable prop: {key.ToHuman()} to {field.Name}:{field.FieldType}");
                     if (keysSeen.Contains(key)) {
                         throw new BencodingTypeMappingException(
-                            $"[Bencodable(\"{key}\")] specified for multiple properties.");
+                            $"[Bencodable(\"{key}\")] specified for multiple props/fields.");
                     } else {
                         keysSeen.Add(key);
+
+                        if (!bDict.ContainsKey(key)) {
+                            continue;
+                        }
 
                         var type = field.FieldType;
                         var bValue = bDict[key];
@@ -43,9 +48,10 @@ namespace Ditto.Serialization  {
                         if (type == typeof(byte[])) {
                             value = (byte[]) bValue;
                         } else if (type == typeof(string)) {
-                            value = ((string) bValue).ToASCII();
+                            value = ((byte[]) bValue).FromASCII();
                         } else {
-                            throw new BencodingTypeMappingException($"Can't map field of type {type}.");
+                            logger.LogError($"Can't map field of type {type}.");;
+                            continue;
                         }
                         field.SetValue(result, value);
                     }
@@ -56,15 +62,14 @@ namespace Ditto.Serialization  {
             }
 
             foreach (var prop in props) {
-                Console.WriteLine("see prop:" + prop.Name);
                 var bAttrs = prop.GetCustomAttributes(typeof(BencodableAttribute)).ToList();
                 if (bAttrs.Count == 1) {
                     var attr = (BencodableAttribute) bAttrs[0];
                     var key = attr.Key;
-                    Console.WriteLine("MAPPABLE!!! " + key);
+                    logger.LogDebug($"found mappable prop: {key.ToHuman()} to {prop.Name}:{prop.PropertyType}");
                     if (keysSeen.Contains(key)) {
                         throw new BencodingTypeMappingException(
-                            $"[Bencodable(\"{key}\")] specified for multiple properties.");
+                            $"[Bencodable(\"{key}\")] specified for multiple props/fields.");
                     } else {
                         keysSeen.Add(key);
 

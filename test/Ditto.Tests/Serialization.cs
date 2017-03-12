@@ -4,11 +4,16 @@ using Xunit;
 
 using Ditto.Common;
 using Ditto.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace Ditto.UnitTests
 {
     public class SerializationTests
     {
+        static SerializationTests() {
+            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Debug);
+        }
+
         // Asserts that deserializing and reserializing doesn't modify a value.
         public void AssertRoundTrip(byte[] bytes) {
             var value = Bencoding.DecodeDynamic(bytes);
@@ -398,6 +403,70 @@ namespace Ditto.UnitTests
             var result = Bencoding.DecodeDynamic(value);
             Assert.Equal(typeof(Dictionary<byte[], object>), result.GetType());
             AssertRoundTrip(value);
+        }
+
+        [Fact]
+        public void TypedTorrentLikeFromBytes()
+        {
+            var value = (
+                "d8:announce35:udp://tracker.openbittorrent.com:8013:announce-list" +
+                "ll35:udp://tracker.openbittorrent.com:80el33:udp://tracker.opentrackr.org:1337ee" +
+                "4:infod6:lengthi7e4:name7:example12:piece lengthi7e6:pieces20:0I0')s000000v0-0o0?0" + 
+                "4:salt3:200e8:url-listl57:https://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/" + 
+                "56:http://mgnt.ca/123456fc77d23aca05a8b58066bb55fe06c72f8e/ee").ToASCII();
+            var result = Bencoding.Decode<PseudoTorrent>(value);
+            Assert.Equal("udp://tracker.openbittorrent.com:80", result.Tracker);
+        }
+
+        class PseudoTorrent {
+            [Bencodable("announce")]
+            public string Tracker;
+
+            [Bencodable("announce-list")]
+            public IList<IList<string>> TrackersByTier;
+
+            [Bencodable("url-list")]
+            public IList<string> WebSeedURLs;
+
+            [Bencodable("info")]
+            public InfoData Info;
+
+            public class InfoData {
+                [Bencodable("piece length")]
+                public Int64 PieceLength;
+
+                [Bencodable("length")]
+                public Int64 Length;
+
+                [Bencodable("name")]
+                public string Name;
+
+                [Bencodable("pieces")]
+                public byte[] PieceHashes;
+
+                [Bencodable("files")]
+                public IList<FileData> RawFilesDict;
+                public class FileData {
+                    [Bencodable("path")]
+                    public IList<string> Path;
+
+                    [Bencodable("length")]
+                    public Int64 Length;
+                }
+            }
+
+            [Bencodable("signatures")]
+            public IDictionary<byte[], SignatureData> Signatures;
+            public class SignatureData {
+                [Bencodable("certificate")]
+                byte[] Certificate;
+
+                [Bencodable("signature")]
+                byte[] Signature;
+
+                [BencodableAttribute("info")]
+                public IDictionary<byte[], object> ExtensionsInfo;
+            }
         }
     }
 }

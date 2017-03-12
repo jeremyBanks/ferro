@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 
 using Ditto.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Ditto.Serialization  {
     // Utility functions for bencoded data.
-    public static partial class Bencoding {
+    public partial class Bencoding {
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<Bencoding>();
+
         // Returns a new Dictionary that can be directly bencoded.
         public static Dictionary<byte[], object> Dict() {
             return new Dictionary<byte[], object>(ByteArrayComparer.Instance);

@@ -5,7 +5,7 @@ using System.IO;
 using Ditto.Common;
 
 namespace Ditto.Serialization  {
-    public static partial class Bencoding {
+    public partial class Bencoding {
         public static T Decode<T>(byte[] bytes) where T : new() {
             return bToType<T>(decode(bytes));
         }
