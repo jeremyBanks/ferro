@@ -1,5 +1,5 @@
 #!/bin/bash -eu
-cd "$(dirname "${BASH_SOURCE[0]}")";
+cd "$(dirname "$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]}")")";
 
 rm -rf ./active-state/;
 cp -R ./state/ ./active-state/;
