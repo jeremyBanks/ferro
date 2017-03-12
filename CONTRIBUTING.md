@@ -1,4 +1,4 @@
-# Contributing to Ferro
+# Contributing to Ditto
 
 ## Guidelines
 

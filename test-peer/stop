@@ -1,4 +1,4 @@
 #!/bin/bash -eu
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
-docker stop -t 120 "$(docker ps -q --filter ancestor=registry.gitlab.com/banks/ferro:docktorrent)";
+docker stop -t 120 "$(docker ps -q --filter ancestor=registry.gitlab.com/ditto/ditto:docktorrent)";
