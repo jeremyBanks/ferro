@@ -498,7 +498,7 @@ namespace Ferro.DHT {
             if (!disposedValue)
             {
                 if (disposing) {
-                    saveDHT();
+                    // saveDHT();
                 }
 
                 canceled = true;
