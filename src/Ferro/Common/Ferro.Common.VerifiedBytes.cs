@@ -137,6 +137,31 @@ namespace Ferro.Common {
             }
         }
 
+        public byte[] GetPiece(Int32 index) {
+            if (pieces != null) {
+                throw new VerifiedBytesStateException("Not all data has been provided.");
+            }
+
+            // Verify that the piece and index are valid in general.
+            if (index < 0 || index >= PieceCount ) {
+                throw new ArgumentOutOfRangeException($"Index {index} out of range.");
+            }
+
+            var data = Result.Result;
+            var length = (ExtraPieceLength > 0 && index == PieceCount - 1) ? ExtraPieceLength : PieceLength;
+            var piece = new byte[length];
+            Buffer.BlockCopy(data, PieceLength * index, piece, 0, length);
+            return piece;
+        }
+
+        public byte[] GetData() {
+            if (pieces != null) {
+                throw new VerifiedBytesStateException("Not all data has been provided.");
+            }
+
+            return Result.Result;
+        }
+
         private void finalizePieces() {
             if (pieces == null) {
                 throw new VerifiedBytesStateException("Already finalized!");
@@ -145,12 +170,7 @@ namespace Ferro.Common {
             var resultValue = new byte[Length];
 
             for (Int32 i = 0; i < PieceCount; i++) {
-                Buffer.BlockCopy(
-                    pieces[i],
-                    0,
-                    resultValue,
-                    PieceLength * i,
-                    pieces[i].Length);
+                Buffer.BlockCopy(pieces[i], 0, resultValue, PieceLength * i, pieces[i].Length);
             }
 
             pieces = null;
