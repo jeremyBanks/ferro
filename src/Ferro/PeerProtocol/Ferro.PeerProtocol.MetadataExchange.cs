@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Linq;
 
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +29,7 @@ namespace Ferro
             }
 
             var currentPiece = 0;
-            var infoVerifier = new VerifiedBytes(infohash, (Int32) metadataLength, 16384);
+            var info = new VerifiedBytes(infohash, (Int32) metadataLength, CommonPieceSizes.BEP9_METADATA);
 
             using (logger.BeginScope($"Metadata request for {infohash.ToHex()} from {connection.Client.RemoteEndPoint}"))
             {
@@ -79,14 +78,14 @@ namespace Ferro
                                     LoggingEvents.METADATA_RESPONSE_INCOMING,
                                     $"Got BEP-9 {Bencoding.ToHuman(Bencoding.Encode(dict))} followed by {postDict.Length} bytes of data.\nStoring...");
 
-                                infoVerifier.ProvidePiece(currentPiece, postDict);
+                                info.ProvidePiece(currentPiece, postDict);
                                 currentPiece++;
 
-                                if (currentPiece == infoVerifier.PieceCount)
+                                if (currentPiece == info.PieceCount)
                                 {
                                     byte[] combinedPieces;
                                     try {
-                                        combinedPieces = infoVerifier.Result.Result;
+                                        combinedPieces = info.Result.Result;
                                     } catch (BytesVerificationException ex) {
                                         logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!", ex);
                                         return;
