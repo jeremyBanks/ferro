@@ -44,7 +44,7 @@ namespace Ditto.BitTorrent
 
                         try
                         {
-                            var connection = new Ditto.PeerProtocol.PeerConnectionManager(IPAddress.Any);
+                            var connection = new Ditto.PeerProtocol.ConnectionManager(IPAddress.Any);
                             connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
                             break;
                         }
@@ -64,7 +64,7 @@ namespace Ditto.BitTorrent
             {
                 try
                 {
-                    var connection = new Ditto.PeerProtocol.PeerConnectionManager(IPAddress.Any);
+                    var connection = new Ditto.PeerProtocol.ConnectionManager(IPAddress.Any);
                     connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
                 }
                 catch (Exception ex)

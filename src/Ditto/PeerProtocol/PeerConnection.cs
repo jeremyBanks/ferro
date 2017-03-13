@@ -14,19 +14,25 @@ namespace Ditto.PeerProtocol
     class PeerConnection
     {
         private bool theirExtensionsEnabled = false;
+        private IPEndPoint Peer;
 
         ILogger Logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
 
+        PeerConnection(IPEndPoint peer)
+        {
+            Peer = peer;
+        }
+
         public void InitiateHandshake(IPEndPoint peer, byte[] infoHash)
         {
-            Logger.LogInformation("Our peer id: " + PeerConnectionManager.peerId.ToHuman());
+            Logger.LogInformation("Our peer id: " + ConnectionManager.peerId.ToHuman());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte)19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
 
             var bufferBitfield = new byte[8];
             bufferBitfield[5] = (byte)16;
-            PeerConnectionManager.extensionsEnabled = true;
+            ConnectionManager.extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
             connection.ConnectAsync(peer.Address, peer.Port).Wait();
@@ -40,7 +46,7 @@ namespace Ditto.PeerProtocol
             fixedHeader.CopyTo(initialHandshake, 0);
             bufferBitfield.CopyTo(initialHandshake, fixedHeader.Length);
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
-            PeerConnectionManager.peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
+            ConnectionManager.peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
             Logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peer.Address + ":" + peer.Port);
             using (var stream = connection.GetStream())
@@ -71,7 +77,7 @@ namespace Ditto.PeerProtocol
                 var theirPeerId = stream.ReadBytes(20);
                 Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The peer's ID is " + theirPeerId.ToHuman());
 
-                if (PeerConnectionManager.extensionsEnabled && theirExtensionsEnabled)
+                if (ConnectionManager.extensionsEnabled && theirExtensionsEnabled)
                 {
                     var theirExtensionHeader = GetPeerExtensionHeader(stream);
                     var decodedExtensionHeader = Bencoding.DecodeDict(theirExtensionHeader);
@@ -139,7 +145,7 @@ namespace Ditto.PeerProtocol
             extensionDict.Set("m", supportedExtensions);
             // metadata_size is unnecessary if we are requesting. If we're providing metadata, we should add this. 
             // extensionDict.Set("metadata_size", 0);
-            extensionDict.Set("p", PeerConnectionManager.myPort);
+            extensionDict.Set("p", ConnectionManager.myPort);
             extensionDict.Set("v", "Ditto 0.1.0");
 
             return Bencoding.Encode(extensionDict);
