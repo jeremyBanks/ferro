@@ -54,8 +54,8 @@ namespace Ditto.BitTorrent
 
                         try
                         {
-                            var connection = new Ditto.PeerProtocol.ConnectionManager(IPAddress.Any);
-                            connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
+                            var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(ubuntuUnknownInfohash);
+                            ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
                             break;
                         }
                         catch (Exception ex)
@@ -74,8 +74,8 @@ namespace Ditto.BitTorrent
             {
                 try
                 {
-                    var connection = new Ditto.PeerProtocol.ConnectionManager(IPAddress.Any);
-                    connection.InitiateHandshake(peer, ubuntuUnknownInfohash);
+                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(ubuntuUnknownInfohash);
+                    ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
                 }
                 catch (Exception ex)
                 {
