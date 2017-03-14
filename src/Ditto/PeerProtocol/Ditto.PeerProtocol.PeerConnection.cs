@@ -18,14 +18,14 @@ namespace Ditto.PeerProtocol
 
         ILogger Logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
 
-        PeerConnection(IPEndPoint peer)
+        public PeerConnection(IPEndPoint peer)
         {
             Peer = peer;
         }
 
-        public void InitiateHandshake(IPEndPoint peer, byte[] infoHash)
+        public void InitiateHandshake(byte[] infoHash)
         {
-            Logger.LogInformation("Our peer id: " + ConnectionManager.peerId.ToHuman());
+            Logger.LogInformation("Our Peer id: " + ConnectionManager.peerId.ToHuman());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte)19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
@@ -35,11 +35,11 @@ namespace Ditto.PeerProtocol
             ConnectionManager.extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
-            connection.ConnectAsync(peer.Address, peer.Port).Wait();
+            connection.ConnectAsync(Peer.Address, Peer.Port).Wait();
 
             if (!connection.Connected)
             {
-                throw new Exception("Failed to connect to peer.");
+                throw new Exception("Failed to connect to Peer.");
             }
 
             var initialHandshake = new byte[68];
@@ -48,12 +48,12 @@ namespace Ditto.PeerProtocol
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
             ConnectionManager.peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
-            Logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peer.Address + ":" + peer.Port);
+            Logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + Peer.Address + ":" + Peer.Port);
             using (var stream = connection.GetStream())
             {
                 stream.Write(initialHandshake);
 
-                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Received response from peer.");
+                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Received response from Peer.");
 
                 var theirFixedHeader = stream.ReadBytes(20);
                 if (!theirFixedHeader.SequenceEqual(fixedHeader))
@@ -74,8 +74,8 @@ namespace Ditto.PeerProtocol
                     throw new Exception("Peer failed to return a matching infohash; aborting connection.");
                 }
 
-                var theirPeerId = stream.ReadBytes(20);
-                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The peer's ID is " + theirPeerId.ToHuman());
+                var theirpeerId = stream.ReadBytes(20);
+                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The Peer's ID is " + theirpeerId.ToHuman());
 
                 if (ConnectionManager.extensionsEnabled && theirExtensionsEnabled)
                 {

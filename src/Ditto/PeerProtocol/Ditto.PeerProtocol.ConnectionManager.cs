@@ -11,6 +11,8 @@ using Ditto.Common;
 
 namespace Ditto.PeerProtocol
 {
+    // handles requests to begin connecting to peers, 
+    // and routes them to the correct instance of TorrentManager.
     public class ConnectionManager
     {
         public static readonly Int32 myPort = 6881;
@@ -29,8 +31,9 @@ namespace Ditto.PeerProtocol
 
         public Task InitiateConnection(IPEndPoint peer)
         {
-            var connection = new TcpClient();
+            
         }
+
         // uses the TPL to listen for and manage multiple incoming requests from peers
         // concurrently. This needs to be set up more rigorously and tested.
         public void HandleIncomingConnections()
@@ -39,8 +42,8 @@ namespace Ditto.PeerProtocol
 
             while (true)
             {
-                var connectionTask = new Task(() => listener.AcceptTcpClientAsync().Wait());
-                connectionTask.Start();
+                var connection = new Task(() => listener.AcceptTcpClientAsync().Wait());
+                connection.Start();
             }
         }
     }

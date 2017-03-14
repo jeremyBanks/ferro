@@ -8,7 +8,15 @@ using Ditto.Common;
 
 namespace Ditto.BitTorrent
 {
-    class Client : IDisposable {
+    class Client : IDisposable
+    {    
+        readonly private IPAddress myIpAddress;
+        public static readonly Int32 myPort = 6881;
+        public static readonly byte[] peerId = new byte[20].FillRandom();
+
+        public static bool extensionsEnabled = true; // Extensions enabled by default -- option to disable?
+
+        // -- POSSIBLY MOVE -- //
         // Torrents we expect to be loaded into our test peer.
         readonly byte[] veryTinyKnownInfohash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
         readonly byte[] lessTinyKnownInfohash = "68d22f0f856ca5056e009ac53597a66c0cb03068".FromHex();
@@ -21,6 +29,8 @@ namespace Ditto.BitTorrent
 
         public Client() {
             dht = new DHT.Client();
+            myIpAddress = IPAddress.Any;
+            "ditto.to#".ToASCII().CopyTo(peerId, 0);
         }
 
         public async Task Example(IPAddress[] bootstrapAddresses, IPEndPoint peer=null)
