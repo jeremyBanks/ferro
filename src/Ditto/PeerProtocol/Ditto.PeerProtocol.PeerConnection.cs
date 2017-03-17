@@ -16,12 +16,14 @@ namespace Ditto.PeerProtocol
     {
         private bool theirExtensionsEnabled = false;
         private IPEndPoint Peer;
+        Torrent Torrent;
 
         ILogger Logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
 
-        public PeerConnection(IPEndPoint peer)
+        public PeerConnection(IPEndPoint peer, Torrent torrent)
         {
             Peer = peer;
+            Torrent = torrent;
         }
 
         public void InitiateHandshake(byte[] infoHash)
@@ -107,8 +109,14 @@ namespace Ditto.PeerProtocol
                         Logger.LogInformation(LoggingEvents.METADATA_EXCHANGE, "They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte)theirExtensions.Get("ut_metadata");
 
-                        var metadata = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));
-                        metadata.RequestMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
+                        var metadataExchange = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));
+                        try
+                        {
+                            Torrent.Metadata = metadataExchange.GetMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
+                        } catch (MetadataException e)
+                        {
+                            Logger.LogWarning("Unable to get metadata from current peer: ", e);
+                        }
                     }
                 }
             }

@@ -22,6 +22,7 @@ namespace Ditto.BitTorrent
         readonly byte[] lessTinyKnownInfohash = "68d22f0f856ca5056e009ac53597a66c0cb03068".FromHex();
         // Torrents we do not expect to be loaded in our test peer, but which should have many peers online.
         readonly byte[] ubuntuUnknownInfohash = "34930674ef3bb9317fb5f263cca830f52685235b".FromHex();
+        readonly byte[] netBSDInfohash = "a04028df0f94de0db51f3132dec47c754ffc20b1".FromHex();
 
         private DHT.Client dht;
 
@@ -54,7 +55,7 @@ namespace Ditto.BitTorrent
 
                         try
                         {
-                            var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(ubuntuUnknownInfohash);
+                            var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(netBSDInfohash);
                             ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
                             break;
                         }
@@ -74,7 +75,7 @@ namespace Ditto.BitTorrent
             {
                 try
                 {
-                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(ubuntuUnknownInfohash);
+                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(netBSDInfohash);
                     ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
                 }
                 catch (Exception ex)
