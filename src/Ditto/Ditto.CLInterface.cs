@@ -14,99 +14,97 @@ namespace Ditto {
 
         ILogger logger { get; } = GlobalLogger.CreateLogger<CLInterface>();
          
-        public static int Main(string[] args)
+        public static int RunCLI(string[] args)
         {
             writeHeader();
-            //IPAddress peerIP;
-            //IPEndPoint peerEndpoint;
+            IPAddress peerIP;
+            IPEndPoint peerEndpoint;
 
-            //var cli = new CommandLineApplication {
-            //    Name = "ditto",
-            //    FullName = "Ditto"
-            //};
-
-            //cli.HelpOption("-h | --help | -?");
-            //cli.VersionOption("--version", version);
-
-            //cli.OnExecute(() =>
-            //{
-            //    cli.ShowHelp();
-            //    return 0;
-            //});
-
-            //cli.Command("get-meta", sub => {
-            //    sub.Description = "Fetches the metadata for the specified torrent, saving it as a .torrent file.";
-            //    sub.HelpOption("-h | --help | -?");
-
-            //    var verboseOption = sub.Option(
-            //        "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
-
-            //    var infohashArgument = sub.Argument(
-            //        "infohash",
-            //        "The infohash of the torrent to fetch.");
-
-            //    var testingArgument = sub.Argument(
-            //        "testing",
-            //        "Are you testing connectivity with a single, pre-defined peer?");
-
-            //    sub.OnExecute(() => {
-            //        GlobalLogger.LoggerFactory.AddConsole(
-            //            verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
-
-            //        using (var client = new Ditto.BitTorrent.Client()) {
-            //            if (args.Length == 3)
-            //            {
-            //                // for testing functionality with a single controlled peer client -- pass target IP and port as args
-            //                peerIP = IPAddress.Parse(args[1]);
-            //                peerEndpoint = new IPEndPoint(peerIP, Int32.Parse(args[2]));
-            //                client.Example(new IPAddress[] { IPAddress.Loopback} , peerEndpoint).Wait();
-            //            }
-            //            else
-            //            {
-            //                client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
-            //            }
-
-            //        }
-
-            //        return 0; 
-            //    });
-            //});
-
-            //cli.Command("connect", sub => {
-            //    sub.Description = "Refreshes the DHT connection as neccessary.";
-            //    sub.HelpOption("-h | --help | -?");
-
-            //    var verboseOption = sub.Option(
-            //        "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
-
-            //    var bootstrapArguments = sub.Argument(
-            //        "bootstrap",
-            //        "The address:port pairs for any bootstrap nodes to use if neccessary.");
-
-            //    sub.OnExecute(() => {
-            //        GlobalLogger.LoggerFactory.AddConsole(
-            //            verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
-
-            //        using (var client = new Ditto.BitTorrent.Client()) {
-            //            client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
-            //        }
-
-            //        return 0; 
-            //    });
-            //});
-
-            //string[] moreArgs = new string[args.Length - 2];
-            //Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
-            //return cli.Execute(args);
-            GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
-            using (var client = new Ditto.BitTorrent.Client())
+            var cli = new CommandLineApplication
             {
-                var peerIP = IPAddress.Parse(args[0]);
-                var peerEndpoint = new IPEndPoint(peerIP, Int32.Parse(args[1]));
-                client.Example(new IPAddress[] { IPAddress.Loopback }, peerEndpoint).Wait();
-            }
+                Name = "ditto",
+                FullName = "Ditto"
+            };
 
-            return 0;
+            cli.HelpOption("-h | --help | -?");
+            cli.VersionOption("--version", version);
+
+            cli.OnExecute(() =>
+            {
+                cli.ShowHelp();
+                return 0;
+            });
+
+            cli.Command("get-meta", sub =>
+            {
+                sub.Description = "Fetches the metadata for the specified torrent, saving it as a .torrent file.";
+                sub.HelpOption("-h | --help | -?");
+
+                var verboseOption = sub.Option(
+                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
+
+                var infohashArgument = sub.Argument(
+                    "infohash",
+                    "The infohash of the torrent to fetch.");
+
+                var testingArgument = sub.Argument(
+                    "testing",
+                    "Are you testing connectivity with a single, pre-defined peer?");
+
+                sub.OnExecute(() =>
+                {
+                    GlobalLogger.LoggerFactory.AddConsole(
+                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+
+                    using (var client = new Ditto.BitTorrent.Client())
+                    {
+                        if (args.Length == 3)
+                        {
+                            // for testing functionality with a single controlled peer client -- pass target IP and port as args
+                            peerIP = IPAddress.Parse(args[1]);
+                            peerEndpoint = new IPEndPoint(peerIP, Int32.Parse(args[2]));
+                            client.Example(new IPAddress[] { IPAddress.Loopback }, peerEndpoint).Wait();
+                        }
+                        else
+                        {
+                            client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                        }
+
+                    }
+
+                    return 0;
+                });
+            });
+
+            cli.Command("connect", sub =>
+            {
+                sub.Description = "Refreshes the DHT connection as neccessary.";
+                sub.HelpOption("-h | --help | -?");
+
+                var verboseOption = sub.Option(
+                    "-v | --verbose", "Enables verbose logging", CommandOptionType.NoValue);
+
+                var bootstrapArguments = sub.Argument(
+                    "bootstrap",
+                    "The address:port pairs for any bootstrap nodes to use if neccessary.");
+
+                sub.OnExecute(() =>
+                {
+                    GlobalLogger.LoggerFactory.AddConsole(
+                        verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
+
+                    using (var client = new Ditto.BitTorrent.Client())
+                    {
+                        client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                    }
+
+                    return 0;
+                });
+            });
+
+            string[] moreArgs = new string[args.Length - 2];
+            Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
+            return cli.Execute(args);
         }
 
         static void writeHeader() {
