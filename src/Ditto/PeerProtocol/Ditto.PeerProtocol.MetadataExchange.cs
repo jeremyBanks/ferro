@@ -21,7 +21,7 @@ namespace Ditto
 
         // ourExtCode refers to the value we have associated with ut_metadata
         // theirExtCode refers to the value they have associated with ut_metadata
-        public void RequestMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode, byte[] infohash)
+        public byte[] GetMetadata(NetworkStream stream, TcpClient connection, byte ourExtCode, byte theirExtCode, byte[] infohash)
         {
             if (!connection.Connected)
             {
@@ -88,13 +88,13 @@ namespace Ditto
                                         combinedPieces = info.Result.Result;
                                     } catch (BytesVerificationException ex) {
                                         logger.LogWarning(LoggingEvents.METADATA_FAILURE, "metadata verification failed!", ex);
-                                        return;
+                                        throw new MetadataException("Metadata verification failed -- try another peer.");
                                     }
 
                                     logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata verified! saving...");
                                     DataHandler.SaveMetadata(combinedPieces);
                                     logger.LogInformation(LoggingEvents.DATA_STORAGE_ACTION, "metadata saved.");
-                                    return;
+                                    return combinedPieces;
                                 }
 
                                 var request = ConstructRequestMessage(ourExtCode, currentPiece);
@@ -133,7 +133,7 @@ namespace Ditto
         }
 
         // For messages with msgType 0 (request) and 2 (reject)
-        private static byte[] ConstructGenericMessage(int ourExtCode, int msgType, int piece)
+        private static byte[] ConstructMessage(int ourExtCode, int msgType, int piece)
         {
             var messageDict = new Dictionary<byte[], object>();
             messageDict.Set("msg_type", msgType);
@@ -153,12 +153,12 @@ namespace Ditto
 
         private static byte[] ConstructRequestMessage(int ourExtCode, int piece)
         {
-            return ConstructGenericMessage(ourExtCode, 0, piece);
+            return ConstructMessage(ourExtCode, 0, piece);
         }
 
         private static byte[] ConstructRejectMessage(int ourExtCode, int piece)
         {
-            return ConstructGenericMessage(ourExtCode, 2, piece);
+            return ConstructMessage(ourExtCode, 2, piece);
         }
 
         // For messages with msgType 1 (data)
@@ -166,5 +166,10 @@ namespace Ditto
         {
             return new byte[4];
         }
+    }
+
+    public class MetadataException : Exception
+    {
+        public MetadataException(string message) : base(message) { }
     }
 }

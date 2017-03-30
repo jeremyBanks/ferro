@@ -8,12 +8,13 @@ using Ditto.Common;
 
 namespace Ditto.BitTorrent
 {
-    class Client : IDisposable {
-        // Torrents we expect to be loaded into our test peer.
-        readonly byte[] veryTinyKnownInfohash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
-        readonly byte[] lessTinyKnownInfohash = "68d22f0f856ca5056e009ac53597a66c0cb03068".FromHex();
-        // Torrents we do not expect to be loaded in our test peer, but which should have many peers online.
-        readonly byte[] ubuntuUnknownInfohash = "34930674ef3bb9317fb5f263cca830f52685235b".FromHex();
+    class Client : IDisposable
+    {    
+        readonly private IPAddress myIpAddress;
+        public static readonly Int32 myPort = 6881;
+        public static readonly byte[] peerId = new byte[20].FillRandom();
+
+        public static bool extensionsEnabled = true; // Extensions enabled by default -- option to disable?
 
         private DHT.Client dht;
 
@@ -21,39 +22,58 @@ namespace Ditto.BitTorrent
 
         public Client() {
             dht = new DHT.Client();
+            myIpAddress = IPAddress.Any;
+            "ditto.to#".ToASCII().CopyTo(peerId, 0);
         }
 
-        public async Task Example(IPAddress[] bootstrapAddresses) {
-            foreach (var address in bootstrapAddresses) {
-                var bootstrapNode = new IPEndPoint(address, 9527);
-                dht.AddNode(bootstrapNode);
-            }
-
-            var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
+        public async Task Example(IPAddress[] bootstrapAddresses, IPEndPoint peer=null)
+        {
+            if (peer == null)
             {
-                logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
-                    $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
-
-                foreach (var ep in ubuntuPeers)
+                foreach (var address in bootstrapAddresses)
                 {
-                    logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
-
-                    try
-                    {
-                        var connection = new Ditto.PeerProtocol.PeerConnection(IPAddress.Any);
-                        connection.InitiateHandshake(ep.Address, ep.Port, ubuntuUnknownInfohash);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
-                        await Task.Delay(1000);
-                        logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
-                        continue;
-                    }
+                    var bootstrapNode = new IPEndPoint(address, 9527);
+                    dht.AddNode(bootstrapNode);
                 }
 
-                logger.LogInformation("Done.");
+                var ubuntuPeers = await dht.GetPeers(KnownTorrents.ubuntuUnknownInfohash);
+                {
+                    logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
+                        $"Requested peers for Ubuntu {KnownTorrents.ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
+
+                    foreach (var ep in ubuntuPeers)
+                    {
+                        logger.LogInformation(LoggingEvents.ATTEMPT_CONNECTION, $"Attempting to connect to peer at {ep}.");
+
+                        try
+                        {
+                            var testTorrent = new Ditto.PeerProtocol.TorrentManager(KnownTorrents.ubuntuUnknownInfohash);
+                            testTorrent.AddPeer(peer); // this will need to be managed more systematically
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                            await Task.Delay(1000);
+                            logger.LogError(LoggingEvents.DHT_ERROR, "Do I have another peer to try?");
+                            continue;
+                        }
+                    }
+
+                    logger.LogInformation("Done.");
+                }
+            }
+            else
+            {
+                try
+                {
+                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(KnownTorrents.netBSDInfohash);
+                    ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(LoggingEvents.DHT_ERROR, "It failed: " + ex);
+                }
             }
         }
 

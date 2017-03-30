@@ -2,7 +2,7 @@
   "profiles": {
     "Ditto": {
       "commandName": "Project",
-      "commandLineArgs": "192.168.99.100"
+      "commandLineArgs": "192.168.1.153 8999"
     }
   }
 }

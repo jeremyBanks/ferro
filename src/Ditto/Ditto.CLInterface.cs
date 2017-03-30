@@ -14,9 +14,13 @@ namespace Ditto {
 
         static ILogger logger { get; } = GlobalLogger.CreateLogger<CLInterface>();
          
-        public static int Main(string[] args)
+        public static int RunCLI(string[] args)
         {
-            var cli = new CommandLineApplication {
+            IPAddress peerIP;
+            IPEndPoint peerEndpoint;
+
+            var cli = new CommandLineApplication
+            {
                 Name = "ditto",
                 FullName = "Ditto"
             };
@@ -34,7 +38,8 @@ namespace Ditto {
                 return 0;
             });
 
-            cli.Command("get-meta", sub => {
+            cli.Command("get-meta", sub =>
+            {
                 sub.Description = "Fetches the metadata for the specified torrent, saving it as a .torrent file.";
                 sub.HelpOption("-h | --help | -?");
 
@@ -45,19 +50,37 @@ namespace Ditto {
                     "infohash",
                     "The infohash of the torrent to fetch.");
 
-                sub.OnExecute(() => {
+                var testingArgument = sub.Argument(
+                    "testing",
+                    "Are you testing connectivity with a single, pre-defined peer?");
+
+                sub.OnExecute(() =>
+                {
                     GlobalLogger.LoggerFactory.AddConsole(
                         verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
 
-                    using (var client = new Ditto.BitTorrent.Client()) {
-                        client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                    using (var client = new Ditto.BitTorrent.Client())
+                    {
+                        if (args.Length == 3)
+                        {
+                            // for testing functionality with a single controlled peer client -- pass target IP and port as args
+                            peerIP = IPAddress.Parse(args[1]);
+                            peerEndpoint = new IPEndPoint(peerIP, Int32.Parse(args[2]));
+                            client.Example(new IPAddress[] { IPAddress.Loopback }, peerEndpoint).Wait();
+                        }
+                        else
+                        {
+                            client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
+                        }
+
                     }
 
-                    return 0; 
+                    return 0;
                 });
             });
 
-            cli.Command("connect", sub => {
+            cli.Command("connect", sub =>
+            {
                 sub.Description = "Refreshes the DHT connection as neccessary.";
                 sub.HelpOption("-h | --help | -?");
 
@@ -68,18 +91,22 @@ namespace Ditto {
                     "bootstrap",
                     "The address:port pairs for any bootstrap nodes to use if neccessary.");
 
-                sub.OnExecute(() => {
+                sub.OnExecute(() =>
+                {
                     GlobalLogger.LoggerFactory.AddConsole(
                         verboseOption.HasValue() ? LogLevel.Debug : LogLevel.Information, true);
 
-                    using (var client = new Ditto.BitTorrent.Client()) {
+                    using (var client = new Ditto.BitTorrent.Client())
+                    {
                         client.Example(new IPAddress[] { IPAddress.Loopback }).Wait();
                     }
 
-                    return 0; 
+                    return 0;
                 });
             });
 
+            //string[] moreArgs = new string[args.Length - 2];
+            //Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
             return cli.Execute(args);
         }
     }
