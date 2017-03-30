@@ -10,13 +10,13 @@ namespace Ditto
 {
     public class MetadataExchange
     {
-        Int64 MetadataLength;
+        Int64 metadataLength;
 
         ILogger logger { get; } = GlobalLogger.CreateLogger<MetadataExchange>();
 
         public MetadataExchange(Int64 metadataLength)
         {
-            MetadataLength = metadataLength;
+            this.metadataLength = metadataLength;
         }
 
         // ourExtCode refers to the value we have associated with ut_metadata
@@ -29,7 +29,7 @@ namespace Ditto
             }
 
             var currentPiece = 0;
-            var info = new VerifiedBytes(infohash, (Int32) MetadataLength, CommonPieceSizes.BEP9_METADATA);
+            var info = new VerifiedBytes(infohash, (Int32) metadataLength, CommonPieceSizes.BEP9_METADATA);
 
             using (logger.BeginScope($"Metadata request for {infohash.ToHex()} from {connection.Client.RemoteEndPoint}"))
             {

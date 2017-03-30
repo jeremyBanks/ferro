@@ -15,20 +15,20 @@ namespace Ditto.PeerProtocol
     class PeerConnection
     {
         private bool theirExtensionsEnabled = false;
-        private IPEndPoint Peer;
-        Torrent Torrent;
+        private IPEndPoint peer;
+        Torrent torrent;
 
-        ILogger Logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
+        ILogger logger { get; } = GlobalLogger.CreateLogger<PeerConnection>();
 
         public PeerConnection(IPEndPoint peer, Torrent torrent)
         {
-            Peer = peer;
-            Torrent = torrent;
+            this.peer = peer;
+            this.torrent = torrent;
         }
 
         public void InitiateHandshake(byte[] infoHash)
         {
-            Logger.LogInformation("Our Peer id: " + Client.peerId.ToHuman());
+            logger.LogInformation("Our Peer id: " + Client.peerId.ToHuman());
             var fixedHeader = new byte[20];
             fixedHeader[0] = (byte)19;
             "BitTorrent protocol".ToASCII().CopyTo(fixedHeader, 1);
@@ -38,7 +38,7 @@ namespace Ditto.PeerProtocol
             Client.extensionsEnabled = true;
 
             TcpClient connection = new TcpClient();
-            connection.ConnectAsync(Peer.Address, Peer.Port).Wait();
+            connection.ConnectAsync(peer.Address, peer.Port).Wait();
 
             if (!connection.Connected)
             {
@@ -51,12 +51,12 @@ namespace Ditto.PeerProtocol
             infoHash.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length);
             Client.peerId.CopyTo(initialHandshake, fixedHeader.Length + bufferBitfield.Length + infoHash.Length);
 
-            Logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + Peer.Address + ":" + Peer.Port);
+            logger.LogInformation(LoggingEvents.HANDSHAKE_OUTGOING, "Sending our handshake to " + peer.Address + ":" + peer.Port);
             using (var stream = connection.GetStream())
             {
                 stream.Write(initialHandshake);
 
-                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Received response from Peer.");
+                logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Received response from Peer.");
 
                 var theirFixedHeader = stream.ReadBytes(20);
                 if (!theirFixedHeader.SequenceEqual(fixedHeader))
@@ -71,14 +71,14 @@ namespace Ditto.PeerProtocol
                 }
 
                 var theirInfoHash = stream.ReadBytes(20);
-                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Peer's infohash is: " + theirInfoHash.ToHuman());
+                logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "Peer's infohash is: " + theirInfoHash.ToHuman());
                 if (!theirInfoHash.SequenceEqual(infoHash))
                 {
                     throw new Exception("Peer failed to return a matching infohash; aborting connection.");
                 }
 
                 var theirpeerId = stream.ReadBytes(20);
-                Logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The Peer's ID is " + theirpeerId.ToHuman());
+                logger.LogInformation(LoggingEvents.HANDSHAKE_INCOMING, "The Peer's ID is " + theirpeerId.ToHuman());
 
                 if (Client.extensionsEnabled && theirExtensionsEnabled)
                 {
@@ -86,7 +86,7 @@ namespace Ditto.PeerProtocol
                     var decodedExtensionHeader = Bencoding.DecodeDict(theirExtensionHeader);
                     var theirExtensions = decodedExtensionHeader.GetDict("m");
 
-                    Logger.LogInformation(LoggingEvents.EXTENSION_HEADER_IN, "Peer's extension header:" + Environment.NewLine + Bencoding.ToHuman(theirExtensionHeader));
+                    logger.LogInformation(LoggingEvents.EXTENSION_HEADER_IN, "Peer's extension header:" + Environment.NewLine + Bencoding.ToHuman(theirExtensionHeader));
 
                     var extensionDict = GenerateExtentionDict();
                     var extensionHeader = new byte[extensionDict.Length + 6];
@@ -97,25 +97,25 @@ namespace Ditto.PeerProtocol
                     extensionDict.CopyTo(extensionHeader, 6);
                     stream.Write(extensionHeader);
 
-                    Logger.LogInformation(LoggingEvents.EXTENSION_HEADER_OUT, "Sending our extension header: " + Environment.NewLine + Bencoding.ToHuman(extensionDict));
+                    logger.LogInformation(LoggingEvents.EXTENSION_HEADER_OUT, "Sending our extension header: " + Environment.NewLine + Bencoding.ToHuman(extensionDict));
 
                     // Send interested message
                     stream.Write(1.EncodeBytes());
                     stream.Write(new byte[1] { 2 });
-                    Logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "Sent interested message.");
+                    logger.LogInformation(LoggingEvents.PEER_PROTOCOL_MSG, "Sent interested message.");
 
                     if (theirExtensions.ContainsKey("ut_metadata"))
                     {
-                        Logger.LogInformation(LoggingEvents.METADATA_EXCHANGE, "They also support metadata exchange. Lets try that.");
+                        logger.LogInformation(LoggingEvents.METADATA_EXCHANGE, "They also support metadata exchange. Lets try that.");
                         var theirMetadataExtensionId = (byte)theirExtensions.Get("ut_metadata");
 
                         var metadataExchange = new MetadataExchange(decodedExtensionHeader.Get("metadata_size"));
                         try
                         {
-                            Torrent.Metadata = metadataExchange.GetMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
+                            torrent.Metadata = metadataExchange.GetMetadata(stream, connection, 2, theirMetadataExtensionId, infoHash);
                         } catch (MetadataException e)
                         {
-                            Logger.LogWarning("Unable to get metadata from current peer: ", e);
+                            logger.LogWarning("Unable to get metadata from current peer: ", e);
                         }
                     }
                 }

@@ -14,7 +14,7 @@ namespace Ditto.PeerProtocol
         Torrent torrent;
         Dictionary<IPEndPoint, PeerConnection> peers = new Dictionary<IPEndPoint, PeerConnection>();
 
-        ILogger Logger { get; } = GlobalLogger.CreateLogger<TorrentManager>(); 
+        ILogger logger { get; } = GlobalLogger.CreateLogger<TorrentManager>(); 
         
         public TorrentManager(byte[] infohash)
         {
@@ -30,12 +30,12 @@ namespace Ditto.PeerProtocol
         {
             var connection = new PeerConnection(peer, torrent);
             peers[peer] = connection;
-            Logger.LogInformation($"Connecting to peer {peer.Address} for {torrent.Infohash.ToHex()}");
+            logger.LogInformation($"Connecting to peer {peer.Address} for {torrent.Infohash.ToHex()}");
             
             // for now, let's assume that all connections are outgoing connections.
             // we'll have a little conditional to direct incoming connections later.
             connection.InitiateHandshake(torrent.Infohash);
-            Logger.LogInformation($"Metadata is now set to: {torrent.Metadata.ToHuman()}");
+            logger.LogInformation($"Metadata is now set to: {torrent.Metadata.ToHuman()}");
         }
     }
 }
