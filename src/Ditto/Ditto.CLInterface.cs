@@ -16,6 +16,7 @@ namespace Ditto {
          
         public static int Main(string[] args)
         {
+            writeHeader();
             //IPAddress peerIP;
             //IPEndPoint peerEndpoint;
 

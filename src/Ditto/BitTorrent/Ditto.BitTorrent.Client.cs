@@ -16,14 +16,6 @@ namespace Ditto.BitTorrent
 
         public static bool extensionsEnabled = true; // Extensions enabled by default -- option to disable?
 
-        // -- POSSIBLY MOVE -- //
-        // Torrents we expect to be loaded into our test peer.
-        readonly byte[] veryTinyKnownInfohash = "ea45080eab61ab465f647e6366f775bf25f69a61".FromHex();
-        readonly byte[] lessTinyKnownInfohash = "68d22f0f856ca5056e009ac53597a66c0cb03068".FromHex();
-        // Torrents we do not expect to be loaded in our test peer, but which should have many peers online.
-        readonly byte[] ubuntuUnknownInfohash = "34930674ef3bb9317fb5f263cca830f52685235b".FromHex();
-        readonly byte[] netBSDInfohash = "a04028df0f94de0db51f3132dec47c754ffc20b1".FromHex();
-
         private DHT.Client dht;
 
         private static ILogger logger { get; } = GlobalLogger.CreateLogger<Client>();
@@ -44,10 +36,10 @@ namespace Ditto.BitTorrent
                     dht.AddNode(bootstrapNode);
                 }
 
-                var ubuntuPeers = await dht.GetPeers(ubuntuUnknownInfohash);
+                var ubuntuPeers = await dht.GetPeers(KnownTorrents.ubuntuUnknownInfohash);
                 {
                     logger.LogInformation(LoggingEvents.DHT_PROTOCOL_MSG,
-                        $"Requested peers for Ubuntu {ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
+                        $"Requested peers for Ubuntu {KnownTorrents.ubuntuUnknownInfohash.ToHex()} and got {ubuntuPeers.Count}!");
 
                     foreach (var ep in ubuntuPeers)
                     {
@@ -55,8 +47,8 @@ namespace Ditto.BitTorrent
 
                         try
                         {
-                            var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(netBSDInfohash);
-                            ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
+                            var testTorrent = new Ditto.PeerProtocol.TorrentManager(KnownTorrents.ubuntuUnknownInfohash);
+                            testTorrent.AddPeer(peer); // this will need to be managed more systematically
                             break;
                         }
                         catch (Exception ex)
@@ -75,7 +67,7 @@ namespace Ditto.BitTorrent
             {
                 try
                 {
-                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(netBSDInfohash);
+                    var ubuntuTorrent = new Ditto.PeerProtocol.TorrentManager(KnownTorrents.netBSDInfohash);
                     ubuntuTorrent.AddPeer(peer); // this will need to be managed more systematically
                 }
                 catch (Exception ex)
