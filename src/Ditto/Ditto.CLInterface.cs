@@ -102,8 +102,8 @@ namespace Ditto {
                 });
             });
 
-            string[] moreArgs = new string[args.Length - 2];
-            Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
+            //string[] moreArgs = new string[args.Length - 2];
+            //Array.Copy(args, 2, moreArgs, 0, moreArgs.Length);
             return cli.Execute(args);
         }
 
