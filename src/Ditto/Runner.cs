@@ -14,7 +14,7 @@ namespace Ditto
         ILogger logger { get; } = GlobalLogger.CreateLogger<Runner>();
         public static int Main(string[] args)
         {
-            var useCLI = false;
+            var useCLI = true;
 
             GlobalLogger.LoggerFactory.AddConsole(LogLevel.Information, true);
 
