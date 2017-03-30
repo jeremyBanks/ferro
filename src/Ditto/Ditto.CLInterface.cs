@@ -16,7 +16,6 @@ namespace Ditto {
          
         public static int RunCLI(string[] args)
         {
-            writeHeader();
             IPAddress peerIP;
             IPEndPoint peerEndpoint;
 
