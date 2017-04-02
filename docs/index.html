@@ -11,82 +11,6 @@
         height: 100%;
     }
 
-    html {
-        background-image: url(./ditto-b.png);
-        background-position: center;
-    }
-
-    div {
-        height: 100%;
-        background-image: url(./ditto-v.png);
-        background-position: center;
-        background-size: 64px;
-        background-repeat: no-repeat;
-        animation-duration: 23s, 27s;
-        animation-name: sideways, upways;
-        animation-iteration-count: infinite;
-        animation-direction: default;
-        animation-timing-function: ease-in-out;
-        animation-delay: -3s;
-    }
-
-    div div {
-        animation-delay: -23s;
-    }
-
-    div div div {
-        animation-delay: -43s;
-    }
-
-    div div div div {
-        animation-direction: reverse;
-        animation-delay: -63s;
-    }
-
-    div div div div div {
-        animation-direction: reverse;
-        animation-delay: -83s;
-    }
-
-    div div div div div div {
-        animation-direction: reverse;
-        animation-delay: -103s;
-    }
-
-    div div div div div div div {
-        animation-direction: reverse;
-        animation-delay: -123s;
-    }
-
-    div div div div div div div div {
-        animation-direction: reverse;
-        animation-delay: -143s;
-    }
-
-    @keyframes sideways {
-        from { 
-            background-position-x: 90%;
-        }
-        50% {
-            background-position-x: 10%;
-        }
-        to {
-            background-position-x: 90%;
-        }
-    }
-
-    @keyframes upways {
-        from { 
-            background-position-y: 90%;
-        }
-        50% {
-            background-position-y: 10%;
-        }
-        to {
-            background-position-y: 90%;
-        }
-    }
-
     main {
         font-family: sans-serif;
         position: absolute;
@@ -95,9 +19,6 @@
         top: 64px;
         max-width: 32em;
         right: 64px;
-        border: 6px solid #000;
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
         padding: 1em;
     }
 
@@ -109,12 +30,7 @@
         margin-top: 1em;
     }
 
-    a {
-        color: rgb(150, 200, 255);
-    }
-
     img {
-        border: 6px solid #000;
         position: absolute;
         width: 256px;
         right: 64px;
@@ -122,23 +38,20 @@
     }
 </style>
 
-<div><div><div><div><div><div><div><div>
-    <main>
-        <h1>Ditto</h1>
+<main>
+    <h1>Ditto</h1>
 
-        <p>
-            We're developing a BitTorrent client named Ditto.
-        </p>
+    <p>
+        We're developing a BitTorrent client named Ditto.
+    </p>
 
-        <p>
-            The first release will be version 0.1 on 2017/May/1.
-        </p>
+    <p>
+        The first release will be version 0.1 on 2017/May/1.
+    </p>
 
-        <p>
-            You can find the code <a href="https://gitlab.com/ditto/ditto">on GitLab</a>.
-        </p>
-    </main>
+    <p>
+        You can find the code <a href="https://gitlab.com/ditto/ditto">on GitLab</a>.
+    </p>
+</main>
 
-    <img src="./ditto-p.jpg" />
-
-    </div></div></div></div></div></div></div></div>
+<img src="./ditto-v.png" />
