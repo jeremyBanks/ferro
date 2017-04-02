@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 using Ditto.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Ditto  {
     partial class Bencoding {
+        static ILogger logger { get; } = GlobalLogger.CreateLogger<object>();
+
         public static Dictionary<byte[], object> Dict() {
             return new Dictionary<byte[], object>(ByteArrayComparer.Instance);
         }
@@ -30,8 +34,8 @@ namespace Ditto  {
                     }
                 }
                 result.Append("\"");
-            } else if (value is Int64) {
-                var i = (Int64) value;
+            } else if (value is BigInteger) {
+                var i = (BigInteger) value;
                 result.Append(i.ToString());
             } else if (value is Dictionary<byte[], object>) {
                 var d = (Dictionary<byte[], object>) value;

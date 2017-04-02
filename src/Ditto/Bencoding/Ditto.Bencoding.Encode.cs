@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
+using System.Numerics;
 using Ditto.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Ditto  {
     public static partial class Bencoding {
@@ -17,6 +18,10 @@ namespace Ditto  {
         public static void Encode(Stream stream, object value) {
             switch (value) {
                 case Int64 x:
+                    logger.LogWarning("Using deprecated support for Int64 in Ditto.Bencoding.Encode.");
+                    Encode(stream, (BigInteger) x);
+                    break;
+                case BigInteger x:
                     Encode(stream, x);
                     break;
                 case byte[] x:

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -206,8 +207,12 @@ namespace Ditto.Common {
     }
 
     public static class BencodedDictExtensions {
-        public static Int64 GetInt(this Dictionary<byte[], object> bDict, string key) {
+        public static Int64 GetInt64(this Dictionary<byte[], object> bDict, string key) {
             return (Int64) bDict[key.ToASCII()];
+        }
+
+        public static BigInteger GetInt(this Dictionary<byte[], object> bDict, string key) {
+            return (BigInteger) bDict[key.ToASCII()];
         }
 
         public static byte[] GetBytes(this Dictionary<byte[], object> bDict, string key) {
@@ -231,7 +236,7 @@ namespace Ditto.Common {
         }
 
         public static void Set(this Dictionary<byte[], object> bDict, string key, Int32 value) {
-            bDict[key.ToASCII()] = (Int64) value;
+            bDict[key.ToASCII()] = (BigInteger) value;
         }
 
         public static void Set(this Dictionary<byte[], object> bDict, string key, object value) {

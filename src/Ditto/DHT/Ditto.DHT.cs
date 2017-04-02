@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using Ditto.Common;
+using System.Numerics;
 
 namespace Ditto.DHT {
     // Identifier for a DHT query that can be used as a dictionary key.
@@ -236,7 +237,7 @@ namespace Ditto.DHT {
                             pendingQueries.Remove(key);
 
                             var errors = value.GetList("e");
-                            var code = (Int64)errors[0];
+                            var code = (Int64) (BigInteger) errors[0];
                             var errorMessage = ((byte[])errors[1]).FromASCII();
 
                             var exception = new Exception($"{code} {errorMessage}");

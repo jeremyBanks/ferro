@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Numerics;
 using Ditto.Common;
 
 namespace Ditto  {
@@ -53,7 +53,7 @@ namespace Ditto  {
                             if (end != 'e') {
                                 throw new DecodingException($"Expected 'e' after 'i0', got: {end} '{char.ConvertFromUtf32(end)}'.");
                             }
-                            return (Int64) 0;
+                            return (BigInteger) 0;
                         }
 
                         if (valueDigits.Count == 1 && next == '0' && valueDigits[0] == '-') {
@@ -85,7 +85,7 @@ namespace Ditto  {
 
                     var valueDigitsString = valueDigits.ToArray().FromASCII();
                     try {
-                        return Int64.Parse(valueDigitsString);
+                        return BigInteger.Parse(valueDigitsString);
                     } catch (System.OverflowException exception) {
                         throw new DecodingException(
                             $"Integer out of supported 64-bit bounds: {valueDigitsString}", exception);

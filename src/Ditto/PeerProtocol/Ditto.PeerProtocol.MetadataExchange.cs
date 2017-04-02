@@ -69,9 +69,9 @@ namespace Ditto
                                 var dict = Bencoding.DecodeFirstDict(data, out Int64 dictSize);
                                 var postDict = data.Slice((Int32)dictSize); // This is the metadata itself -- a bencoded dictionary of utf8 strings
 
-                                if (dict.GetInt("piece") != currentPiece)
+                                if (dict.GetInt64("piece") != currentPiece)
                                 {
-                                    throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt("piece")}");
+                                    throw new Exception($"Expected piece {currentPiece}. Instead, received {dict.GetInt64("piece")}");
                                 }
 
                                 logger.LogInformation(
